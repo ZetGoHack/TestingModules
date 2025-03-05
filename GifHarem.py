@@ -32,7 +32,7 @@ import re
 
 @loader.tds
 class GifHarem(loader.Module):
-    """Automatization module for @Horny_GaremBot"""
+    """Automatization module for @GIFgarem_bot"""
 
     strings = {
         "name": "GifHarem"
