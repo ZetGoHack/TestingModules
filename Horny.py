@@ -91,6 +91,7 @@ class HornyHarem(loader.Module):
         self.bonus = True
         await message.edit("<emoji document_id=5389003252790480195>✅</emoji> Автобонус включён.")
         while self.bonus:
+            self.wait_boost = False
             async with self._client.conversation(self.id) as conv:
                 await conv.send_message("/bonus")
                 r = await conv.get_response()
