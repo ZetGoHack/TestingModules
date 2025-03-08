@@ -15,7 +15,7 @@ class Test(loader.Module):
                 nn = 1
                 while True:
                     nn += 1
-                    await msg.edit(f"nn{}")
+                    await msg.edit(f"nn{nn}")
                     try:
                         r = await conv.get_response()
                     except:
