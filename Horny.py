@@ -94,7 +94,15 @@ class HornyHarem(loader.Module):
             self.wait_boost = False
             async with self._client.conversation(self.id) as conv:
                 await conv.send_message("/bonus")
-                r = await conv.get_response()
+                try:
+                    r = await conv.get_response()
+                except:
+                    while True:
+                        try:
+                            r = await conv.get_response()
+                        except:
+                            pass
+                        break
                 if "Доступен бонус за подписки" in r.text:
                     await conv.send_message("/start flyer_bonus")
                     r = await conv.get_response()
