@@ -12,6 +12,15 @@ class Test(loader.Module):
             try:
                 r = await conv.get_response()
             except:
-                pass
+                nn = 1
+                while True:
+                    nn += 1
+                    await msg.edit(f"nn{}")
+                    try:
+                        r = await conv.get_response()
+                    except:
+                        continue
+                    if r:
+                        break
             await conv.send_message(r)
     
