@@ -1,4 +1,4 @@
-__version__ = (1,0,3) ###Да, это -- копирка модуля HornyHarem. Я не виноват, что у разраба во всей связке ботов код одинаковый.🥰
+__version__ = (1,0,4) ###Да, это -- копирка модуля HornyHarem. Я не виноват, что у разраба во всей связке ботов код одинаковый.🥰
 
 #░░░░░░░░░░░░░░░░░░░░░░
 #░░░░░░░░░░██░░██░░░░░░
@@ -42,9 +42,6 @@ class GifHarem(loader.Module):
         self.outptt = True
         self.bonus = False
         self.id = 7084965046
-        self.last_time = 0
-        self.lout = 0
-        self.wait_boost = False
 
     ########Ловец########
     @loader.watcher("only_messages","only_media")
@@ -72,6 +69,8 @@ class GifHarem(loader.Module):
     async def catchGH(self, message):
         """Переключить режим ловли. Вывод арта украденной вайфу в лс бота"""
         self.state = not self.state
+        if not hasattr(self, "last_time"):
+            self.last_time = 1226061708
         await message.edit(f"{'<emoji document_id=5269315712685448697>👍</emoji> Я ловлю вайфу.' if self.state else '<emoji document_id=5269428966678077523>👎</emoji> Я не ловлю вайфу.'}")
     @loader.command()
     async def catchGH_output(self, message):
@@ -92,6 +91,9 @@ class GifHarem(loader.Module):
         self.bonus = True
         await message.edit("<emoji document_id=5389003252790480195>✅</emoji> Автобонус включён.")
         while self.bonus:
+            if hasattr(self, "lout"):
+                self.lout = 1226061708
+            self.wait_boost = False
             async with self._client.conversation(self.id) as conv:
                 await conv.send_message("/bonus")
                 r = await conv.get_response()
