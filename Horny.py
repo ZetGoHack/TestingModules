@@ -67,7 +67,7 @@ class HornyHarem(loader.Module):
     async def catchW(self, message):
         """Переключить режим ловли. Вывод арта украденной вайфу в лс бота"""
         self.state = not self.state
-        if not self.last_time:
+        if not hasattr(self, "last_time"):
             self.last_time = 1226061708
         await message.edit(f"{'<emoji document_id=5269315712685448697>👍</emoji> Я ловлю вайфу.' if self.state else '<emoji document_id=5269428966678077523>👎</emoji> Я не ловлю вайфу.'}")
     @loader.command()
@@ -86,7 +86,7 @@ class HornyHarem(loader.Module):
             self.bonus = False
             await message.edit("<emoji document_id=5388915455069015167>❎</emoji> Автобонус выключен.")
             return
-        if not self.lout:
+        if not hasattr(self, "lout"):
             self.lout = 1226061708
         self.bonus = True
         await message.edit("<emoji document_id=5389003252790480195>✅</emoji> Автобонус включён.")
