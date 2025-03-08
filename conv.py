@@ -5,7 +5,7 @@ class Test(loader.Module):
     """A"""
     strings = {"name": "Conv"}
     @loader.command()
-    async def conv(self):
+    async def conv(self, msg):
         """B"""
         async with self._client.conversation(7212151458) as conv:
             await conv.send_message("сюда")
