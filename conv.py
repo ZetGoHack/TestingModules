@@ -4,7 +4,7 @@ import asyncio
 class Test(loader.Module):
     """A"""
     strings = {"name": "Conv"}
-    @loader.command
+    @loader.command()
     async def conv(self):
         """B"""
         async with self._client.conversation(7212151458) as conv:
