@@ -114,7 +114,7 @@ class HornyHarem(loader.Module):
                             for i in a:
                                 for button in i:
                                     if button.url:
-                                        if "t.me/boost?" in button.url:
+                                        if "t.me/boost" in button.url:
                                             self.wait_boost = True
                                             continue
                                         if "t.me/+" in button.url:
