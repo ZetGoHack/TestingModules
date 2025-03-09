@@ -45,12 +45,12 @@ class WaifuHarem(loader.Module):
         """Автоматически собирает бонус(а также бонус за подписку и отыгрывает 3 игры в /lout) каждые 4 часа"""
         if self.bonus:
             self.bonus = False
-            await message.edit(" Автобонус выключен.")
+            await message.edit("<emoji document_id=5872829476143894491>🚫</emoji> Автобонус выключен.")
             return
         if not hasattr(self, "lout"):
             self.lout = 1226061708
         self.bonus = True
-        await message.edit("<emoji document_id=5389003252790480195>✅</emoji>  Автобонус включён.")
+        await message.edit("<emoji document_id=5825794181183836432>✔️</emoji> Автобонус включён.")
         while self.bonus:
             self.wait_boost = False
             async with self._client.conversation(self.id) as conv:
@@ -167,7 +167,6 @@ class WaifuHarem(loader.Module):
             if not clicks:
                 await message.edit("Иди код трейси гений.")
                 return #*смачный пинок кодеру под зад.*
-            await message.edit("Решение найдено.")
             for i in range(len(clicks)):
                 if clicks[i] == 1:
                     r = await self.client.get_messages(r.chat_id,ids=r.id)
