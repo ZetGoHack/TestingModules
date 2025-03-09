@@ -89,7 +89,7 @@ class HornyHarem(loader.Module):
         if not hasattr(self, "lout"):
             self.lout = 1226061708
         self.bonus = True
-        await message.edit(<emoji document_id=5825794181183836432>✔️</emoji> Автобонус включён.")
+        await message.edit("<emoji document_id=5825794181183836432>✔️</emoji> Автобонус включён.")
         while self.bonus:
             self.wait_boost = False
             async with self._client.conversation(self.id) as conv:
