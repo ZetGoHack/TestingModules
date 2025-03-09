@@ -71,12 +71,12 @@ class GifHarem(loader.Module):
         self.state = not self.state
         if not hasattr(self, "last_time"):
             self.last_time = 1226061708
-        await message.edit(f"{'<emoji document_id=5269315712685448697>👍</emoji> Я ловлю вайфу.' if self.state else '<emoji document_id=5269428966678077523>👎</emoji> Я не ловлю вайфу.'}")
+        await message.edit(f"{'<emoji document_id=5954175920506933873>👤</emoji> Я ловлю вайфу.' if self.state else '<emoji document_id=5872829476143894491>🚫</emoji> Я не ловлю вайфу.'}")
     @loader.command()
     async def catchGH_output(self, message):
         """Переключить вывод арта украденной вайфу."""
         self.outptt = not self.outptt
-        await message.edit(f"{'Я показываю вайфу.' if self.outptt else 'Я не показываю вайфу.'}")
+        await message.edit(f"{'<emoji document_id=5877530150345641603>👤</emoji> Я показываю вайфу.' if self.outptt else '<emoji document_id=5872829476143894491>🚫</emoji> Я не показываю вайфу.'}")
     ########Ловец########
 
 
@@ -86,10 +86,10 @@ class GifHarem(loader.Module):
         """Автоматически собирает бонус(а также бонус за подписку и отыгрывает 3 игры в /lout) каждые 4 часа"""
         if self.bonus:
             self.bonus = False
-            await message.edit("<emoji document_id=5388915455069015167>❎</emoji> Автобонус выключен.")
+            await message.edit("<emoji document_id=5872829476143894491>🚫</emoji> Автобонус выключен.")
             return
         self.bonus = True
-        await message.edit("<emoji document_id=5389003252790480195>✅</emoji> Автобонус включён.")
+        await message.edit("<emoji document_id=5825794181183836432>✔️</emoji> Автобонус включён.")
         while self.bonus:
             if not hasattr(self, "lout"):
                 self.lout = 1226061708
