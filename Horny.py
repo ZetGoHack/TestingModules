@@ -69,12 +69,12 @@ class HornyHarem(loader.Module):
         self.state = not self.state
         if not hasattr(self, "last_time"):
             self.last_time = 1226061708
-        await message.edit(f"{'Я ловлю вайфу.' if self.state else '<emoji document_id=5872829476143894491>🚫</emoji> Я не ловлю вайфу.'}")
+        await message.edit(f"{'<emoji document_id=5954175920506933873>👤</emoji> Я ловлю вайфу.' if self.state else '<emoji document_id=5872829476143894491>🚫</emoji> Я не ловлю вайфу.'}")
     @loader.command()
     async def catchW_output(self, message):
         """Переключить вывод арта украденной вайфу."""
         self.outptt = not self.outptt
-        await message.edit(f"{'Я показываю вайфу.' if self.outptt else '<emoji document_id=5872829476143894491>🚫</emoji> Я не показываю вайфу.'}")
+        await message.edit(f"{'<emoji document_id=5877530150345641603>👤</emoji> Я показываю вайфу.' if self.outptt else '<emoji document_id=5872829476143894491>🚫</emoji> Я не показываю вайфу.'}")
     ########Ловец########
 
 
