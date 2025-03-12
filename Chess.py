@@ -1,18 +1,21 @@
 #чесс нуда
 from .. import loader
+@loader.tds
+class Chess(loader.Module):
+    """Chesssssssss s s ss ss"""
+    strings = {
+        "name": "Chess"
+    }
+    async def yea(self, call):
+        await m.respond(f"@{str(call.from_user.username)}")
 
-
-
-async def yea(call):
-    await m.respond(f"@{str(call.from_user.username)}")
-
-async def ans(call, data):
-    if data == 'y':
-        await call.edit(text="УРА")
-    else:
-        await call.edit(text="(")
+    async def ans(self, call, data):
+        if data == 'y':
+            await call.edit(text="УРА")
+        else:
+            await call.edit(text="(")
     
-board = {
+    board = {
     "A1":"♖","B1":"♘","C1":"♗","D1":"♕","E1":"♔","F1":"♗","G1":"♘","H1":"♖",
     "A2":"♙","B2":"♙","C2":"♙","D2":"♙","E2":"♙","F2":"♙","G2":"♙","H2":"♙",
     "A3":" ","B3":" ","C3":" ","D3":" ","E3":" ","F3":" ","G3":" ","H3":" ",
@@ -21,21 +24,15 @@ board = {
     "A6":" ","B6":" ","C6":" ","D6":" ","E6":" ","F6":" ","G6":" ","H6":" ",
     "A7":"♟","B7":"♟","C7":"♟","D7":"♟","E7":"♟","F7":"♟","G7":"♟","H7":"♟",
     "A8":"♜","B8":"♞","C8":"♝","D8":"♛","E8":"♚","F8":"♝","G8":"♞","H8":"♜",
-}
-@loader.tds
-class Chess(loader.Module):
-    """Chesssssssss s s ss ss"""
-    strings = {
-        "name": "Chess"
     }
     @loader.command() 
-    async def chess(self,message):
+    async def chess(self, message):
         await self.inline.form(message = message, text = "Тя в игру пригласили, примешь?", reply_markup = [
                 {"text": "КОНЕЧНО ТЫ ЧО", "callback": ans, "data":"y"},
                 {"text": "ни", "callback": ans, "data":"n"},
             ]
         )
-    async def board():
+    async def board(self):
         await self.inline.form(message = message, text = "‌", reply_markup = 
             [
                 [
