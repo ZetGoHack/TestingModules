@@ -28,8 +28,8 @@ class Chess(loader.Module):
     @loader.command() 
     async def chess(self, message):
         await self.inline.form(message = message, text = "Тя в игру пригласили, примешь?", reply_markup = [
-                {"text": "КОНЕЧНО ТЫ ЧО", "callback": ans, "data":"y"},
-                {"text": "ни", "callback": ans, "data":"n"},
+                {"text": "КОНЕЧНО ТЫ ЧО", "callback": self.ans, "data":"y"},
+                {"text": "ни", "callback": self.ans, "data":"n"},
             ]
         )
     async def board(self):
