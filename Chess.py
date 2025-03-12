@@ -27,13 +27,13 @@ class chess(loader.Module):
     """Chesssssssss s s ss ss"""
     @loader.command() 
     async def chess(self,message):
-        self.inline.form(message = message, text = "Тя в игру пригласили, примешь?", reply_markup = [
+        await self.inline.form(message = message, text = "Тя в игру пригласили, примешь?", reply_markup = [
                 {"text": "КОНЕЧНО ТЫ ЧО", "callback": ans, "data":"y"},
                 {"text": "ни", "callback": ans, "data":"n"},
             ]
         )
     async def board():
-        self.inline.form(message = message, text = "‌", reply_markup = 
+        await self.inline.form(message = message, text = "‌", reply_markup = 
             [
                 [
                     {"text": f"{board['A1']}", "callback": yea},
