@@ -23,7 +23,7 @@ board = {
     "A8":"♜","B8":"♞","C8":"♝","D8":"♛","E8":"♚","F8":"♝","G8":"♞","H8":"♜",
 }
 @loader.tds
-class chess(loader.Module):
+class Chess(loader.Module):
     """Chesssssssss s s ss ss"""
     @loader.command() 
     async def chess(self,message):
