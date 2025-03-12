@@ -45,9 +45,9 @@ class Chess(loader.Module):
     async def ans(self, call, data):
         if data == 'y':
             await call.edit(text="УРА!!!!1!1!! Щааа")
-            await asyncio.sleep(1500)
+            await asyncio.sleep(1.5)
             await call.edit(text="Во")
-            await asyncio.sleep(500)
+            await asyncio.sleep(0.5)
             await self.UpdBoard("Это начальная позиция шахмат. Я хз как чёрных реализовать", call)
         else:
             await call.edit(text="(")
