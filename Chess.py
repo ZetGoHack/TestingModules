@@ -25,6 +25,9 @@ board = {
 @loader.tds
 class Chess(loader.Module):
     """Chesssssssss s s ss ss"""
+    strings = {
+        "name": "Chess"
+    }
     @loader.command() 
     async def chess(self,message):
         await self.inline.form(message = message, text = "Тя в игру пригласили, примешь?", reply_markup = [
