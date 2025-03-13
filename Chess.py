@@ -86,7 +86,7 @@ class Chess(loader.Module):
             except:
                 await message.edit("Я не нахожу такого пользователя")
                 
-        await self.inline.form(message = message, text = "<a href='tg://openmessage?user_id={opp_id}'>{opp_name}</a>, тя в игру пригласили, примешь?", reply_markup = [
+        await self.inline.form(message = message, text = f"<a href='tg://openmessage?user_id={opp_id}'>{opp_name}</a>, тя в игру пригласили, примешь?", reply_markup = [
                 {"text": "КОНЕЧНО ТЫ ЧО", "callback": self.ans, "args":("y",)},
                 {"text": "ни", "callback": self.ans, "args":("n",)},
             ], always_allow=[opp_id], ttl=60, on_unload=self.offer_outdated
