@@ -20,8 +20,10 @@
 
 
 # meta developer: @nullmod
-from .. import loader
+from .. import loader, utils
 import asyncio
+
+
 @loader.tds
 class Chess(loader.Module):
     """Chesssssssss s s ss ss"""
@@ -41,6 +43,10 @@ class Chess(loader.Module):
         }
     async def yea(self, call):
         await self.message.respond(f"@{str(call.from_user.username)} щас ток это реализовано")
+        
+    async def offer_outdated(self, call):
+        await call.edit("Время на ответ истекло.")
+        return
 
     async def ans(self, call, data):
         if data == 'y':
@@ -55,11 +61,35 @@ class Chess(loader.Module):
     
     @loader.command() 
     async def chess(self, message):
+        """[reply/username/id] предложить человеку сыграть партию"""
         self.message = message
-        await self.inline.form(message = message, text = "Тя в игру пригласили, примешь?", reply_markup = [
+        if message.is_reply:
+            r = await message.get_reply_message()
+            opponent = r.sender
+            opp_id = opponent.id
+            opp_name = opponent.first_name
+        else:
+            args = utils.get_args(message)
+            if len(args)==0:
+                message.edit("Вы не указали с кем играть")
+                return
+            opponent = args[0]
+            try:
+                if opponent.isdigit():
+                    opp_id = int(opponent)
+                    opponent = await self.client.get_entity(opp_id)
+                    opp_name = opponent.first_name
+                else:
+                    opponent = await self.client.get_entity(opponent)
+                    opp_name = opponent.first_name
+                    opp_id = opponent.id
+            except:
+                await message.edit("Я не нахожу такого пользователя")
+                
+        await self.inline.form(message = message, text = "<a href='tg://openmessage?user_id={opp_id}'>{opp_name}</a>, тя в игру пригласили, примешь?", reply_markup = [
                 {"text": "КОНЕЧНО ТЫ ЧО", "callback": self.ans, "args":("y",)},
                 {"text": "ни", "callback": self.ans, "args":("n",)},
-            ]
+            ], always_allow=[opp_id], ttl=60, on_unload=offer_outdated
         )
     async def UpdBoard(self, text, call):
         await call.edit(text = text, reply_markup = 
