@@ -89,7 +89,7 @@ class Chess(loader.Module):
         await self.inline.form(message = message, text = "<a href='tg://openmessage?user_id={opp_id}'>{opp_name}</a>, тя в игру пригласили, примешь?", reply_markup = [
                 {"text": "КОНЕЧНО ТЫ ЧО", "callback": self.ans, "args":("y",)},
                 {"text": "ни", "callback": self.ans, "args":("n",)},
-            ], always_allow=[opp_id], ttl=60, on_unload=offer_outdated
+            ], always_allow=[opp_id], ttl=60, on_unload=self.offer_outdated
         )
     async def UpdBoard(self, text, call):
         await call.edit(text = text, reply_markup = 
@@ -174,5 +174,6 @@ class Chess(loader.Module):
                     {"text": f"{self.board['G8']}", "callback": self.yea},
                     {"text": f"{self.board['H8']}", "callback": self.yea}
                 ]
-            ]
+            ],
+            always_allow=[opp_id]
         )
