@@ -40,7 +40,7 @@ class Chess(loader.Module):
         "A8":"♜","B8":"♞","C8":"♝","D8":"♛","E8":"♚","F8":"♝","G8":"♞","H8":"♜",
         }
     async def yea(self, call):
-        await call.respond(f"@{str(call.from_user.username)}")
+        await self.message.respond(f"@{str(call.from_user.username)} щас ток это реализовано")
 
     async def ans(self, call, data):
         if data == 'y':
@@ -55,6 +55,7 @@ class Chess(loader.Module):
     
     @loader.command() 
     async def chess(self, message):
+        self.message = message
         await self.inline.form(message = message, text = "Тя в игру пригласили, примешь?", reply_markup = [
                 {"text": "КОНЕЧНО ТЫ ЧО", "callback": self.ans, "args":("y",)},
                 {"text": "ни", "callback": self.ans, "args":("n",)},
