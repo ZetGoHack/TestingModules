@@ -1,5 +1,5 @@
 #чесс нуда
-
+__version__ = ("NOT","DONE","YET")
 #░░░░░░░░░░░░░░░░░░░░░░
 #░░░░░░░░░░██░░██░░░░░░
 #░░░░░░░░░████████░░░░░
@@ -21,8 +21,18 @@
 
 # meta developer: @nullmod
 from .. import loader, utils
-import asyncio
+import asyncio, random
 
+def ranColor():
+    return "w" if random.randint(1,2) == 1 else "b"
+
+def flip_board(board):
+    flipped_board = {}
+    for pos, piece in board.items():
+        col, row = pos[0], pos[1]
+        new_row = str(9 - int(row))
+        flipped_board[col + new_row] = piece
+    return flipped_board
 
 @loader.tds
 class Chess(loader.Module):
@@ -41,22 +51,29 @@ class Chess(loader.Module):
         "A7":"♟","B7":"♟","C7":"♟","D7":"♟","E7":"♟","F7":"♟","G7":"♟","H7":"♟",
         "A8":"♜","B8":"♞","C8":"♝","D8":"♛","E8":"♚","F8":"♝","G8":"♞","H8":"♜",
         }
-    async def yea(self, call):
-        await self.message.respond(f"@{str(call.from_user.username)} щас ток это реализовано")
+
+    async def clicks_handle(self, call):
+        #await self.message.respond(f"@{str(call.from_user.username)} щас ток это реализовано")
+
         
     async def offer_outdated(self, call):
         await call.edit("Время на ответ истекло.")
         return
 
     async def ans(self, call, data):
+        if call.from_user.id == self.message.sender_id:
+            await call.answer("Дай человеку ответить!")
+            return
         if data == 'y':
             await call.edit(text="УРА!!!!1!1!! Щааа")
-            await asyncio.sleep(1.5)
+            await asyncio.sleep(0.5)
             await call.edit(text="Во")
             await asyncio.sleep(0.5)
-            await self.UpdBoard("Это начальная позиция шахмат. Я хз как чёрных реализовать", call)
+            await self.UpdBoard("Это начальная позиция шахмат. \nХод белых", call)
+            you_play = ranColor()
+            await 
         else:
-            await call.edit(text="(")
+            await call.edit(text="ну ладно(")
     
     
     @loader.command() 
@@ -66,7 +83,7 @@ class Chess(loader.Module):
         if message.is_reply:
             r = await message.get_reply_message()
             opponent = r.sender
-            opp_id = opponent.id
+            self.opp_id = opponent.id
             opp_name = opponent.first_name
         else:
             args = utils.get_args(message)
@@ -76,15 +93,16 @@ class Chess(loader.Module):
             opponent = args[0]
             try:
                 if opponent.isdigit():
-                    opp_id = int(opponent)
+                    self.opp_id = int(opponent)
                     opponent = await self.client.get_entity(opp_id)
                     opp_name = opponent.first_name
                 else:
                     opponent = await self.client.get_entity(opponent)
                     opp_name = opponent.first_name
-                    opp_id = opponent.id
+                    self.opp_id = opponent.id
             except:
                 await message.edit("Я не нахожу такого пользователя")
+                return
                 
         await self.inline.form(message = message, text = f"<a href='tg://openmessage?user_id={opp_id}'>{opp_name}</a>, тя в игру пригласили, примешь?", reply_markup = [
                 {"text": "КОНЕЧНО ТЫ ЧО", "callback": self.ans, "args":("y",)},
@@ -92,88 +110,17 @@ class Chess(loader.Module):
             ], always_allow=[opp_id], ttl=60, on_unload=self.offer_outdated
         )
     async def UpdBoard(self, text, call):
-        await call.edit(text = text, reply_markup = 
-            [
-                [
-                    {"text": f"{self.board['A1']}", "callback": self.yea},
-                    {"text": f"{self.board['B1']}", "callback": self.yea},
-                    {"text": f"{self.board['C1']}", "callback": self.yea},
-                    {"text": f"{self.board['D1']}", "callback": self.yea},
-                    {"text": f"{self.board['E1']}", "callback": self.yea},
-                    {"text": f"{self.board['F1']}", "callback": self.yea},
-                    {"text": f"{self.board['G1']}", "callback": self.yea},
-                    {"text": f"{self.board['H1']}", "callback": self.yea}
-                ],
-                [
-                    {"text": f"{self.board['A2']}", "callback": self.yea},
-                    {"text": f"{self.board['B2']}", "callback": self.yea},
-                    {"text": f"{self.board['C2']}", "callback": self.yea},
-                    {"text": f"{self.board['D2']}", "callback": self.yea},
-                    {"text": f"{self.board['E2']}", "callback": self.yea},
-                    {"text": f"{self.board['F2']}", "callback": self.yea},
-                    {"text": f"{self.board['G2']}", "callback": self.yea},
-                    {"text": f"{self.board['H2']}", "callback": self.yea}
-                ],
-                [
-                    {"text": f"{self.board['A3']}", "callback": self.yea},
-                    {"text": f"{self.board['B3']}", "callback": self.yea},
-                    {"text": f"{self.board['C3']}", "callback": self.yea},
-                    {"text": f"{self.board['D3']}", "callback": self.yea},
-                    {"text": f"{self.board['E3']}", "callback": self.yea},
-                    {"text": f"{self.board['F3']}", "callback": self.yea},
-                    {"text": f"{self.board['G3']}", "callback": self.yea},
-                    {"text": f"{self.board['H3']}", "callback": self.yea}
-                ],
-                [
-                    {"text": f"{self.board['A4']}", "callback": self.yea},
-                    {"text": f"{self.board['B4']}", "callback": self.yea},
-                    {"text": f"{self.board['C4']}", "callback": self.yea},
-                    {"text": f"{self.board['D4']}", "callback": self.yea},
-                    {"text": f"{self.board['E4']}", "callback": self.yea},
-                    {"text": f"{self.board['F4']}", "callback": self.yea},
-                    {"text": f"{self.board['G4']}", "callback": self.yea},
-                    {"text": f"{self.board['H4']}", "callback": self.yea}
-                ],
-                [
-                    {"text": f"{self.board['A5']}", "callback": self.yea},
-                    {"text": f"{self.board['B5']}", "callback": self.yea},
-                    {"text": f"{self.board['C5']}", "callback": self.yea},
-                    {"text": f"{self.board['D5']}", "callback": self.yea},
-                    {"text": f"{self.board['E5']}", "callback": self.yea},
-                    {"text": f"{self.board['F5']}", "callback": self.yea},
-                    {"text": f"{self.board['G5']}", "callback": self.yea},
-                    {"text": f"{self.board['H5']}", "callback": self.yea}
-                ],
-                [
-                    {"text": f"{self.board['A6']}", "callback": self.yea},
-                    {"text": f"{self.board['B6']}", "callback": self.yea},
-                    {"text": f"{self.board['C6']}", "callback": self.yea},
-                    {"text": f"{self.board['D6']}", "callback": self.yea},
-                    {"text": f"{self.board['E6']}", "callback": self.yea},
-                    {"text": f"{self.board['F6']}", "callback": self.yea},
-                    {"text": f"{self.board['G6']}", "callback": self.yea},
-                    {"text": f"{self.board['H6']}", "callback": self.yea}
-                ],
-                [
-                    {"text": f"{self.board['A7']}", "callback": self.yea},
-                    {"text": f"{self.board['B7']}", "callback": self.yea},
-                    {"text": f"{self.board['C7']}", "callback": self.yea},
-                    {"text": f"{self.board['D7']}", "callback": self.yea},
-                    {"text": f"{self.board['E7']}", "callback": self.yea},
-                    {"text": f"{self.board['F7']}", "callback": self.yea},
-                    {"text": f"{self.board['G7']}", "callback": self.yea},
-                    {"text": f"{self.board['H7']}", "callback": self.yea}
-                ],
-                [
-                    {"text": f"{self.board['A8']}", "callback": self.yea},
-                    {"text": f"{self.board['B8']}", "callback": self.yea},
-                    {"text": f"{self.board['C8']}", "callback": self.yea},
-                    {"text": f"{self.board['D8']}", "callback": self.yea},
-                    {"text": f"{self.board['E8']}", "callback": self.yea},
-                    {"text": f"{self.board['F8']}", "callback": self.yea},
-                    {"text": f"{self.board['G8']}", "callback": self.yea},
-                    {"text": f"{self.board['H8']}", "callback": self.yea}
-                ]
-            ],
-            always_allow=[opp_id]
+        btns = []
+
+        for row in range(1,9):
+            rows = []
+            for col in "ABCDEFGH":
+                coord = f"{col}{row}"
+                rows.append({"text": f"{self.board[f'{col}{row}']}", "callback": self.clicks_handle, "args":(coord,)})
+            btns.append(rows)
+
+        
+        await call.edit(text = text,
+            reply_markup = btns,
+            always_allow=[self.opp_id]
         )
