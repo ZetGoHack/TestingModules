@@ -54,8 +54,9 @@ class Chess(loader.Module):
 
     async def clicks_handle(self, call):
         #await self.message.respond(f"@{str(call.from_user.username)} щас ток это реализовано")
-
-        
+        pass
+    async def playing(self, u):
+        pass
     async def offer_outdated(self, call):
         await call.edit("Время на ответ истекло.")
         return
@@ -71,7 +72,7 @@ class Chess(loader.Module):
             await asyncio.sleep(0.5)
             await self.UpdBoard("Это начальная позиция шахмат. \nХод белых", call)
             you_play = ranColor()
-            await 
+            await self.playing(you_play)
         else:
             await call.edit(text="ну ладно(")
     
@@ -94,7 +95,7 @@ class Chess(loader.Module):
             try:
                 if opponent.isdigit():
                     self.opp_id = int(opponent)
-                    opponent = await self.client.get_entity(opp_id)
+                    opponent = await self.client.get_entity(self.opp_id)
                     opp_name = opponent.first_name
                 else:
                     opponent = await self.client.get_entity(opponent)
@@ -104,14 +105,13 @@ class Chess(loader.Module):
                 await message.edit("Я не нахожу такого пользователя")
                 return
                 
-        await self.inline.form(message = message, text = f"<a href='tg://openmessage?user_id={opp_id}'>{opp_name}</a>, тя в игру пригласили, примешь?", reply_markup = [
+        await self.inline.form(message = message, text = f"<a href='tg://openmessage?user_id={self.opp_id}'>{opp_name}</a>, тя в игру пригласили, примешь?", reply_markup = [
                 {"text": "КОНЕЧНО ТЫ ЧО", "callback": self.ans, "args":("y",)},
                 {"text": "ни", "callback": self.ans, "args":("n",)},
-            ], always_allow=[opp_id], ttl=60, on_unload=self.offer_outdated
+            ], always_allow=[self.opp_id], ttl=60, on_unload=self.offer_outdated
         )
     async def UpdBoard(self, text, call):
         btns = []
-
         for row in range(1,9):
             rows = []
             for col in "ABCDEFGH":
