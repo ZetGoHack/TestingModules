@@ -57,7 +57,7 @@ class Chess(loader.Module):
         await call.answer(f"Ставлю {self.places}")
         await self.UpdBoard(call)
 
-    async def sttxt(self):
+    def sttxt(self):
         if self.reverse:
             if self.you_play == "w":
                 return f"♚ Белые - {self.saymyname}\n♔ Чёрные - {self.opp_name} (ваш ход)"
@@ -112,7 +112,7 @@ class Chess(loader.Module):
             await call.edit(text="УРА!!!!1!1!! Щааа")
             await asyncio.sleep(0.5)
             self.you_play = ranColor()
-            text = await self.sttxt()
+            text = self.sttxt()
             await call.edit(text="Во")
             await asyncio.sleep(0.5)
             await self.LoadBoard(text, call)
@@ -197,7 +197,7 @@ class Chess(loader.Module):
                     self.board[coord] =  self.symbols[piece.symbol()] if piece else " "
                 
                 
-            text = await self.sttxt()  
+            text = self.sttxt()  
         btns = []
         for row in range(1,9):
             rows = []
