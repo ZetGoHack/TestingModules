@@ -87,7 +87,7 @@ class Chess(loader.Module):
                 if self.you_play == "w":
                     return f"♔ Белые - {self.saymyname}\n♚ Чёрные - {self.opp_name}\nШах и мат! Победил(а) {self.saymyname}"
                 else:
-                    return f"♔ Белые - {self.opp_name}\n♚ Чёрные - {self.saymyname} Шах и мат! Победил(а) {self.opp_name}"
+                    return f"♔ Белые - {self.opp_name}\n♚ Чёрные - {self.saymyname}\nШах и мат! Победил(а) {self.opp_name}"
             else:
                 if self.you_play == "w":
                     return f"♔ Белые - {self.saymyname} \n♚ Чёрные - {self.opp_name}\nШах и мат! Победил(а) {self.opp_name}"
@@ -98,7 +98,7 @@ class Chess(loader.Module):
                 if self.you_play == "w":
                     return f"♔ Белые - {self.saymyname}\n♚ Чёрные - {self.opp_name}\nШах!"
                 else:
-                    return f"♔ Белые - {self.opp_name}\n♚ Чёрные - {self.saymyname} Шах!"
+                    return f"♔ Белые - {self.opp_name}\n♚ Чёрные - {self.saymyname}\nШах!"
             else:
                 if self.you_play == "w":
                     return f"♔ Белые - {self.saymyname} \n♚ Чёрные - {self.opp_name}\nШах!"
@@ -168,15 +168,15 @@ class Chess(loader.Module):
             return
         if data == 'y':
             self.Board = chess.Board()
-            await call.edit(text="УРА!!!!1!1!! Щааа")
+            await call.edit(text="Выбираем стороны...")
             await asyncio.sleep(0.5)
             self.you_play = ranColor()
             text = self.sttxt()
-            await call.edit(text="Во")
+            await call.edit(text="Готово. Загрузка доски")
             await asyncio.sleep(0.5)
             await self.LoadBoard(text, call)
         else:
-            await call.edit(text="ну ладно(")
+            await call.edit(text="Отклонено.")
 
 
     @loader.command() 
@@ -207,9 +207,9 @@ class Chess(loader.Module):
                 await message.edit("Я не нахожу такого пользователя")
                 return
         self.you_n_me = [self.opp_id, self.message.sender_id]
-        await self.inline.form(message = message, text = f"<a href='tg://openmessage?user_id={self.opp_id}'>{self.opp_name}</a>, тя в игру пригласили, примешь?", reply_markup = [
-                {"text": "КОНЕЧНО ТЫ ЧО", "callback": self.ans, "args":("y",)},
-                {"text": "ни", "callback": self.ans, "args":("n",)},
+        await self.inline.form(message = message, text = f"<a href='tg://openmessage?user_id={self.opp_id}'>{self.opp_name}</a>, вас пригласили в игру, примите?", reply_markup = [
+                {"text": "Принимаю", "callback": self.ans, "args":("y",)},
+                {"text": "Нет", "callback": self.ans, "args":("n",)},
             ], disable_security = True
         )
     async def LoadBoard(self, text, call):
