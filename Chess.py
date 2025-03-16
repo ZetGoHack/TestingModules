@@ -98,8 +98,8 @@ class Chess(loader.Module):
                 # else:
                 #     await self.checkMove(call,coord)
             text = self.sttxt()
-            self.reverse != self.reverse
-            self.chsn == False
+            self.reverse = not self.reverse
+            self.chsn = False
             await self.LoadBoard(text,call)
             #else:
                 
