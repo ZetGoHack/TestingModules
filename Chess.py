@@ -181,7 +181,7 @@ class Chess(loader.Module):
                 rows.append({"text": f"{self.board[f'{col}{row}']}", "callback": self.clicks_handle, "args":(coord,)})
             btns.append(rows)
 
-        await self.client.send_message(self.message.chat_id, f"запуск доски без точек. self.chsn={self.chsn},coord={coord.lower()},self.reverse{self.reverse},self.places={self.places}")
+        await self.client.send_message(self.message.chat_id, f"запуск доски без точек. self.chsn={self.chsn},coord={coord.lower()},self.reverse{self.reverse},self.places={self.places if hasattr(self,'places') else None}")
         if self.reverse:
             await call.edit(text = text,
                 reply_markup = btns,
