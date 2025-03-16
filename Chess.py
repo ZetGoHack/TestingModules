@@ -40,6 +40,7 @@ class Chess(loader.Module):
     "R": "♜", "N": "♞", "B": "♝", "Q": "♛", "K": "♚", "P": "♟", "r": "♖", "n": "♘", "b": "♗", "q": "♕", "k": "♔", "p": "♙",
 }
         self.chsn = False
+        self.saymyname = (await self.client.getme()).first_name
 
     async def clicks_handle(self, call, coord):
         if call.from_user.id not in self.you_n_me:
@@ -78,9 +79,9 @@ class Chess(loader.Module):
             await asyncio.sleep(0.5)
             you_play = ranColor()
             if you_play == "w":
-                text = f"♚ Белые - {self.message.sender.first_name}\n♔ Чёрные - {self.opp_name}\nХод белых ♚"
+                text = f"♚ Белые - {self.saymyname}\n♔ Чёрные - {self.opp_name}\nХод белых ♚"
             else:
-                text = f"♚ Белые - {self.opp_name}\n♔ Чёрные - {self.message.sender.first_name}\nХод белых ♚"
+                text = f"♚ Белые - {self.opp_name}\n♔ Чёрные - {self.saymyname}\nХод белых ♚"
             await call.edit(text="Во")
             await asyncio.sleep(0.5)
             await self.StartBoard(text, call)
@@ -119,7 +120,7 @@ class Chess(loader.Module):
         await self.inline.form(message = message, text = f"<a href='tg://openmessage?user_id={self.opp_id}'>{self.opp_name}</a>, тя в игру пригласили, примешь?", reply_markup = [
                 {"text": "КОНЕЧНО ТЫ ЧО", "callback": self.ans, "args":("y",)},
                 {"text": "ни", "callback": self.ans, "args":("n",)},
-            ], disable_security = True, always_allow=self.you_n_me, ttl=60, on_unload=self.offer_outdated
+            ], disable_security = True
         )
     async def StartBoard(self, text, call):
         #board = str(self.Board).split("\n")
@@ -173,6 +174,5 @@ class Chess(loader.Module):
 
         await call.edit(text = text,
             reply_markup = btns[::-1],
-            disable_security = True,
-            always_allow=self.you_n_me
+            disable_security = True
         )
