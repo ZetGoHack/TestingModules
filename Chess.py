@@ -40,7 +40,7 @@ class Chess(loader.Module):
     "R": "♜", "N": "♞", "B": "♝", "Q": "♛", "K": "♚", "P": "♟", "r": "♖", "n": "♘", "b": "♗", "q": "♕", "k": "♔", "p": "♙",
 }
         self.chsn = False
-        self.saymyname = (await self.client.getme()).first_name
+        self.saymyname = (await self.client.get_me()).first_name
 
     async def clicks_handle(self, call, coord):
         if call.from_user.id not in self.you_n_me:
