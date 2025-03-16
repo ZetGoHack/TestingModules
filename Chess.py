@@ -104,7 +104,7 @@ class Chess(loader.Module):
         if call.from_user.id == self.message.sender_id:
             await call.answer("Дай человеку ответить!")
             return
-         if call.from_user.id not in self.you_n_me:
+        if call.from_user.id not in self.you_n_me:
             await call.answer("Не тебе предлагают ж")
             return
         if data == 'y':
