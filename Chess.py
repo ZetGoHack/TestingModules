@@ -37,7 +37,7 @@ class Chess(loader.Module):
         self.board = {}
         self.symbols = {
     "R": "♜", "N": "♞", "B": "♝", "Q": "♛", "K": "♚", "P": "♟", "r": "♖", "n": "♘", "b": "♗", "q": "♕", "k": "♔", "p": "♙",
-}
+        }
         self.chsn = False
         self.saymyname = (await self.client.get_me()).first_name
         self.reverse = False
@@ -49,15 +49,15 @@ class Chess(loader.Module):
             self.places = [p for p in [move.uci() for move in moves]]
             if not self.places:
                 await call.answer("Для этой фигуры нет ходов!")
-                await self.client.send_message(self.message.chat_id, f"для фигуры нет ходов. self.chsn={self.chsn},coord={coord.lower()},self.reverse{self.reverse},self.places={self.places if hasattr(self,'places') else None}")
+                #await self.client.send_message(self.message.chat_id, f"для фигуры нет ходов. self.chsn={self.chsn},coord={coord.lower()},self.reverse{self.reverse},self.places={self.places if hasattr(self,'places') else None}")
                 return None
         else:
             await call.answer("Тут нет фигуры")
-            await self.client.send_message(self.message.chat_id, f"нема фигуры тут. self.chsn={self.chsn},coord={coord.lower()},self.reverse{self.reverse},self.places={self.places if hasattr(self,'places') else None}")
+            #await self.client.send_message(self.message.chat_id, f"нема фигуры тут. self.chsn={self.chsn},coord={coord.lower()},self.reverse{self.reverse},self.places={self.places if hasattr(self,'places') else None}")
             return None
         
         self.chsn = True
-        await self.client.send_message(self.message.chat_id, f"Прошли проверку, вывод. self.chsn={self.chsn},coord={coord.lower()},self.reverse{self.reverse},self.places={self.places if hasattr(self,'places') else None}")
+        #await self.client.send_message(self.message.chat_id, f"Прошли проверку, вывод. self.chsn={self.chsn},coord={coord.lower()},self.reverse{self.reverse},self.places={self.places if hasattr(self,'places') else None}")
         await call.answer(f"Ставлю {self.places}")
         await self.UpdBoard(call)
 
@@ -78,20 +78,20 @@ class Chess(loader.Module):
             await call.answer("Партия не ваша")
             return
         if self.chsn == False:
-            await self.client.send_message(self.message.chat_id, f"не выбрано. self.chsn={self.chsn},coord={coord.lower()},self.reverse{self.reverse},self.places={self.places if hasattr(self,'places') else None}")
+            #await self.client.send_message(self.message.chat_id, f"не выбрано. self.chsn={self.chsn},coord={coord.lower()},self.reverse{self.reverse},self.places={self.places if hasattr(self,'places') else None}")
             await self.checkMove(call,coord)
         else:
             #if self.reverse:
-            await self.client.send_message(self.message.chat_id, f"выбрано. self.chsn={self.chsn},coord={coord.lower()},self.reverse{self.reverse},self.places={self.places if hasattr(self,'places') else None}")
+            #await self.client.send_message(self.message.chat_id, f"выбрано. self.chsn={self.chsn},coord={coord.lower()},self.reverse{self.reverse},self.places={self.places if hasattr(self,'places') else None}")
             matching_place = next((place for place in self.places if place[-2:] == coord.lower()), None)
             if matching_place:
-                await self.client.send_message(self.message.chat_id, f"совпадение. self.chsn={self.chsn},coord={coord.lower()},self.reverse{self.reverse},self.places={self.places if hasattr(self,'places') else None}")
+                #await self.client.send_message(self.message.chat_id, f"совпадение. self.chsn={self.chsn},coord={coord.lower()},self.reverse{self.reverse},self.places={self.places if hasattr(self,'places') else None}")
                 self.Board.push(chess.Move.from_uci(matching_place))
                 #await call.answer("потом")
             else:
-                await self.client.send_message(self.message.chat_id, f"не совпадение. self.chsn={self.chsn},coord={coord.lower()},self.reverse{self.reverse},self.places={self.places if hasattr(self,'places') else None}")
+                #await self.client.send_message(self.message.chat_id, f"не совпадение. self.chsn={self.chsn},coord={coord.lower()},self.reverse{self.reverse},self.places={self.places if hasattr(self,'places') else None}")
                 if not await self.checkMove(call,coord):
-                    await self.client.send_message(self.message.chat_id, f"неправильный ход сосо(сброс данных). self.chsn={self.chsn},coord={coord.lower()},self.reverse{self.reverse},self.places={self.places if hasattr(self,'places') else None}")
+                    #await self.client.send_message(self.message.chat_id, f"неправильный ход сосо(сброс данных). self.chsn={self.chsn},coord={coord.lower()},self.reverse{self.reverse},self.places={self.places if hasattr(self,'places') else None}")
                     self.chsn = False
                     self.places = []
                     await self.LoadBoard(text,call)
@@ -181,17 +181,12 @@ class Chess(loader.Module):
                 rows.append({"text": f"{self.board[f'{col}{row}']}", "callback": self.clicks_handle, "args":(coord,)})
             btns.append(rows)
 
-        await self.client.send_message(self.message.chat_id, f"запуск доски без точек. self.chsn={self.chsn},coord={coord.lower()},self.reverse{self.reverse},self.places={self.places if hasattr(self,'places') else None}")
-        if self.reverse:
-            await call.edit(text = text,
-                reply_markup = btns,
-                disable_security = True
-            )
-        else:
-            await call.edit(text = text,
-                reply_markup = btns[::-1],
-                disable_security = True
-            )
+        #await self.client.send_message(self.message.chat_id, f"запуск доски без точек. self.chsn={self.chsn},coord={coord.lower()},self.reverse{self.reverse},self.places={self.places if hasattr(self,'places') else None}")
+
+        await call.edit(text = text,
+            reply_markup = btns[::-1],
+            disable_security = True
+        )
 
     async def UpdBoard(self, call):
         #board = str(self.Board).split("\n")
@@ -214,14 +209,9 @@ class Chess(loader.Module):
                 coord = f"{col}{row}"
                 rows.append({"text": f"{self.board[f'{col}{row}']}", "callback": self.clicks_handle, "args":(coord,)})
             btns.append(rows)
-        await self.client.send_message(self.message.chat_id, f"создали кнопки. self.chsn={self.chsn},coord={coord.lower()},self.reverse{self.reverse},self.places={self.places if hasattr(self,'places') else None}")
-        if self.reverse:
-            await call.edit(text = text,
-                reply_markup = btns,
-                disable_security = True
-            )
-        else:
-            await call.edit(text = text,
-                reply_markup = btns[::-1],
-                disable_security = True
-            )
+        #await self.client.send_message(self.message.chat_id, f"создали кнопки. self.chsn={self.chsn},coord={coord.lower()},self.reverse{self.reverse},self.places={self.places if hasattr(self,'places') else None}")
+
+        await call.edit(text = text,
+            reply_markup = btns[::-1],
+            disable_security = True
+        )
