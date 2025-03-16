@@ -24,8 +24,7 @@ __version__ = ("NOT","DONE","YET")
 from .. import loader, utils
 import asyncio, random, chess
 
-def ranColor():
-    return "w" if random.randint(1,2) == 1 else "b"
+
 
 @loader.tds
 class Chess(loader.Module):
@@ -33,6 +32,8 @@ class Chess(loader.Module):
     strings = {
         "name": "Chess"
     }
+    #####Переменные#####
+
     async def client_ready(self):
         self.board = {}
         self.symbols = {
@@ -55,6 +56,170 @@ class Chess(loader.Module):
         self.opp_name = None
         self.checkmate = None
         self.stalemate = None
+
+    #####Переменные#####
+
+
+    #####Игра#####
+
+    @loader.command() 
+    async def chess(self, message):
+        """[reply/username/id] предложить человеку сыграть партию"""
+        self.message = message
+        if message.is_reply:
+            r = await message.get_reply_message()
+            opponent = r.sender
+            self.opp_id = opponent.id
+            self.opp_name = opponent.first_name
+        else:
+            args = utils.get_args(message)
+            if len(args)==0:
+                await message.edit("Вы не указали с кем играть")
+                return
+            opponent = args[0]
+            try:
+                if opponent.isdigit():
+                    self.opp_id = int(opponent)
+                    opponent = await self.client.get_entity(self.opp_id)
+                    self.opp_name = opponent.first_name
+                else:
+                    opponent = await self.client.get_entity(opponent)
+                    self.opp_name = opponent.first_name
+                    self.opp_id = opponent.id
+            except:
+                await message.edit("Я не нахожу такого пользователя")
+                return
+        self.you_n_me = [self.opp_id, self.message.sender_id]
+        await self.inline.form(message = message, text = f"<a href='tg://openmessage?user_id={self.opp_id}'>{self.opp_name}</a>, вас пригласили в игру, примите?", reply_markup = [
+                {"text": "Принимаю", "callback": self.ans, "args":("y",)},
+                {"text": "Нет", "callback": self.ans, "args":("n",)},
+            ], disable_security = True
+        )
+    @loader.command() 
+    async def purgeGame(self, message):
+        """Грубо завершить партию, очистив ВСЕ связанные с ней данные"""
+        self.purgeSelf()
+
+    async def ans(self, call, data):
+        if call.from_user.id == self.message.sender_id:
+            await call.answer("Дай человеку ответить!")
+            return
+        if call.from_user.id not in self.you_n_me:
+            await call.answer("Не тебе предлагают ж")
+            return
+        if data == 'y':
+            self.Board = chess.Board()
+            await call.edit(text="Выбираю стороны...")
+            await asyncio.sleep(0.5)
+            self.you_play = self.ranColor()
+            text = self.sttxt()
+            await call.edit(text="Готово. Загрузка доски")
+            await asyncio.sleep(0.5)
+            await self.LoadBoard(text, call)
+        else:
+            await call.edit(text="Отклонено.")
+
+    #####Игра#####
+
+
+    #####Доска#####
+
+    async def LoadBoard(self, text, call):
+        #board = str(self.Board).split("\n")
+        for row in range(1,9):
+            rows = []
+            for col in "ABCDEFGH":
+                coord = f"{col}{row}"
+                piece = self.Board.piece_at(chess.parse_square(coord.lower()))
+                self.board[coord] =  self.symbols[piece.symbol()] if piece else " "
+                
+                
+                
+        btns = []
+        for row in range(1,9):
+            rows = []
+            for col in "ABCDEFGH":
+                coord = f"{col}{row}"
+                rows.append({"text": f"{self.board[f'{col}{row}']}", "callback": self.clicks_handle, "args":(coord,)})
+            btns.append(rows)
+
+        #await self.client.send_message(self.message.chat_id, f"запуск доски без точек. self.chsn={self.chsn},coord={coord.lower()},self.reverse{self.reverse},self.places={self.places if hasattr(self,'places') else None}")
+
+        await call.edit(text = text,
+            reply_markup = btns[::-1],
+            disable_security = True
+        )
+
+    async def UpdBoard(self, call):
+        #board = str(self.Board).split("\n")
+        for row in range(1,9):
+            rows = []
+            for col in "ABCDEFGH":
+                coord = f"{col}{row}"
+                if any(place[-2:] == coord.lower() for place in self.places):
+                        self.board[coord] = "✖" if (move := next((chess.Move.from_uci(p) for p in self.places if p[-2:] == coord.lower()), None)) and self.Board.is_capture(move) else "●"
+                else:
+                    piece = self.Board.piece_at(chess.parse_square(coord.lower()))
+                    self.board[coord] =  self.symbols[piece.symbol()] if piece else " "
+                
+                
+        text = self.sttxt()  
+        btns = []
+        for row in range(1,9):
+            rows = []
+            for col in "ABCDEFGH":
+                coord = f"{col}{row}"
+                rows.append({"text": f"{self.board[f'{col}{row}']}", "callback": self.clicks_handle, "args":(coord,)})
+            btns.append(rows)
+        #await self.client.send_message(self.message.chat_id, f"создали кнопки. self.chsn={self.chsn},coord={coord.lower()},self.reverse{self.reverse},self.places={self.places if hasattr(self,'places') else None}")
+
+        await call.edit(text = text,
+            reply_markup = btns[::-1],
+            disable_security = True
+        )
+
+
+    #####Доска#####
+
+
+    #####Ходы#####
+
+    async def clicks_handle(self, call, coord):
+        if call.from_user.id not in self.you_n_me:
+            await call.answer("Партия не ваша")
+            return
+        current_player = self.message.sender_id if (self.you_play == "w") ^ self.reverse else self.opp_id
+        if call.from_user.id not in current_player:
+            await call.answer("Кыш от моих фигур")
+            return
+        if self.checkmate or self.stalemate:
+            await call.answer("Партия окончена. Доступных ходов нет.")
+            
+        if self.chsn == False:
+            #await self.client.send_message(self.message.chat_id, f"не выбрано. self.chsn={self.chsn},coord={coord.lower()},self.reverse{self.reverse},self.places={self.places if hasattr(self,'places') else None}")
+            await self.checkMove(call,coord)
+        else:
+            #if self.reverse:
+            #await self.client.send_message(self.message.chat_id, f"выбрано. self.chsn={self.chsn},coord={coord.lower()},self.reverse{self.reverse},self.places={self.places if hasattr(self,'places') else None}")
+            matching_place = next((place for place in self.places if place[-2:] == coord.lower()), None)
+            if matching_place:
+                #await self.client.send_message(self.message.chat_id, f"совпадение. self.chsn={self.chsn},coord={coord.lower()},self.reverse{self.reverse},self.places={self.places if hasattr(self,'places') else None}")
+                self.Board.push(chess.Move.from_uci(matching_place))
+                self.reverse = not self.reverse
+                #await call.answer("потом")
+            else:
+                #await self.client.send_message(self.message.chat_id, f"не совпадение. self.chsn={self.chsn},coord={coord.lower()},self.reverse{self.reverse},self.places={self.places if hasattr(self,'places') else None}")
+                if not await self.checkMove(call,coord):
+                    #await self.client.send_message(self.message.chat_id, f"неправильный ход сосо(сброс данных). self.chsn={self.chsn},coord={coord.lower()},self.reverse{self.reverse},self.places={self.places if hasattr(self,'places') else None}")
+                    self.chsn = False
+                    self.places = []
+                    await self.LoadBoard(text,call)
+                # else:
+                #     await self.checkMove(call,coord)
+            text = self.sttxt()
+            self.chsn = False
+            await self.LoadBoard(text,call)
+            #else:
 
     async def checkMove(self,call,coord):
         if self.Board.piece_at(chess.parse_square(coord.lower())):
@@ -131,156 +296,15 @@ class Chess(loader.Module):
                     return f"♔ Белые - {self.opp_name} \n♚ Чёрные - {self.saymyname}\nПат. Ничья"
 
 
-    async def clicks_handle(self, call, coord):
-        if call.from_user.id not in self.you_n_me:
-            await call.answer("Партия не ваша")
-            return
-        current_player = self.message.sender_id if (self.you_play == "w") ^ self.reverse else self.opp_id
-        if call.from_user.id not in current_player:
-            await call.answer("Кыш от моих фигур")
-            return
-        if self.checkmate or self.stalemate:
-            await call.answer("Партия окончена. Доступных ходов нет.")
-            
-        if self.chsn == False:
-            #await self.client.send_message(self.message.chat_id, f"не выбрано. self.chsn={self.chsn},coord={coord.lower()},self.reverse{self.reverse},self.places={self.places if hasattr(self,'places') else None}")
-            await self.checkMove(call,coord)
-        else:
-            #if self.reverse:
-            #await self.client.send_message(self.message.chat_id, f"выбрано. self.chsn={self.chsn},coord={coord.lower()},self.reverse{self.reverse},self.places={self.places if hasattr(self,'places') else None}")
-            matching_place = next((place for place in self.places if place[-2:] == coord.lower()), None)
-            if matching_place:
-                #await self.client.send_message(self.message.chat_id, f"совпадение. self.chsn={self.chsn},coord={coord.lower()},self.reverse{self.reverse},self.places={self.places if hasattr(self,'places') else None}")
-                self.Board.push(chess.Move.from_uci(matching_place))
-                self.reverse = not self.reverse
-                #await call.answer("потом")
-            else:
-                #await self.client.send_message(self.message.chat_id, f"не совпадение. self.chsn={self.chsn},coord={coord.lower()},self.reverse{self.reverse},self.places={self.places if hasattr(self,'places') else None}")
-                if not await self.checkMove(call,coord):
-                    #await self.client.send_message(self.message.chat_id, f"неправильный ход сосо(сброс данных). self.chsn={self.chsn},coord={coord.lower()},self.reverse{self.reverse},self.places={self.places if hasattr(self,'places') else None}")
-                    self.chsn = False
-                    self.places = []
-                    await self.LoadBoard(text,call)
-                # else:
-                #     await self.checkMove(call,coord)
-            text = self.sttxt()
-            self.chsn = False
-            await self.LoadBoard(text,call)
-            #else:
-                
-        pass
-        
+    #####Ходы#####
+
+
+    ##########
     async def offer_outdated(self, call):
-        await self.message.respond("Время на ответ истекло")
+        self.purgeSelf()
         return
 
-    async def ans(self, call, data):
-        if call.from_user.id == self.message.sender_id:
-            await call.answer("Дай человеку ответить!")
-            return
-        if call.from_user.id not in self.you_n_me:
-            await call.answer("Не тебе предлагают ж")
-            return
-        if data == 'y':
-            self.Board = chess.Board()
-            await call.edit(text="Выбираю стороны...")
-            await asyncio.sleep(0.5)
-            self.you_play = ranColor()
-            text = self.sttxt()
-            await call.edit(text="Готово. Загрузка доски")
-            await asyncio.sleep(0.5)
-            await self.LoadBoard(text, call)
-        else:
-            await call.edit(text="Отклонено.")
 
-
-    @loader.command() 
-    async def chess(self, message):
-        """[reply/username/id] предложить человеку сыграть партию"""
-        self.message = message
-        if message.is_reply:
-            r = await message.get_reply_message()
-            opponent = r.sender
-            self.opp_id = opponent.id
-            self.opp_name = opponent.first_name
-        else:
-            args = utils.get_args(message)
-            if len(args)==0:
-                await message.edit("Вы не указали с кем играть")
-                return
-            opponent = args[0]
-            try:
-                if opponent.isdigit():
-                    self.opp_id = int(opponent)
-                    opponent = await self.client.get_entity(self.opp_id)
-                    self.opp_name = opponent.first_name
-                else:
-                    opponent = await self.client.get_entity(opponent)
-                    self.opp_name = opponent.first_name
-                    self.opp_id = opponent.id
-            except:
-                await message.edit("Я не нахожу такого пользователя")
-                return
-        self.you_n_me = [self.opp_id, self.message.sender_id]
-        await self.inline.form(message = message, text = f"<a href='tg://openmessage?user_id={self.opp_id}'>{self.opp_name}</a>, вас пригласили в игру, примите?", reply_markup = [
-                {"text": "Принимаю", "callback": self.ans, "args":("y",)},
-                {"text": "Нет", "callback": self.ans, "args":("n",)},
-            ], disable_security = True
-        )
-    @loader.command() 
-    async def purgeGame(self, message):
-        """Грубо завершить партию, очистив ВСЕ связанные с ней данные"""
-         self.purgeSelf()
-    async def LoadBoard(self, text, call):
-        #board = str(self.Board).split("\n")
-        for row in range(1,9):
-            rows = []
-            for col in "ABCDEFGH":
-                coord = f"{col}{row}"
-                piece = self.Board.piece_at(chess.parse_square(coord.lower()))
-                self.board[coord] =  self.symbols[piece.symbol()] if piece else " "
-                
-                
-                
-        btns = []
-        for row in range(1,9):
-            rows = []
-            for col in "ABCDEFGH":
-                coord = f"{col}{row}"
-                rows.append({"text": f"{self.board[f'{col}{row}']}", "callback": self.clicks_handle, "args":(coord,)})
-            btns.append(rows)
-
-        #await self.client.send_message(self.message.chat_id, f"запуск доски без точек. self.chsn={self.chsn},coord={coord.lower()},self.reverse{self.reverse},self.places={self.places if hasattr(self,'places') else None}")
-
-        await call.edit(text = text,
-            reply_markup = btns[::-1],
-            disable_security = True
-        )
-
-    async def UpdBoard(self, call):
-        #board = str(self.Board).split("\n")
-        for row in range(1,9):
-            rows = []
-            for col in "ABCDEFGH":
-                coord = f"{col}{row}"
-                if any(place[-2:] == coord.lower() for place in self.places):
-                        self.board[coord] = "✖" if (move := next((chess.Move.from_uci(p) for p in self.places if p[-2:] == coord.lower()), None)) and self.Board.is_capture(move) else "●"
-                else:
-                    piece = self.Board.piece_at(chess.parse_square(coord.lower()))
-                    self.board[coord] =  self.symbols[piece.symbol()] if piece else " "
-                
-                
-        text = self.sttxt()  
-        btns = []
-        for row in range(1,9):
-            rows = []
-            for col in "ABCDEFGH":
-                coord = f"{col}{row}"
-                rows.append({"text": f"{self.board[f'{col}{row}']}", "callback": self.clicks_handle, "args":(coord,)})
-            btns.append(rows)
-        #await self.client.send_message(self.message.chat_id, f"создали кнопки. self.chsn={self.chsn},coord={coord.lower()},self.reverse{self.reverse},self.places={self.places if hasattr(self,'places') else None}")
-
-        await call.edit(text = text,
-            reply_markup = btns[::-1],
-            disable_security = True
-        )
+    def ranColor(self):
+        return "w" if random.randint(1,2) == 1 else "b"
+    ##########
