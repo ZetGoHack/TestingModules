@@ -52,6 +52,7 @@ class Chess(loader.Module):
                 return None
         else:
             await call.answer("Тут нет фигуры")
+            await self.client.send_message(self.message.chat_id, f"self.chsn={self.chsn},coord={coord.lower()},self.reverse{self.reverse},self.places={self.places}")
             return None
         self.chsn = True
         await call.answer(f"Ставлю {self.places}")
@@ -197,7 +198,7 @@ class Chess(loader.Module):
                     self.board[coord] =  self.symbols[piece.symbol()] if piece else " "
                 
                 
-            text = self.sttxt()  
+        text = self.sttxt()  
         btns = []
         for row in range(1,9):
             rows = []
@@ -206,7 +207,7 @@ class Chess(loader.Module):
                 rows.append({"text": f"{self.board[f'{col}{row}']}", "callback": self.clicks_handle, "args":(coord,)})
             btns.append(rows)
 
-        if self.reverse:
+        if not self.reverse:
             await call.edit(text = text,
                 reply_markup = btns,
                 disable_security = True
