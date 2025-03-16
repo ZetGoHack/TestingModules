@@ -195,7 +195,7 @@ class Chess(loader.Module):
             for col in "ABCDEFGH":
                 coord = f"{col}{row}"
                 if any(place[-2:] == coord.lower() for place in self.places):
-                        self.board[coord] = "•"
+                        self.board[coord] = "✖" if (move := next((chess.Move.from_uci(p) for p in self.places if p[-2:] == coord.lower()), None)) and self.Board.is_capture(move) else "●"
                 else:
                     piece = self.Board.piece_at(chess.parse_square(coord.lower()))
                     self.board[coord] =  self.symbols[piece.symbol()] if piece else " "
