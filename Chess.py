@@ -41,26 +41,56 @@ class Chess(loader.Module):
 }
         self.chsn = False
         self.saymyname = (await self.client.get_me()).first_name
+        self.reverse = False
+
+    async def checkMove(self,call,coord):
+        if self.Board.piece_at(chess.parse_square(coord.lower())):
+            square = chess.parse_square(coord.lower())
+            moves = [move for move in self.Board.legal_moves if move.from_square == square]
+            self.places = [p for p in [move.uci() for move in moves]]
+            if not self.places:
+                await call.answer("Для этой фигуры нет ходов!")
+                return
+        else:
+            await call.answer("Тут нет фигуры")
+            return
+        self.chsn = True
+        await call.answer(f"Ставлю {self.places}")
+        await self.UpdBoard(call)
+
+    async def sttxt(self):
+        if self.reverse:
+            if self.you_play == "w":
+                return f"♚ Белые - {self.saymyname}\n♔ Чёрные - {self.opp_name} (ваш ход)"
+            else:
+                return f"♚ Белые - {self.opp_name}\n♔ Чёрные - {self.saymyname} (ваш ход)"
+        else:
+            if self.you_play == "w":
+                return f"♚ Белые - {self.saymyname} (ваш ход)\n♔ Чёрные - {self.opp_name}"
+            else:
+                return f"♚ Белые - {self.opp_name} (ваш ход)\n♔ Чёрные - {self.saymyname}"
 
     async def clicks_handle(self, call, coord):
         if call.from_user.id not in self.you_n_me:
             await call.answer("Партия не ваша")
             return
         if self.chsn == False:
-            if self.Board.piece_at(chess.parse_square(coord.lower())):
-                square = chess.parse_square(coord.lower())
-                moves = [move for move in self.Board.legal_moves if move.from_square == square]
-                places = [p[2:] for p in [move.uci() for move in moves]]
-                if not places:
-                    await call.answer("Для этой фигуры нет ходов!")
-                    return
-            else:
-                await call.answer("Тут нет фигур")
-            self.chsn = True
-            await call.answer(f"Ставлю {places}")
-            await self.UpdBoard(call,places)
+            await self.checkMove(call,coord)
         else:
-            await call.answer("потом")
+            if self.reverse:
+                matching_place = next((place for place in self.places if place[-2:] == coord.lower()), None)
+                if matching_place:
+                    self.Board.push(chess.Move.from_uci(matching_place))
+                #await call.answer("потом")
+                else:
+                    if not await self.checkMove(call,coord):
+                        self.chsn == False
+                        self.places = []
+                        await self.LoadBoard(text,call)
+                text = self.sttxt()
+                self.reverse != self.reverse
+                self.chsn == False
+                await self.LoadBoard(text,call)
         pass
         
     async def offer_outdated(self, call):
@@ -77,14 +107,11 @@ class Chess(loader.Module):
         if data == 'y':
             await call.edit(text="УРА!!!!1!1!! Щааа")
             await asyncio.sleep(0.5)
-            you_play = ranColor()
-            if you_play == "w":
-                text = f"♚ Белые - {self.saymyname}\n♔ Чёрные - {self.opp_name}\nХод белых ♚"
-            else:
-                text = f"♚ Белые - {self.opp_name}\n♔ Чёрные - {self.saymyname}\nХод белых ♚"
+            self.you_play = ranColor()
+            text = await self.sttxt()
             await call.edit(text="Во")
             await asyncio.sleep(0.5)
-            await self.StartBoard(text, call)
+            await self.LoadBoard(text, call)
         else:
             await call.edit(text="ну ладно(")
 
@@ -111,7 +138,7 @@ class Chess(loader.Module):
                     self.opp_name = opponent.first_name
                 else:
                     opponent = await self.client.get_entity(opponent)
-                    opp_name = opponent.first_name
+                    self.opp_name = opponent.first_name
                     self.opp_id = opponent.id
             except:
                 await message.edit("Я не нахожу такого пользователя")
@@ -122,7 +149,7 @@ class Chess(loader.Module):
                 {"text": "ни", "callback": self.ans, "args":("n",)},
             ], disable_security = True
         )
-    async def StartBoard(self, text, call):
+    async def LoadBoard(self, text, call):
         #board = str(self.Board).split("\n")
         for row in range(1,9):
             rows = []
@@ -147,22 +174,23 @@ class Chess(loader.Module):
             disable_security = True,
             always_allow=self.you_n_me
         )
-    async def UpdBoard(self, call, mbplcs=None):
+    async def UpdBoard(self, call):
         #board = str(self.Board).split("\n")
-        if not mbplcs:
-            mbplcs = []
         for row in range(1,9):
             rows = []
             for col in "ABCDEFGH":
                 coord = f"{col}{row}"
-                if coord.lower() in mbplcs:
+                if any(place[-2:] == coord.lower() for place in self.places):
                         self.board[coord] = "•"
                 else:
                     piece = self.Board.piece_at(chess.parse_square(coord.lower()))
                     self.board[coord] =  self.symbols[piece.symbol()] if piece else " "
                 
                 
-        text = "Втоой этап"   
+            if self.you_play == "w":
+                text = f"♚ Белые - {self.saymyname} (ваш ход)\n♔ Чёрные - {self.opp_name}\n\nВот доступные ходы"
+            else:
+                text = f"♚ Белые - {self.opp_name} (ваш ход)\n♔ Чёрные - {self.saymyname}\n\nВот доступные ходы"   
         btns = []
         for row in range(1,9):
             rows = []
