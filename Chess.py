@@ -99,6 +99,7 @@ class Chess(loader.Module):
     async def purgeGame(self, message):
         """Грубо завершить партию, очистив ВСЕ связанные с ней данные"""
         self.purgeSelf()
+        await message.edit("Данные очищены")
 
     async def ans(self, call, data):
         if call.from_user.id == self.message.sender_id:
