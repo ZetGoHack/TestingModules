@@ -92,7 +92,7 @@ class Chess(loader.Module):
                 await self.client.send_message(self.message.chat_id, f"не совпадение. self.chsn={self.chsn},coord={coord.lower()},self.reverse{self.reverse},self.places={self.places if hasattr(self,'places') else None}")
                 if not await self.checkMove(call,coord):
                     await self.client.send_message(self.message.chat_id, f"неправильный ход сосо(сброс данных). self.chsn={self.chsn},coord={coord.lower()},self.reverse{self.reverse},self.places={self.places if hasattr(self,'places') else None}")
-                    self.chsn == False
+                    self.chsn = False
                     self.places = []
                     await self.LoadBoard(text,call)
                 # else:
