@@ -36,7 +36,7 @@ class Chess(loader.Module):
     async def client_ready(self):
         self.board = {}
         self.symbols = {
-    "R": "♜", "N": "♞", "B": "♝", "Q": "♛", "K": "♚", "P": "♟", "r": "♖", "n": "♘", "b": "♗", "q": "♕", "k": "♔", "p": "♙",
+    "r": "♜", "n": "♞", "b": "♝", "q": "♛", "k": "♚", "p": "♟", "R": "♖", "N": "♘", "B": "♗", "Q": "♕", "K": "♔", "P": "♙",
         }
         self.chsn = False
         self.saymyname = (await self.client.get_me()).first_name
@@ -64,14 +64,14 @@ class Chess(loader.Module):
     def sttxt(self):
         if self.reverse:
             if self.you_play == "w":
-                return f"♚ Белые - {self.saymyname}\n♔ Чёрные - {self.opp_name} (ваш ход)"
+                return f"♔ Белые - {self.saymyname}\n♚ Чёрные - {self.opp_name} (ваш ход)"
             else:
-                return f"♚ Белые - {self.opp_name}\n♔ Чёрные - {self.saymyname} (ваш ход)"
+                return f"♔ Белые - {self.opp_name}\n♚ Чёрные - {self.saymyname} (ваш ход)"
         else:
             if self.you_play == "w":
-                return f"♚ Белые - {self.saymyname} (ваш ход)\n♔ Чёрные - {self.opp_name}"
+                return f"♔ Белые - {self.saymyname} (ваш ход)\n♚ Чёрные - {self.opp_name}"
             else:
-                return f"♚ Белые - {self.opp_name} (ваш ход)\n♔ Чёрные - {self.saymyname}"
+                return f"♔ Белые - {self.opp_name} (ваш ход)\n♚ Чёрные - {self.saymyname}"
 
     async def clicks_handle(self, call, coord):
         if call.from_user.id not in self.you_n_me:
