@@ -42,6 +42,20 @@ class Chess(loader.Module):
         self.saymyname = (await self.client.get_me()).first_name
         self.reverse = False
 
+    def purgeSelf(self):
+        self.board = {}
+        self.chsn = None
+        self.reverse = None
+        self.Board = None
+        self.you_play = None
+        self.you_n_me = None
+        self.places = None
+        self.message = None
+        self.opp_id = None
+        self.opp_name = None
+        self.checkmate = None
+        self.stalemate = None
+
     async def checkMove(self,call,coord):
         if self.Board.piece_at(chess.parse_square(coord.lower())):
             square = chess.parse_square(coord.lower())
@@ -127,6 +141,7 @@ class Chess(loader.Module):
             return
         if self.checkmate or self.stalemate:
             await call.answer("Партия окончена. Доступных ходов нет.")
+            
         if self.chsn == False:
             #await self.client.send_message(self.message.chat_id, f"не выбрано. self.chsn={self.chsn},coord={coord.lower()},self.reverse{self.reverse},self.places={self.places if hasattr(self,'places') else None}")
             await self.checkMove(call,coord)
@@ -168,7 +183,7 @@ class Chess(loader.Module):
             return
         if data == 'y':
             self.Board = chess.Board()
-            await call.edit(text="Выбираем стороны...")
+            await call.edit(text="Выбираю стороны...")
             await asyncio.sleep(0.5)
             self.you_play = ranColor()
             text = self.sttxt()
@@ -212,6 +227,10 @@ class Chess(loader.Module):
                 {"text": "Нет", "callback": self.ans, "args":("n",)},
             ], disable_security = True
         )
+    @loader.command() 
+    async def purgeGame(self, message):
+        """Грубо завершить партию, очистив ВСЕ связанные с ней данные"""
+         self.purgeSelf()
     async def LoadBoard(self, text, call):
         #board = str(self.Board).split("\n")
         for row in range(1,9):
