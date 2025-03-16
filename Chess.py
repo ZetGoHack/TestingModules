@@ -34,7 +34,6 @@ class Chess(loader.Module):
         "name": "Chess"
     }
     async def client_ready(self):
-        self.Board = chess.Board()
         self.board = {}
         self.symbols = {
     "R": "♜", "N": "♞", "B": "♝", "Q": "♛", "K": "♚", "P": "♟", "r": "♖", "n": "♘", "b": "♗", "q": "♕", "k": "♔", "p": "♙",
@@ -50,10 +49,10 @@ class Chess(loader.Module):
             self.places = [p for p in [move.uci() for move in moves]]
             if not self.places:
                 await call.answer("Для этой фигуры нет ходов!")
-                return
+                return None
         else:
             await call.answer("Тут нет фигуры")
-            return
+            return None
         self.chsn = True
         await call.answer(f"Ставлю {self.places}")
         await self.UpdBoard(call)
@@ -77,20 +76,24 @@ class Chess(loader.Module):
         if self.chsn == False:
             await self.checkMove(call,coord)
         else:
-            if self.reverse:
-                matching_place = next((place for place in self.places if place[-2:] == coord.lower()), None)
-                if matching_place:
-                    self.Board.push(chess.Move.from_uci(matching_place))
+            #if self.reverse:
+            matching_place = next((place for place in self.places if place[-2:] == coord.lower()), None)
+            if matching_place:
+                self.Board.push(chess.Move.from_uci(matching_place))
                 #await call.answer("потом")
-                else:
-                    if not await self.checkMove(call,coord):
-                        self.chsn == False
-                        self.places = []
-                        await self.LoadBoard(text,call)
-                text = self.sttxt()
-                self.reverse != self.reverse
-                self.chsn == False
-                await self.LoadBoard(text,call)
+            else:
+                if not await self.checkMove(call,coord):
+                    self.chsn == False
+                    self.places = []
+                    await self.LoadBoard(text,call)
+                # else:
+                #     await self.checkMove(call,coord)
+            text = self.sttxt()
+            self.reverse != self.reverse
+            self.chsn == False
+            await self.LoadBoard(text,call)
+            #else:
+                
         pass
         
     async def offer_outdated(self, call):
@@ -105,6 +108,7 @@ class Chess(loader.Module):
             await call.answer("Не тебе предлагают ж")
             return
         if data == 'y':
+            self.Board = chess.Board()
             await call.edit(text="УРА!!!!1!1!! Щааа")
             await asyncio.sleep(0.5)
             self.you_play = ranColor()
@@ -169,11 +173,17 @@ class Chess(loader.Module):
             btns.append(rows)
 
 
-        await call.edit(text = text,
-            reply_markup = btns[::-1],
-            disable_security = True,
-            always_allow=self.you_n_me
-        )
+        if self.reverse:
+            await call.edit(text = text,
+                reply_markup = btns,
+                disable_security = True
+            )
+        else:
+            await call.edit(text = text,
+                reply_markup = btns[::-1],
+                disable_security = True
+            )
+
     async def UpdBoard(self, call):
         #board = str(self.Board).split("\n")
         for row in range(1,9):
@@ -187,10 +197,7 @@ class Chess(loader.Module):
                     self.board[coord] =  self.symbols[piece.symbol()] if piece else " "
                 
                 
-            if self.you_play == "w":
-                text = f"♚ Белые - {self.saymyname} (ваш ход)\n♔ Чёрные - {self.opp_name}\n\nВот доступные ходы"
-            else:
-                text = f"♚ Белые - {self.opp_name} (ваш ход)\n♔ Чёрные - {self.saymyname}\n\nВот доступные ходы"   
+            text = await self.sttxt()  
         btns = []
         for row in range(1,9):
             rows = []
@@ -199,8 +206,13 @@ class Chess(loader.Module):
                 rows.append({"text": f"{self.board[f'{col}{row}']}", "callback": self.clicks_handle, "args":(coord,)})
             btns.append(rows)
 
-
-        await call.edit(text = text,
-            reply_markup = btns[::-1],
-            disable_security = True
-        )
+        if self.reverse:
+            await call.edit(text = text,
+                reply_markup = btns,
+                disable_security = True
+            )
+        else:
+            await call.edit(text = text,
+                reply_markup = btns[::-1],
+                disable_security = True
+            )
