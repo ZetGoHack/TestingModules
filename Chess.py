@@ -87,6 +87,7 @@ class Chess(loader.Module):
             if matching_place:
                 #await self.client.send_message(self.message.chat_id, f"совпадение. self.chsn={self.chsn},coord={coord.lower()},self.reverse{self.reverse},self.places={self.places if hasattr(self,'places') else None}")
                 self.Board.push(chess.Move.from_uci(matching_place))
+                self.reverse = not self.reverse
                 #await call.answer("потом")
             else:
                 #await self.client.send_message(self.message.chat_id, f"не совпадение. self.chsn={self.chsn},coord={coord.lower()},self.reverse{self.reverse},self.places={self.places if hasattr(self,'places') else None}")
@@ -98,7 +99,6 @@ class Chess(loader.Module):
                 # else:
                 #     await self.checkMove(call,coord)
             text = self.sttxt()
-            self.reverse = not self.reverse
             self.chsn = False
             await self.LoadBoard(text,call)
             #else:
