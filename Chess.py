@@ -62,21 +62,71 @@ class Chess(loader.Module):
         await self.UpdBoard(call)
 
     def sttxt(self):
-        if self.reverse:
-            if self.you_play == "w":
-                return f"♔ Белые - {self.saymyname}\n♚ Чёрные - {self.opp_name} (ваш ход)"
+        check = False
+        self.checkmate = False
+        self.stalemate = False
+        if self.Board.is_checkmate():
+            self.checkmate = True
+        elif self.Board.is_check():
+            check = True
+        elif self.Board.is_stalemate():
+            self.stalemate = True
+        if not self.checkmate and not check and not self.stalemate:
+            if self.reverse:
+                if self.you_play == "w":
+                    return f"♔ Белые - {self.saymyname}\n♚ Чёрные - {self.opp_name} (ваш ход)"
+                else:
+                    return f"♔ Белые - {self.opp_name}\n♚ Чёрные - {self.saymyname} (ваш ход)"
             else:
-                return f"♔ Белые - {self.opp_name}\n♚ Чёрные - {self.saymyname} (ваш ход)"
-        else:
-            if self.you_play == "w":
-                return f"♔ Белые - {self.saymyname} (ваш ход)\n♚ Чёрные - {self.opp_name}"
+                if self.you_play == "w":
+                    return f"♔ Белые - {self.saymyname} (ваш ход)\n♚ Чёрные - {self.opp_name}"
+                else:
+                    return f"♔ Белые - {self.opp_name} (ваш ход)\n♚ Чёрные - {self.saymyname}"
+        elif self.checkmate:
+            if self.reverse:
+                if self.you_play == "w":
+                    return f"♔ Белые - {self.saymyname}\n♚ Чёрные - {self.opp_name}\nШах и мат! Победил(а) {self.saymyname}"
+                else:
+                    return f"♔ Белые - {self.opp_name}\n♚ Чёрные - {self.saymyname} Шах и мат! Победил(а) {self.opp_name}"
             else:
-                return f"♔ Белые - {self.opp_name} (ваш ход)\n♚ Чёрные - {self.saymyname}"
+                if self.you_play == "w":
+                    return f"♔ Белые - {self.saymyname} \n♚ Чёрные - {self.opp_name}\nШах и мат! Победил(а) {self.opp_name}"
+                else:
+                    return f"♔ Белые - {self.opp_name} \n♚ Чёрные - {self.saymyname}\nШах и мат! Победил(а) {self.saymyname}"
+        elif check:
+            if self.reverse:
+                if self.you_play == "w":
+                    return f"♔ Белые - {self.saymyname}\n♚ Чёрные - {self.opp_name}\nШах!"
+                else:
+                    return f"♔ Белые - {self.opp_name}\n♚ Чёрные - {self.saymyname} Шах!"
+            else:
+                if self.you_play == "w":
+                    return f"♔ Белые - {self.saymyname} \n♚ Чёрные - {self.opp_name}\nШах!"
+                else:
+                    return f"♔ Белые - {self.opp_name} \n♚ Чёрные - {self.saymyname}\nШах!"
+        elif self.stalemate:
+            if self.reverse:
+                if self.you_play == "w":
+                    return f"♔ Белые - {self.saymyname}\n♚ Чёрные - {self.opp_name}\nПат. Ничья"
+                else:
+                    return f"♔ Белые - {self.opp_name}\n♚ Чёрные - {self.saymyname}\nПат. Ничья"
+            else:
+                if self.you_play == "w":
+                    return f"♔ Белые - {self.saymyname} \n♚ Чёрные - {self.opp_name}\nПат. Ничья"
+                else:
+                    return f"♔ Белые - {self.opp_name} \n♚ Чёрные - {self.saymyname}\nПат. Ничья"
+
 
     async def clicks_handle(self, call, coord):
         if call.from_user.id not in self.you_n_me:
             await call.answer("Партия не ваша")
             return
+        current_player = self.message.sender_id if (self.you_play == "w") ^ self.reverse else self.opp_id
+        if call.from_user.id not in current_player:
+            await call.answer("Кыш от моих фигур")
+            return
+        if self.checkmate or self.stalemate:
+            await call.answer("Партия окончена. Доступных ходов нет.")
         if self.chsn == False:
             #await self.client.send_message(self.message.chat_id, f"не выбрано. self.chsn={self.chsn},coord={coord.lower()},self.reverse{self.reverse},self.places={self.places if hasattr(self,'places') else None}")
             await self.checkMove(call,coord)
