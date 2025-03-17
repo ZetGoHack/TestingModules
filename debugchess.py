@@ -223,6 +223,9 @@ class Chess(loader.Module):
                     self.chsn = False
                     self.places = []
                     await self.LoadBoard(text,call)
+                    return
+                else:
+                    return
                 # else:
                 #     await self.checkMove(call,coord)
             text = self.sttxt()
