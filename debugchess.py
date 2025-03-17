@@ -212,6 +212,7 @@ class Chess(loader.Module):
             else:
                 await self.client.send_message(self.message.chat_id, f"не совпадение. self.chsn={self.chsn},coord={coord.lower()},self.reverse{self.reverse},self.places={self.places if hasattr(self,'places') else None}")
                 prev_place = next((place for place in self.places if place[:-2] == coord.lower()), None)
+                text = self.sttxt()
                 if prev_place:
                     self.chsn = False
                     self.places = []
@@ -248,6 +249,7 @@ class Chess(loader.Module):
         await self.client.send_message(self.message.chat_id, f"Прошли проверку, вывод. self.chsn={self.chsn},coord={coord.lower()},self.reverse{self.reverse},self.places={self.places if hasattr(self,'places') else None}")
         await call.answer(f"Ставлю {self.places}")
         await self.UpdBoard(call)
+        return True
 
     def sttxt(self):
         check = False
