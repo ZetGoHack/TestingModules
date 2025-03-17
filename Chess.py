@@ -45,17 +45,17 @@ class Chess(loader.Module):
 
     def purgeSelf(self):
         self.board = {}
-        self.chsn = None
-        self.reverse = None
+        self.chsn = False
+        self.reverse = False
         self.Board = None
         self.you_play = None
-        self.you_n_me = None
-        self.places = None
+        self.you_n_me = []
+        self.places = []
         self.message = None
         self.opp_id = None
         self.opp_name = None
-        self.checkmate = None
-        self.stalemate = None
+        self.checkmate = False
+        self.stalemate = False
 
     #####Переменные#####
 
