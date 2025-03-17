@@ -90,7 +90,7 @@ class Chess(loader.Module):
                 await message.edit("Я не нахожу такого пользователя")
                 return
         self.you_n_me = [self.opp_id, self.message.sender_id]
-        await self.inline.form(message = message, text = f"<a href='tg://openmessage?user_id={self.opp_id}'>{self.opp_name}</a>, вас пригласили в игру, примите?", reply_markup = [
+        await self.inline.form(message = message, text = f"<a href='tg://openmessage?user_id={self.opp_id}'>{self.opp_name}</a>, вас пригласили сыграть партию шахмат, примите?", reply_markup = [
                 {"text": "Принимаю", "callback": self.ans, "args":("y",)},
                 {"text": "Нет", "callback": self.ans, "args":("n",)},
             ], disable_security = True
@@ -212,6 +212,7 @@ class Chess(loader.Module):
             else:
                 #await self.client.send_message(self.message.chat_id, f"не совпадение. self.chsn={self.chsn},coord={coord.lower()},self.reverse{self.reverse},self.places={self.places if hasattr(self,'places') else None}")
                 prev_place = next((place for place in self.places if place[:-2] == coord.lower()), None)
+                text = self.sttxt()
                 if prev_place:
                     self.chsn = False
                     self.places = []
@@ -222,6 +223,9 @@ class Chess(loader.Module):
                     self.chsn = False
                     self.places = []
                     await self.LoadBoard(text,call)
+                    return
+                else:
+                    return
                 # else:
                 #     await self.checkMove(call,coord)
             text = self.sttxt()
@@ -245,9 +249,10 @@ class Chess(loader.Module):
             return None
         
         self.chsn = True
-        #await self.client.send_message(self.message.chat_id, f"Прошли проверку, вывод. self.chsn={self.chsn},coord={coord.lower()},self.reverse{self.reverse},self.places={self.places if hasattr(self,'places') else None}")
+        ##await self.client.send_message(self.message.chat_id, f"Прошли проверку, вывод. self.chsn={self.chsn},coord={coord.lower()},self.reverse{self.reverse},self.places={self.places if hasattr(self,'places') else None}")
         await call.answer(f"Ставлю {self.places}")
         await self.UpdBoard(call)
+        return True
 
     def sttxt(self):
         check = False
