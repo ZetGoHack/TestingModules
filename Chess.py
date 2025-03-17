@@ -148,8 +148,7 @@ class Chess(loader.Module):
 
         await call.edit(text = text,
             reply_markup = btns[::-1],
-            disable_security = True,
-            on_unload=self.outdated()
+            disable_security = True
         )
 
     async def UpdBoard(self, call):
@@ -177,8 +176,7 @@ class Chess(loader.Module):
 
         await call.edit(text = text,
             reply_markup = btns[::-1],
-            disable_security = True,
-            on_unload=self.outdated()
+            disable_security = True
         )
 
 
