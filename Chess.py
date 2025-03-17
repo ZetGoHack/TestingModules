@@ -93,7 +93,7 @@ class Chess(loader.Module):
         await self.inline.form(message = message, text = f"<a href='tg://openmessage?user_id={self.opp_id}'>{self.opp_name}</a>, вас пригласили сыграть партию шахмат, примите?", reply_markup = [
                 {"text": "Принимаю", "callback": self.ans, "args":("y",)},
                 {"text": "Нет", "callback": self.ans, "args":("n",)},
-            ], disable_security = True, on_unload=self.outdated
+            ], disable_security = True, on_unload=self.outdated()
         )
     @loader.command() 
     async def purgeGame(self, message):
@@ -149,7 +149,7 @@ class Chess(loader.Module):
         await call.edit(text = text,
             reply_markup = btns[::-1],
             disable_security = True,
-            on_unload=self.outdated
+            on_unload=self.outdated()
         )
 
     async def UpdBoard(self, call):
@@ -178,7 +178,7 @@ class Chess(loader.Module):
         await call.edit(text = text,
             reply_markup = btns[::-1],
             disable_security = True,
-            on_unload=self.outdated
+            on_unload=self.outdated()
         )
 
 
@@ -316,7 +316,7 @@ class Chess(loader.Module):
 
 
     ##########
-    async def outdated(self, call):
+    async def outdated(self):
         self.purgeSelf()
         return
 
