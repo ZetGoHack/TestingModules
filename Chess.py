@@ -37,7 +37,7 @@ class Chess(loader.Module):
     async def client_ready(self):
         self.board = {}
         self.symbols = {
-    "r": "♜", "n": "♞", "b": "♝", "q": "♛", "k": "♚", "p": "♟", "R": "♖", "N": "♘", "B": "♗", "Q": "♕", "K": "♔", "P": "♙",
+    "r": "♜b", "n": "♞b", "b": "♝b", "q": "♛b", "k": "♚b", "p": "♟b", "R": "♖w", "N": "♘w", "B": "♗w", "Q": "♕w", "K": "♔w", "P": "♙w",
         }
         self.chsn = False
         self.saymyname = (await self.client.get_me()).first_name
@@ -267,14 +267,14 @@ class Chess(loader.Module):
         if not self.checkmate and not check and not self.stalemate:
             if self.reverse:
                 if self.you_play == "w":
-                    return f"♔ Белые - {self.saymyname}\n♚ Чёрные - {self.opp_name} (ваш ход)"
+                    return f"♔ Белые - {self.saymyname}\n♚ Чёрные - {self.opp_name} (ваш ход)\n\nw - белые фигуры, \nb - чёрные фигуры."
                 else:
-                    return f"♔ Белые - {self.opp_name}\n♚ Чёрные - {self.saymyname} (ваш ход)"
+                    return f"♔ Белые - {self.opp_name}\n♚ Чёрные - {self.saymyname} (ваш ход)\n\nw - белые фигуры, \nb - чёрные фигуры."
             else:
                 if self.you_play == "w":
-                    return f"♔ Белые - {self.saymyname} (ваш ход)\n♚ Чёрные - {self.opp_name}"
+                    return f"♔ Белые - {self.saymyname} (ваш ход)\n♚ Чёрные - {self.opp_name}\n\nw - белые фигуры, \nb - чёрные фигуры."
                 else:
-                    return f"♔ Белые - {self.opp_name} (ваш ход)\n♚ Чёрные - {self.saymyname}"
+                    return f"♔ Белые - {self.opp_name} (ваш ход)\n♚ Чёрные - {self.saymyname}\n\nw - белые фигуры, \nb - чёрные фигуры."
         elif self.checkmate:
             if self.reverse:
                 if self.you_play == "w":
@@ -289,14 +289,14 @@ class Chess(loader.Module):
         elif check:
             if self.reverse:
                 if self.you_play == "w":
-                    return f"♔ Белые - {self.saymyname}\n♚ Чёрные - {self.opp_name}\nШах!"
+                    return f"♔ Белые - {self.saymyname}\n♚ Чёрные - {self.opp_name}\nШах!\n\nw - белые фигуры, \nb - чёрные фигуры."
                 else:
-                    return f"♔ Белые - {self.opp_name}\n♚ Чёрные - {self.saymyname}\nШах!"
+                    return f"♔ Белые - {self.opp_name}\n♚ Чёрные - {self.saymyname}\nШах!\n\nw - белые фигуры, \nb - чёрные фигуры."
             else:
                 if self.you_play == "w":
-                    return f"♔ Белые - {self.saymyname} \n♚ Чёрные - {self.opp_name}\nШах!"
+                    return f"♔ Белые - {self.saymyname} \n♚ Чёрные - {self.opp_name}\nШах!\n\nw - белые фигуры, \nb - чёрные фигуры."
                 else:
-                    return f"♔ Белые - {self.opp_name} \n♚ Чёрные - {self.saymyname}\nШах!"
+                    return f"♔ Белые - {self.opp_name} \n♚ Чёрные - {self.saymyname}\nШах!\n\nw - белые фигуры, \nb - чёрные фигуры."
         elif self.stalemate:
             if self.reverse:
                 if self.you_play == "w":
