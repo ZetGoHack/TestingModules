@@ -102,12 +102,12 @@ class Chess(loader.Module):
         await message.edit("Данные очищены")
 
     async def ans(self, call, data):
-        # if call.from_user.id == self.message.sender_id:
-        #     await call.answer("Дай человеку ответить!")
-        #     return
-        # if call.from_user.id not in self.you_n_me:
-        #     await call.answer("Не тебе предлагают ж")
-        #     return
+        if call.from_user.id == self.message.sender_id:
+            await call.answer("Дай человеку ответить!")
+            return
+        if call.from_user.id not in self.you_n_me:
+            await call.answer("Не тебе предлагают ж")
+            return
         if data == 'y':
             self.Board = chess.Board()
             await call.edit(text="Выбираю стороны...")
@@ -192,9 +192,9 @@ class Chess(loader.Module):
             await call.answer("Партия не ваша")
             return
         current_player = self.message.sender_id if (self.you_play == "w") ^ self.reverse else self.opp_id
-        # if call.from_user.id != current_player:
-        #     await call.answer("Кыш от моих фигур")
-        #     return
+        if call.from_user.id != current_player:
+            await call.answer("Кыш от моих фигур")
+            return
         if self.checkmate or self.stalemate:
             await call.answer("Партия окончена. Доступных ходов нет.")
             
