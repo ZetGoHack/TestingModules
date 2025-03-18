@@ -39,6 +39,10 @@ class Chess(loader.Module):
         self.symbols = {
     "r": "♜", "n": "♞", "b": "♝", "q": "♛", "k": "♚", "p": "♟", "R": "♖", "N": "♘", "B": "♗", "Q": "♕", "K": "♔", "P": "♙",
         }
+        self.symbolsL = {
+            "r": "𝗿", "n": "𝗻", "b": "𝗯", "q": "𝗾", "k": "𝗸", "p": "𝗽",
+            "R": "𝗥", "N": "𝗡", "B": "𝗕", "Q": "𝗤", "K": "𝗞", "P": "𝗣",
+        }
         self.chsn = False
         self.saymyname = (await self.client.get_me()).first_name
         self.reverse = False
