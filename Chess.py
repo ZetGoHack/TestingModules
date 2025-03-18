@@ -69,6 +69,8 @@ class Chess(loader.Module):
     @loader.command() 
     async def chess(self, message):
         """[reply/username/id] предложить человеку сыграть партию"""
+        if self.board:
+            await message.edit("Партия уже где-то запущена. Завершите или сбросьте её с <code>purgegame</code>")
         self.message = message
         if message.is_reply:
             r = await message.get_reply_message()
