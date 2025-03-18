@@ -37,7 +37,7 @@ class Chess(loader.Module):
     async def client_ready(self):
         self.board = {}
         self.symbols = {
-    "r": "♜b", "n": "♞b", "b": "♝b", "q": "♛b", "k": "♚b", "p": "♟b", "R": "♖w", "N": "♘w", "B": "♗w", "Q": "♕w", "K": "♔w", "P": "♙w",
+    "r": "♜", "n": "♞", "b": "♝", "q": "♛", "k": "♚", "p": "♟", "R": "♖", "N": "♘", "B": "♗", "Q": "♕", "K": "♔", "P": "♙",
         }
         self.chsn = False
         self.saymyname = (await self.client.get_me()).first_name
