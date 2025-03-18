@@ -37,7 +37,7 @@ class Chess(loader.Module):
     async def client_ready(self):
         self.board = {}
         self.symbols = {
-    "r": "♜", "n": "♞", "b": "♝", "q": "♛", "k": "♚", "p": "♟", "R": "♖", "N": "♘", "B": "♗", "Q": "♕", "K": "♔", "P": "♙",
+    "r": "♜", "n": "♞𝗻", "b": "♝", "q": "♛", "k": "♚", "p": "♟", "R": "♖", "N": "♘", "B": "♗", "Q": "♕", "K": "♔", "P": "♙",
         }
         self.symbolsL = {
             "r": "𝗿", "n": "𝗻", "b": "𝗯", "q": "𝗾", "k": "𝗸", "p": "𝗽",
@@ -114,6 +114,7 @@ class Chess(loader.Module):
             return
         if data == 'y':
             self.Board = chess.Board()
+            
             await call.edit(text="Выбираю стороны...")
             await asyncio.sleep(0.5)
             self.you_play = self.ranColor()
