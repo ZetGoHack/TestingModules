@@ -33,27 +33,27 @@ import re
 @loader.tds
 class GifHarem(loader.Module):
     """Automatization module for @GIFgarem_bot"""
-  def __init__(self):
-      self.config = loader.ModuleConfig(
-          loader.ConfigValue(
-              "abW",
-              False,
-              "",
-              validator=loader.validators.Boolean(),
-          ),
-          loader.ConfigValue(
-              "abW_output",
-              True,
-              "",
-              validator=loader.validators.Boolean()
-          ),
-          loader.ConfigValue(
-              "catch",
-              False,
-              "catchH",
-              validator=loader.validators.Boolean(),
-          ),
-      )
+    def __init__(self):
+        self.config = loader.ModuleConfig(
+            loader.ConfigValue(
+                "abG",
+                False,
+                "Автобонус(/bonus, 'lights out', бонус за подписки)",
+                validator=loader.validators.Boolean(),
+            ),
+            loader.ConfigValue(
+                "abG_output",
+                True,
+                "Выводить вайфу?(при ловле)",
+                validator=loader.validators.Boolean()
+            ),
+            loader.ConfigValue(
+                "catch",
+                False,
+                "Я ловлю вайфу?",
+                validator=loader.validators.Boolean(),
+            ),
+        )
 
     strings = {
         "name": "GifHarem"
