@@ -94,7 +94,7 @@ class GifHarem(loader.Module):
     ########loop########
     @loader.loop(interval=1, autostart=True)
     async def check_loop(self):
-        if self.config["abG"] and (not self.get("ABonus_timeG") or (time.time() - self.get("ABonus_timeG")) >= 3600):
+        if self.config["abG"] and (self.get("ABonus_timeG") is None or (time.time() - self.get("ABonus_timeG")) >= 3600*4):
             await self.autobonus()
             self.set("ABonus_timeG", int(time.time()))
     ########loop########
@@ -103,7 +103,7 @@ class GifHarem(loader.Module):
     @loader.watcher("only_messages","only_media")
     async def watcher(self, message: Message):
         """Watcher"""
-        if self.config["catch"] and message.sender_id == self.id and any(not self.get("Gcatcher_time") or int(time.time()) - int(self.get("Gcatcher_time")) > 14400):
+        if self.config["catch"] and message.sender_id == self.id and (self.get("Gcatcher_time") is None or int(time.time()) - int(self.get("Gcatcher_time")) > 14400):
             if "заблудилась" in message.text.lower():
                 try:
                     await message.click()
@@ -193,7 +193,7 @@ class GifHarem(loader.Module):
                                             print('блин')
                                         await self.client.send_message(entity,"/start")
                                         to_block.append(entity.username)
-                        flyer_messages = await message.client.get_messages(self.id, limit=1)
+                        flyer_messages = await self.client.get_messages(self.id, limit=1)
                         if wait_boost:
                             await asyncio.sleep(120)
                         for m in flyer_messages:
