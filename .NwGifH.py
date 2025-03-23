@@ -63,33 +63,34 @@ class GifHarem(loader.Module):
         
     def getmarkup(self):
         return [
-                [
-                    {
-                        "text": "[❌] Автобонус" if self.config["abG"] else "[✔️] Автобонус", 
-                        "callback": self.callback_handler,
-                        "args": ("abG",)
-                    }
-                ],
-                [
-                    {
-                        "text":"[❌] Автоловля" if self.config["catch"] else "[✔️] Автоловля",
-                        "callback":self.callback_handler,
-                        "args": ("catch",)
-                    },
-                    {
-                        "text":"[❌] Вывод вайфу" if self.config["Gcatch_output"] else "[✔️] Вывод вайфу", 
-                        "callback":self.callback_handler,
-                        "args": ("Gcatch_output",)
-                    }
-                ],
-                [
-                    {
-                        "text":"🔻 Закрыть меню", 
-                        "callback":self.callback_handler,
-                        "args": ("close",)
-                    }
-                ]
+            [
+                {
+                    "text": "[✔️] Автобонус" if self.config["abG"] else "[❌] Автобонус", 
+                    "callback": self.callback_handler,
+                    "args": ("abG",)
+                }
+            ],
+            [
+                {
+                    "text": "[✔️] Автоловля" if self.config["catch"] else "[❌] Автоловля",
+                    "callback": self.callback_handler,
+                    "args": ("catch",)
+                },
+                {
+                    "text": "[✔️] Вывод вайфу" if self.config["Gcatch_output"] else "[❌] Вывод вайфу", 
+                    "callback": self.callback_handler,
+                    "args": ("Gcatch_output",)
+                }
+            ],
+            [
+                {
+                    "text": "🔻 Закрыть меню", 
+                    "callback": self.callback_handler,
+                    "args": ("close",)
+                }
             ]
+        ]
+
 
     ########loop########
     @loader.loop(interval=1, autostart=True)
@@ -107,6 +108,7 @@ class GifHarem(loader.Module):
             if "заблудилась" in message.text.lower():
                 try:
                     await message.click()
+                    
                     msgs = await message.client.get_messages(message.chat_id, limit=4)
                     for msg in msgs:
                         if self.config["Gcatch_output"] and msg.mentioned and "забрали" in msg.text:
@@ -116,7 +118,7 @@ class GifHarem(loader.Module):
                             await self.client.send_file(self.id, caption=caption, file=message.media)
                             self.set("Gcatcher_time", int(time.time()))
                 except Exception as e:
-                    pass
+                    self.log.error(f"Error in GIF cather: {e}")
                         
     # @loader.command()
     # async def catchGH(self, message):
@@ -233,7 +235,7 @@ class GifHarem(loader.Module):
         """Меню конфигурации"""
         await self.inline.form(
             message = message, 
-            text = "Меню для @Horny_GaremBot", 
+            text = "Меню для @GIFgarem_bot", 
             reply_markup = self.getmarkup()
         )
 
