@@ -38,11 +38,11 @@ class GifHarem(loader.Module):
             loader.ConfigValue(
                 "abG",
                 False,
-                "Автобонус(/bonus, 'lights out', бонус за подписки)",
+                "Автобонус(/bonus, бонус за подписки, 'lights out')",
                 validator=loader.validators.Boolean(),
             ),
             loader.ConfigValue(
-                "abG_output",
+                "Gcatch_output",
                 True,
                 "Выводить вайфу?(при ловле)",
                 validator=loader.validators.Boolean()
@@ -59,156 +59,193 @@ class GifHarem(loader.Module):
         "name": "GifHarem"
     }
     async def client_ready(self):
-        self.state = False
-        self.outptt = True
-        self.bonus = False
         self.id = 7084965046
-
+        
+    def getmarkup(self):
+        return [
+                [
+                    {
+                        "text": "[❌]🔶 Автобонус" if self.config["abG"] else "[✔️]🔶 Автобонус", 
+                        "callback": self.callback_handler,
+                        "args": ("abG",)
+                    }
+                ],
+                [
+                    {
+                        "text":"[❌]⚪️ Автоловля" if self.config["catch"] else "[✔️]⚪️ Автоловля",
+                        "callback":self.callback_handler,
+                        "args": ("catch",)
+                    },
+                    {
+                        "text":"[❌]💘 Вывод вайфу" if self.config["Gcatch_output"] else "[✔️]💘 Вывод вайфу", 
+                        "callback":self.callback_handler,
+                        "args": ("Gcatch_output",)
+                    }
+                ],
+                [
+                    {
+                        "text":"🔻 Закрыть меню", 
+                        "callback":self.callback_handler,
+                        "args": ("close",)
+                    }
+                ]
+            ]
 
     ########loop########
     @loader.loop(interval=1, autostart=True)
-    async def main_loop(self):
-        try:
-            if self.config["AutoFarm"] and (not self.get("Tree_time") or (time.time() - self.get("Tree_time")) >= 3600):
-                await self.autofarm()
-                self.set("Tree_time", int(time.time()))
-    
-            if self.config["AutoMining"] and (not self.get("Mining_time") or (time.time() - self.get("Mining_time")) >= 3600*2+10):
-                await self.automining()
-                self.set("Mining_time", int(time.time()))
-    
-            if self.config["EveryDayBonus"] and (not self.get("Bonus_time") or (time.time() - self.get("Bonus_time")) >= 3600*24+10):
-                await self.everyday_bonus()
-                self.set("Bonus_time", int(time.time()))
-
-            await self._client(functions.messages.ReadMentionsRequest(self._bot))
-        except Exception as e:
-            self.log.error(f"Error in main_loop: {e}")
+    async def check_loop(self):
+        if self.config["abG"] and (not self.get("ABonus_timeG") or (time.time() - self.get("ABonus_timeG")) >= 3600):
+            await self.autobonus()
+            self.set("ABonus_timeG", int(time.time()))
     ########loop########
-
 
     ########Ловец########
     @loader.watcher("only_messages","only_media")
     async def watcher(self, message: Message):
         """Watcher"""
-        if self.state and message.sender_id == self.id:
-            text = message.text.lower()
-            if "заблудилась" in text:
-                if int(time.time()) - int(self.last_time) > 14400:
-                    try:
-                        await message.click()
-                        msgs = await message.client.get_messages(message.chat_id, limit=4)
-                        for msg in msgs:
-                            if self.outptt and msg.mentioned and "забрали" in msg.text:
-
-                                match = re.search(r", Вы забрали (.+?)\. Вайфу", msg.text)
-                                waifu = match.group(1)
-                                caption = f"{waifu} в вашем гареме! <emoji document_id=5395592707580127159>😎</emoji>"
-                                await self.client.send_file(self.id, caption=caption, file=message.media)
-                                self.last_time = time.time()
-                    except Exception as e:
-                        pass
+        if self.config["catch"] and message.sender_id == self.id and any(not self.get("Gcatcher_time") or int(time.time()) - int(self.get("Gcatcher_time")) > 14400):
+            if "заблудилась" in message.text.lower():
+                try:
+                    await message.click()
+                    msgs = await message.client.get_messages(message.chat_id, limit=4)
+                    for msg in msgs:
+                        if self.config["Gcatch_output"] and msg.mentioned and "забрали" in msg.text:
+                            match = re.search(r", Вы забрали (.+?)\. Вайфу", msg.text)
+                            waifu = match.group(1)
+                            caption = f"{waifu} в вашем гареме! <emoji document_id=5395592707580127159>😎</emoji>"
+                            await self.client.send_file(self.id, caption=caption, file=message.media)
+                            self.set("Gcatcher_time", int(time.time()))
+                except Exception as e:
+                    pass
                         
-    @loader.command()
-    async def catchGH(self, message):
-        """Переключить режим ловли. Вывод арта украденной вайфу в лс бота"""
-        self.state = not self.state
-        if not hasattr(self, "last_time"):
-            self.last_time = 1226061708
-        await message.edit(f"{'<emoji document_id=5954175920506933873>👤</emoji> Я ловлю вайфу.' if self.state else '<emoji document_id=5872829476143894491>🚫</emoji> Я не ловлю вайфу.'}")
-    @loader.command()
-    async def catchGH_output(self, message):
-        """Переключить вывод арта украденной вайфу."""
-        self.outptt = not self.outptt
-        await message.edit(f"{'<emoji document_id=5877530150345641603>👤</emoji> Я показываю вайфу.' if self.outptt else '<emoji document_id=5872829476143894491>🚫</emoji> Я не показываю вайфу.'}")
+    # @loader.command()
+    # async def catchGH(self, message):
+    #     """Переключить режим ловли. Вывод арта украденной вайфу в лс бота"""
+    #     self.state = not self.state
+    #     if not hasattr(self, "last_time"):
+    #         self.last_time = 1226061708
+    #     await message.edit(f"{'<emoji document_id=5954175920506933873>👤</emoji> Я ловлю вайфу.' if self.state else '<emoji document_id=5872829476143894491>🚫</emoji> Я не ловлю вайфу.'}")
+    # @loader.command()
+    # async def catchGH_output(self, message):
+    #     """Переключить вывод арта украденной вайфу."""
+    #     self.outptt = not self.outptt
+    #     await message.edit(f"{'<emoji document_id=5877530150345641603>👤</emoji> Я показываю вайфу.' if self.outptt else '<emoji document_id=5872829476143894491>🚫</emoji> Я не показываю вайфу.'}")
     ########Ловец########
 
 
     ########Заработок########
-    @loader.command()
-    async def autobonusGH(self, message):
+    #@loader.command()
+    async def autobonus(self, message):
         """Автоматически собирает бонус(а также бонус за подписку и отыгрывает 3 игры в /lout) каждые 4 часа"""
-        if self.bonus:
-            self.bonus = False
-            await message.edit("<emoji document_id=5872829476143894491>🚫</emoji> Автобонус выключен.")
-            return
-        self.bonus = True
-        await message.edit("<emoji document_id=5825794181183836432>✔️</emoji> Автобонус включён.")
-        while self.bonus:
-            if not hasattr(self, "lout"):
-                self.lout = 1226061708
-            self.wait_boost = False
-            async with self._client.conversation(self.id) as conv:
-                await conv.send_message("/bonus")
+        wait_boost = False
+        async with self._client.conversation(self.id) as conv:
+            await conv.send_message("/bonus")
+            try:
+                r = await conv.get_response()
+            except:
+                while True:
+                    try:
+                        r = await conv.get_response()
+                        break
+                    except:
+                        pass
+            if "Доступен бонус за подписки" in r.text:
+                await conv.send_message("/start flyer_bonus")
                 try:
                     r = await conv.get_response()
                 except:
                     while True:
                         try:
                             r = await conv.get_response()
+                            break
                         except:
                             pass
-                        break
-                if "Доступен бонус за подписки" in r.text:
-                    await conv.send_message("/start flyer_bonus")
-                    r = await conv.get_response()
-                    if "проверка пройдена" not in r.text:
-                        to_leave = []
-                        to_block = []
-                        if r.reply_markup:
-                            a = r.buttons
-                            for i in a:
-                                for button in i:
-                                    if button.url:
-                                        if "t.me/boost" in button.url:
-                                            self.wait_boost = True
-                                            continue
-                                        if "t.me/+" in button.url:
-                                            try:
-                                                await self.client(ImportChatInviteRequest(button.url.split("+")[-1]))
-                                            except:
-                                                await asyncio.sleep(2)
-                                                await self.client(JoinChannelRequest(button.url))
-                                        url = button.url
-                                        if "?" in button.url:
-                                            url = button.url.split("?")[0]
-                                        entity = await self.client.get_entity(url)
-                                        if hasattr(entity,'broadcast'):
+                if "проверка пройдена" not in r.text:
+                    to_leave = []
+                    to_block = []
+                    if r.reply_markup:
+                        a = r.buttons
+                        for i in a:
+                            for button in i:
+                                if button.url:
+                                    if "/start?" in button.url:
+                                        continue
+                                    if "t.me/boost" in button.url:
+                                        wait_boost = True
+                                        continue
+                                    if "t.me/+" in button.url:
+                                        try:
+                                            await self.client(ImportChatInviteRequest(button.url.split("+")[-1]))
+                                        except:
+                                            await asyncio.sleep(2)
                                             await self.client(JoinChannelRequest(button.url))
-                                            to_leave.append(entity.id)
-                                        elif hasattr(entity,'bot'):
-                                            try:
-                                                await self.client(UnblockRequest(entity.username))
-                                            except:
-                                                print('блин')
-                                            await self.client.send_message(entity,"/start")
-                                            to_block.append(entity.username)
-                            flyer_messages = await message.client.get_messages(self.id, limit=1)
-                            if self.wait_boost:
-                                await asyncio.sleep(120)
-                            for m in flyer_messages:
-                                await asyncio.sleep(5)
-                                await m.click()
-                            for bot in to_block:
-                                await self.client(BlockRequest(bot))
-                                await self.client.delete_dialog(bot)
-                            for channel in to_leave:
+                                    url = button.url
+                                    if "?" in button.url:
+                                        url = button.url.split("?")[0]
+                                    entity = await self.client.get_entity(url)
+                                    if hasattr(entity,'broadcast'):
+                                        await self.client(JoinChannelRequest(button.url))
+                                        to_leave.append(entity.id)
+                                    elif hasattr(entity,'bot'):
+                                        try:
+                                            await self.client(UnblockRequest(entity.username))
+                                        except:
+                                            print('блин')
+                                        await self.client.send_message(entity,"/start")
+                                        to_block.append(entity.username)
+                        flyer_messages = await message.client.get_messages(self.id, limit=1)
+                        if wait_boost:
+                            await asyncio.sleep(120)
+                        for m in flyer_messages:
+                            await asyncio.sleep(5)
+                            await m.click()
+                        for bot in to_block:
+                            await self.client(BlockRequest(bot))
+                            await self.client.delete_dialog(bot)
+                        for channel in to_leave:
+                            try:
                                 await self.client(LeaveChannelRequest(channel))
+                            except:
+                                pass
                 count = 0
-                if time.time()-self.lout > 86400:
-                    while count <= 3:
+                if int(time.time())-self.get("Glast_lout") > 86400:
+                    while count <= 2:
                         await conv.send_message("/lout")
-                        r = await conv.get_response()
+                        try:
+                            r = await conv.get_response()
+                        except:
+                            while True:
+                                try:
+                                    r = await conv.get_response()
+                                    break
+                                except:
+                                    pass
                         if r.reply_markup:
                             m = await r.respond(".")
                             await self.lightsoutW(m,r)
                             await m.delete()
-                            self.lout = time.time()
+                            self.set("Glast_lout", int(time.time()))
                             count += 1
                         else:
                             break
-            await asyncio.sleep(14400)
+    @loader.command()
+    async def GifHaremMenu(self,message):
+        """Меню конфигурации"""
+        await self.inline.form(
+            message = message, 
+            text = "Меню для @Horny_GaremBot", 
+            reply_markup = self.getmarkup()
+        )
 
+    async def callback_handler(self, callback, data):
+        if data == "close":
+            await callback.delete()
+        elif data:
+            self.config[data] = not self.config[data]
+            await callback.edit(reply_markup=self.getmarkup())
+        
+
+    
     @loader.command()
     async def lightsoutW(self, message, r=None):
         """[ответ на соо с полем] Автоматически решает Lights Out"""
