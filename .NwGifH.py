@@ -243,7 +243,7 @@ class GifHarem(loader.Module):
         elif data:
             self.config[data] = not self.config[data]
             if data == "abG":
-                self.main_loop.start() if self.config[data] else self.main_loop.stop()
+                self.check_loop.start() if self.config[data] else self.check_loop.stop()
             await callback.edit(reply_markup=self.getmarkup())
         
 
