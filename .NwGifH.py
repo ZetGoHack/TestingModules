@@ -65,19 +65,19 @@ class GifHarem(loader.Module):
         return [
                 [
                     {
-                        "text": "[❌]🔶 Автобонус" if self.config["abG"] else "[✔️]🔶 Автобонус", 
+                        "text": "[❌] Автобонус" if self.config["abG"] else "[✔️] Автобонус", 
                         "callback": self.callback_handler,
                         "args": ("abG",)
                     }
                 ],
                 [
                     {
-                        "text":"[❌]⚪️ Автоловля" if self.config["catch"] else "[✔️]⚪️ Автоловля",
+                        "text":"[❌] Автоловля" if self.config["catch"] else "[✔️] Автоловля",
                         "callback":self.callback_handler,
                         "args": ("catch",)
                     },
                     {
-                        "text":"[❌]💘 Вывод вайфу" if self.config["Gcatch_output"] else "[✔️]💘 Вывод вайфу", 
+                        "text":"[❌] Вывод вайфу" if self.config["Gcatch_output"] else "[✔️] Вывод вайфу", 
                         "callback":self.callback_handler,
                         "args": ("Gcatch_output",)
                     }
@@ -135,7 +135,7 @@ class GifHarem(loader.Module):
 
     ########Заработок########
     #@loader.command()
-    async def autobonus(self, message):
+    async def autobonus(self):
         """Автоматически собирает бонус(а также бонус за подписку и отыгрывает 3 игры в /lout) каждые 4 часа"""
         wait_boost = False
         async with self._client.conversation(self.id) as conv:
