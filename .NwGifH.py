@@ -208,7 +208,7 @@ class GifHarem(loader.Module):
                             except:
                                 pass
                 count = 0
-                if any(not self.get("Glast_lout") or int(time.time()) - self.get("Glast_lout") > 86400):
+                if self.get("Glast_lout") is None or int(time.time()) - self.get("Glast_lout") > 86400:
                     while count <= 2:
                         await conv.send_message("/lout")
                         try:
