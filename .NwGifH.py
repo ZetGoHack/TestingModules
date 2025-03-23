@@ -94,7 +94,7 @@ class GifHarem(loader.Module):
     ########loop########
     @loader.loop(interval=1, autostart=True)
     async def check_loop(self):
-        if self.config["abG"] and (self.get("ABonus_timeG") is None or (time.time() - self.get("ABonus_timeG")) >= 3600*4):
+        if self.config["abG"] and (not self.get("ABonus_timeG") or (time.time() - self.get("ABonus_timeG")) >= 3600*4):
             await self.autobonus()
             self.set("ABonus_timeG", int(time.time()))
     ########loop########
@@ -103,7 +103,7 @@ class GifHarem(loader.Module):
     @loader.watcher("only_messages","only_media")
     async def watcher(self, message: Message):
         """Watcher"""
-        if self.config["catch"] and message.sender_id == self.id and (self.get("Gcatcher_time") is None or int(time.time()) - int(self.get("Gcatcher_time")) > 14400):
+        if self.config["catch"] and message.sender_id == self.id and (not self.get("Gcatcher_time") or int(time.time()) - int(self.get("Gcatcher_time")) > 14400):
             if "заблудилась" in message.text.lower():
                 try:
                     await message.click()
@@ -208,7 +208,7 @@ class GifHarem(loader.Module):
                             except:
                                 pass
                 count = 0
-                if self.get("Glast_lout") is None or int(time.time()) - self.get("Glast_lout") > 86400:
+                if not self.get("Glast_lout") or int(time.time()) - self.get("Glast_lout") > 86400:
                     while count <= 2:
                         await conv.send_message("/lout")
                         try:
