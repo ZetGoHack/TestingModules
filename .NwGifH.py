@@ -37,7 +37,7 @@ class GifHarem(loader.Module):
         self.config = loader.ModuleConfig(
             loader.ConfigValue(
                 "abG",
-                True,
+                False,
                 "Автобонус(/bonus, бонус за подписки, 'lights out')",
                 validator=loader.validators.Boolean(),
             ),
@@ -200,6 +200,7 @@ class GifHarem(loader.Module):
                                         await self.client.send_message(entity,"/start")
                                         to_block.append(entity.username)
                         flyer_messages = await self.client.get_messages(self.id, limit=1)
+                        await asyncio.sleep(5)
                         if wait_boost:
                             await asyncio.sleep(120)
                         for m in flyer_messages:
