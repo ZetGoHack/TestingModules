@@ -1,5 +1,4 @@
-#чесс нуда
-__version__ = ("NOT","DONE","YET")
+__version__ = ("1","0","0")
 #░░░░░░░░░░░░░░░░░░░░░░
 #░░░░░░░░░░██░░██░░░░░░
 #░░░░░░░░░████████░░░░░
@@ -98,6 +97,7 @@ class Chess(loader.Module):
                 return
         if self.opp_id == self.message.sender_id:
             await message.edit("Одиночные шахматы? Простите, нет.")
+            return
         self.you_n_me = [self.opp_id, self.message.sender_id]
         await self.inline.form(message = message, text = f"<a href='tg://user?id={self.opp_id}'>{self.opp_name}</a>, вас пригласили сыграть партию шахмат, примите?", reply_markup = [[
                 {"text": "Принимаю", "callback": self.ans, "args":("y",)},
