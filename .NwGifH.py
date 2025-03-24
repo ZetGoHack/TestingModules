@@ -65,19 +65,19 @@ class GifHarem(loader.Module):
         return [
                 [
                     {
-                        "text": "[❌] Автобонус" if self.config["abG"] else "[✔️] Автобонус", 
+                        "text": "[✔️] Автобонус" if self.config["abG"] else "[❌] Автобонус", 
                         "callback": self.callback_handler,
                         "args": ("abG",)
                     }
                 ],
                 [
                     {
-                        "text":"[❌] Автоловля" if self.config["catch"] else "[✔️] Автоловля",
+                        "text":"[✔️] Автоловля" if self.config["catch"] else "[❌] Автоловля",
                         "callback":self.callback_handler,
                         "args": ("catch",)
                     },
                     {
-                        "text":"[❌] Вывод вайфу" if self.config["Gcatch_output"] else "[✔️] Вывод вайфу", 
+                        "text":"[✔️] Вывод вайфу" if self.config["Gcatch_output"] else "[❌] Вывод вайфу", 
                         "callback":self.callback_handler,
                         "args": ("Gcatch_output",)
                     }
@@ -94,8 +94,9 @@ class GifHarem(loader.Module):
     ########loop########
     @loader.loop(interval=1, autostart=True)
     async def check_loop(self):
+        await self.client.send_message("me",f"Запустились\n{self.get("ABonud_timeG")} {self.config["abG"]}")
         if self.config["abG"] and (not self.get("ABonus_timeG") or (time.time() - self.get("ABonus_timeG")) >= 3600*4):
-            await self.client.send_message("me", "работаем-работаем")
+            await self.client.send_message("me", f"работаем-работаем {self.get("ABonud_timeG")}")
             await self.autobonus()
             self.set("ABonus_timeG", int(time.time()))
     ########loop########
@@ -210,6 +211,7 @@ class GifHarem(loader.Module):
                             except:
                                 pass
                 count = 0
+                await self.client.send_message("me",f"на колени на колени {self.get("Glast_lout")}")
                 if not self.get("Glast_lout") or int(time.time()) - self.get("Glast_lout") > 86400:
                     while count <= 2:
                         await conv.send_message("/lout")
