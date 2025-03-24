@@ -24,6 +24,7 @@ __version__ = ("ЧТОООООООООО","ЧИТЫ","В МАЙНКРАФТ😨�
 from telethon.tl.functions.channels import JoinChannelRequest, LeaveChannelRequest
 from telethon.tl.functions.contacts import BlockRequest, UnblockRequest
 from hikkatl.tl.functions.messages import ImportChatInviteRequest
+from hikkatl.errors import YouBlockedUserError
 from hikkatl.tl.types import Message
 from .. import loader, utils
 import asyncio
@@ -145,7 +146,11 @@ class GifHarem(loader.Module):
         #await self.client.send_message("me","начало пиздеца")
         wait_boost = False
         async with self._client.conversation(self.id) as conv:
-            await conv.send_message("/bonus")
+            try:
+                await conv.send_message("/bonus")
+            except YouBlockedUserError:
+                await self.client(UnblockRequest(7084965046))
+                await conv.send_message("/bonus")
             try:
                 r = await conv.get_response()
             except:
@@ -240,15 +245,15 @@ class GifHarem(loader.Module):
     @loader.command()
     async def GifMenu(self,message):
         """Меню конфигурации"""
-        await self.inline.form(
+        self.call = await self.inline.form(
             message = message, 
-            text = "Меню для @Horny_GaremBot", 
+            text = "Меню для @GIFgarem_bot", 
             reply_markup = self.getmarkup()
         )
 
     async def callback_handler(self, callback, data):
         if data == "close":
-            await callback.delete()
+            await self.call.delete()
         elif data:
             self.config[data] = not self.config[data]
             if data == "abG":
