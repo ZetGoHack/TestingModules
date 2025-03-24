@@ -200,12 +200,13 @@ class GifHarem(loader.Module):
                                         await self.client.send_message(entity,"/start")
                                         to_block.append(entity.username)
                         flyer_messages = await self.client.get_messages(self.id, limit=1)
-                        await asyncio.sleep(5)
+                        
                         if wait_boost:
                             await asyncio.sleep(120)
                         for m in flyer_messages:
                             await asyncio.sleep(5)
                             await m.click()
+                            await asyncio.sleep(5)
                         for bot in to_block:
                             await self.client(BlockRequest(bot))
                             await self.client.delete_dialog(bot)
