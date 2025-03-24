@@ -16,7 +16,7 @@ __version__ = ("ЧТОООООООООО","ЧИТЫ","В МАЙНКРАФТ😨�
 #░░░░█░░███░░█░░█░█░█░█
 #░░░█░░░█░░░░█░░█░█░█░█
 #░░░███░███░░█░░███░███
-
+# K:
 
 
 # meta developer: @nullmod
@@ -96,7 +96,7 @@ class GifHarem(loader.Module):
     async def check_loop(self):
         await self.client.send_message("me",f"Запустились\n{self.get('ABonud_timeG')} {self.config['abG']}")
         if self.config["abG"]:
-            await self.client.send_message("me",f"Включены\n{self.get('ABonud_timeG')} {self.config['abG']} след блок: {not self.get('ABonus_timeG')} или {(time.time() - self.get('ABonus_timeG')) >= 3600*4} должны дать {(not self.get('ABonus_timeG') or (time.time() - self.get('ABonus_timeG')) >= 3600*4)}")
+            await self.client.send_message("me",f"Включены\n{self.get('ABonus_timeG')} {self.config['abG']} след блок: {not self.get('ABonus_timeG')} или {(time.time() - self.get('ABonus_timeG')) >= 3600*4} должны дать {(not self.get('ABonus_timeG') or (time.time() - self.get('ABonus_timeG')) >= 3600*4)}")
             if (not self.get("ABonus_timeG") or (time.time() - self.get("ABonus_timeG")) >= 3600*4):
                 await self.client.send_message("me", f"работаем-работаем {self.get('ABonud_timeG')}")
                 await self.autobonus()
