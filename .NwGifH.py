@@ -95,6 +95,7 @@ class GifHarem(loader.Module):
     @loader.loop(interval=1, autostart=True)
     async def check_loop(self):
         if self.config["abG"] and (not self.get("ABonus_timeG") or (time.time() - self.get("ABonus_timeG")) >= 3600*4):
+            await self.client.send_message("me", работаем-работаем)
             await self.autobonus()
             self.set("ABonus_timeG", int(time.time()))
     ########loop########
@@ -137,6 +138,7 @@ class GifHarem(loader.Module):
     #@loader.command()
     async def autobonus(self):
         """Автоматически собирает бонус(а также бонус за подписку и отыгрывает 3 игры в /lout) каждые 4 часа"""
+        await self.client.send_message("me","начало пиздеца")
         wait_boost = False
         async with self._client.conversation(self.id) as conv:
             await conv.send_message("/bonus")
