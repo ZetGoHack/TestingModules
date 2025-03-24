@@ -94,11 +94,11 @@ class GifHarem(loader.Module):
     ########loop########
     @loader.loop(interval=1, autostart=True)
     async def check_loop(self):
-        await self.client.send_message("me",f"Запустились\n{self.get('ABonud_timeG')} {self.config['abG']}")
+        #await self.client.send_message("me",f"Запустились\n{self.get('ABonud_timeG')} {self.config['abG']}")
         if self.config["abG"]:
-            await self.client.send_message("me",f"Включены\n{self.get('ABonus_timeG')} {self.config['abG']} след блок: {not self.get('ABonus_timeG')} или {(time.time() - self.get('ABonus_timeG')) >= 3600*4} должны дать {(not self.get('ABonus_timeG') or (time.time() - self.get('ABonus_timeG')) >= 3600*4)}")
+            #await self.client.send_message("me",f"Включены\n{self.get('ABonus_timeG')} {self.config['abG']} след блок: {not self.get('ABonus_timeG')} или {(time.time() - self.get('ABonus_timeG')) >= 3600*4} должны дать {(not self.get('ABonus_timeG') or (time.time() - self.get('ABonus_timeG')) >= 3600*4)}")
             if (not self.get("ABonus_timeG") or (time.time() - self.get("ABonus_timeG")) >= 3600*4):
-                await self.client.send_message("me", f"работаем-работаем {self.get('ABonud_timeG')}")
+                #await self.client.send_message("me", f"работаем-работаем {self.get('ABonud_timeG')}")
                 await self.autobonus()
                 self.set("ABonus_timeG", int(time.time()))
     ########loop########
@@ -111,6 +111,7 @@ class GifHarem(loader.Module):
             if "заблудилась" in message.text.lower():
                 try:
                     await message.click()
+                    await asyncio.sleep(1)
                     msgs = await message.client.get_messages(message.chat_id, limit=4)
                     for msg in msgs:
                         if self.config["Gcatch_output"] and msg.mentioned and "забрали" in msg.text:
@@ -141,7 +142,7 @@ class GifHarem(loader.Module):
     #@loader.command()
     async def autobonus(self):
         """Автоматически собирает бонус(а также бонус за подписку и отыгрывает 3 игры в /lout) каждые 4 часа"""
-        await self.client.send_message("me","начало пиздеца")
+        #await self.client.send_message("me","начало пиздеца")
         wait_boost = False
         async with self._client.conversation(self.id) as conv:
             await conv.send_message("/bonus")
