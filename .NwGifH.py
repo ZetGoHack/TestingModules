@@ -37,7 +37,7 @@ class GifHarem(loader.Module):
         self.config = loader.ModuleConfig(
             loader.ConfigValue(
                 "abG",
-                False,
+                True,
                 "Автобонус(/bonus, бонус за подписки, 'lights out')",
                 validator=loader.validators.Boolean(),
             ),
