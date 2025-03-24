@@ -97,11 +97,11 @@ class Chess(loader.Module):
                 await message.edit("Я не нахожу такого пользователя")
                 return
         self.you_n_me = [self.opp_id, self.message.sender_id]
-        await self.inline.form(message = message, text = f"<a href='tg://user?id={self.opp_id}'>{self.opp_name}</a>, вас пригласили сыграть партию шахмат, примите?", reply_markup = [
+        await self.inline.form(message = message, text = f"<a href='tg://user?id={self.opp_id}'>{self.opp_name}</a>, вас пригласили сыграть партию шахмат, примите?", reply_markup = [[
                 {"text": "Принимаю", "callback": self.ans, "args":("y",)},
-                {"text": "Нет", "callback": self.ans, "args":("n",)},
-                {"text": "ВАЖНО","action":"answer","show_alert":True,"message":"В игре показаны фигуры в виде ASCII символов, но на тёмном фоне(база для кнопок ботов) некоторые фигуры едва различимы(♕♛ тому подтверждение). Для удобства различия они заменены на Q и q",}
-            ], disable_security = True, on_unload=self.outdated()
+                {"text": "Нет", "callback": self.ans, "args":("n",)}],
+                [{"text": "ВАЖНО","action":"answer","show_alert":True,"message":"В игре показаны фигуры в виде ASCII символов, но на тёмном фоне(база для кнопок ботов) фигуры едва различимы(как ♕♛ например).\n\nДля удобства различия они были заменены на Q(бел) и q(чёрн)",}
+            ]], disable_security = True, on_unload=self.outdated()
         )
     @loader.command() 
     async def purgeGame(self, message):
