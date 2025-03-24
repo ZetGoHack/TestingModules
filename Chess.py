@@ -28,7 +28,7 @@ import asyncio, random, chess
 
 @loader.tds
 class Chess(loader.Module):
-    """Chesssssssss s s ss ss"""
+    """Шахматы для игры вдвоём."""
     strings = {
         "name": "Chess"
     }
@@ -37,12 +37,12 @@ class Chess(loader.Module):
     async def client_ready(self):
         self.board = {}
         self.symbols = {
-    "r": "♜", "n": "♞", "b": "♝", "q": "♛", "k": "♚", "p": "♟", "R": "♖", "N": "♘", "B": "♗", "Q": "♕", "K": "♔", "P": "♙",
+    "r": "♜", "n": "♞", "b": "♝", "q": "𝗾", "k": "♚", "p": "♟", "R": "♖", "N": "♘", "B": "♗", "Q": "𝗤", "K": "♔", "P": "♙",
         }
-        self.symbolsL = {
-            "r": "𝗿", "n": "𝗻", "b": "𝗯", "q": "𝗾", "k": "𝗸", "p": "𝗽",
-            "R": "𝗥", "N": "𝗡", "B": "𝗕", "Q": "𝗤", "K": "𝗞", "P": "𝗣",
-        }
+        # self.symbolsL = {
+        #     "r": "𝗿", "n": "𝗻", "b": "𝗯", "q": "𝗾", "k": "𝗸", "p": "𝗽",
+        #     "R": "𝗥", "N": "𝗡", "B": "𝗕", "Q": "𝗤", "K": "𝗞", "P": "𝗣",
+        # } будто кто-то будет за буквы играть...
         self.chsn = False
         self.saymyname = (await self.client.get_me()).first_name
         self.reverse = False
@@ -68,9 +68,10 @@ class Chess(loader.Module):
 
     @loader.command() 
     async def chess(self, message):
-        """[reply/username/id] предложить человеку сыграть партию"""
+        """[reply/username/id] предложить человеку сыграть партию в чате"""
         if self.board:
             await message.edit("Партия уже где-то запущена. Завершите или сбросьте её с <code>purgegame</code>")
+            return
         self.message = message
         if message.is_reply:
             r = await message.get_reply_message()
@@ -99,6 +100,7 @@ class Chess(loader.Module):
         await self.inline.form(message = message, text = f"<a href='tg://user?id={self.opp_id}'>{self.opp_name}</a>, вас пригласили сыграть партию шахмат, примите?", reply_markup = [
                 {"text": "Принимаю", "callback": self.ans, "args":("y",)},
                 {"text": "Нет", "callback": self.ans, "args":("n",)},
+                {"text": "ВАЖНО","action":"answer","show_alert":True,"message":"В игре показаны фигуры в виде ASCII символов, но на тёмном фоне(база для кнопок ботов) некоторые фигуры едва различимы(♕♛ тому подтверждение). Для удобства различия они заменены на Q и q",}
             ], disable_security = True, on_unload=self.outdated()
         )
     @loader.command() 
@@ -159,7 +161,6 @@ class Chess(loader.Module):
         )
 
     async def UpdBoard(self, call):
-        #board = str(self.Board).split("\n")
         for row in range(1,9):
             rows = []
             for col in "ABCDEFGH":
@@ -265,23 +266,27 @@ class Chess(loader.Module):
         check = False
         self.checkmate = False
         self.stalemate = False
+        self.fifty = False
         if self.Board.is_checkmate():
             self.checkmate = True
         elif self.Board.is_check():
             check = True
         elif self.Board.is_stalemate():
             self.stalemate = True
+        elif self.Board.can_claim_fifty_moves():
+            board.outcome()
+            self.fifty = True
         if not self.checkmate and not check and not self.stalemate:
             if self.reverse:
                 if self.you_play == "w":
-                    return f"♔ Белые - {self.saymyname}\n♚ Чёрные - {self.opp_name} (ваш ход)\n\nw - белые фигуры, \nb - чёрные фигуры."
+                    return f"♔ Белые - {self.saymyname}\n👉 ♚ Чёрные - {self.opp_name} (ваш ход)\n\nw - белые фигуры, \nb - чёрные фигуры."
                 else:
-                    return f"♔ Белые - {self.opp_name}\n♚ Чёрные - {self.saymyname} (ваш ход)\n\nw - белые фигуры, \nb - чёрные фигуры."
+                    return f"♔ Белые - {self.opp_name}\n👉 ♚ Чёрные - {self.saymyname} (ваш ход)\n\nw - белые фигуры, \nb - чёрные фигуры."
             else:
                 if self.you_play == "w":
-                    return f"♔ Белые - {self.saymyname} (ваш ход)\n♚ Чёрные - {self.opp_name}\n\nw - белые фигуры, \nb - чёрные фигуры."
+                    return f"👉 ♔ Белые - {self.saymyname} (ваш ход)\n♚ Чёрные - {self.opp_name}\n\nw - белые фигуры, \nb - чёрные фигуры."
                 else:
-                    return f"♔ Белые - {self.opp_name} (ваш ход)\n♚ Чёрные - {self.saymyname}\n\nw - белые фигуры, \nb - чёрные фигуры."
+                    return f"👉 ♔ Белые - {self.opp_name} (ваш ход)\n♚ Чёрные - {self.saymyname}\n\nw - белые фигуры, \nb - чёрные фигуры."
         elif self.checkmate:
             if self.reverse:
                 if self.you_play == "w":
@@ -296,14 +301,14 @@ class Chess(loader.Module):
         elif check:
             if self.reverse:
                 if self.you_play == "w":
-                    return f"♔ Белые - {self.saymyname}\n♚ Чёрные - {self.opp_name}\nШах!\n\nw - белые фигуры, \nb - чёрные фигуры."
+                    return f"♔ Белые - {self.saymyname}\n👉 ♚ Чёрные - {self.opp_name}\nШах!\n\nw - белые фигуры, \nb - чёрные фигуры."
                 else:
-                    return f"♔ Белые - {self.opp_name}\n♚ Чёрные - {self.saymyname}\nШах!\n\nw - белые фигуры, \nb - чёрные фигуры."
+                    return f"♔ Белые - {self.opp_name}\n👉 ♚ Чёрные - {self.saymyname}\nШах!\n\nw - белые фигуры, \nb - чёрные фигуры."
             else:
                 if self.you_play == "w":
-                    return f"♔ Белые - {self.saymyname} \n♚ Чёрные - {self.opp_name}\nШах!\n\nw - белые фигуры, \nb - чёрные фигуры."
+                    return f"👉 ♔ Белые - {self.saymyname} \n♚ Чёрные - {self.opp_name}\nШах!\n\nw - белые фигуры, \nb - чёрные фигуры."
                 else:
-                    return f"♔ Белые - {self.opp_name} \n♚ Чёрные - {self.saymyname}\nШах!\n\nw - белые фигуры, \nb - чёрные фигуры."
+                    return f"👉 ♔ Белые - {self.opp_name} \n♚ Чёрные - {self.saymyname}\nШах!\n\nw - белые фигуры, \nb - чёрные фигуры."
         elif self.stalemate:
             if self.reverse:
                 if self.you_play == "w":
@@ -315,6 +320,17 @@ class Chess(loader.Module):
                     return f"♔ Белые - {self.saymyname} \n♚ Чёрные - {self.opp_name}\nПат. Ничья"
                 else:
                     return f"♔ Белые - {self.opp_name} \n♚ Чёрные - {self.saymyname}\nПат. Ничья"
+        elif self.fifty:
+            if self.reverse:
+                if self.you_play == "w":
+                    return f"♔ Белые - {self.saymyname}\n♚ Чёрные - {self.opp_name}\nПравило 50 ходов. ничья"
+                else:
+                    return f"♔ Белые - {self.opp_name}\n♚ Чёрные - {self.saymyname}\nПравило 50 ходов. ничья"
+            else:
+                if self.you_play == "w":
+                    return f"♔ Белые - {self.saymyname} \n♚ Чёрные - {self.opp_name}\nПравило 50 ходов. ничья"
+                else:
+                    return f"♔ Белые - {self.opp_name} \n♚ Чёрные - {self.saymyname}\nПравило 50 ходов. ничья"
 
 
     #####Ходы#####
