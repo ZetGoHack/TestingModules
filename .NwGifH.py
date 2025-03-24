@@ -237,7 +237,7 @@ class GifHarem(loader.Module):
                         else:
                             break
     @loader.command()
-    async def GifHaremMenu(self,message):
+    async def GifMenu(self,message):
         """Меню конфигурации"""
         await self.inline.form(
             message = message, 
