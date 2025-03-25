@@ -102,7 +102,7 @@ class Chess(loader.Module):
         await self.inline.form(message = message, text = f"<a href='tg://user?id={self.opp_id}'>{self.opp_name}</a>, вас пригласили сыграть партию шахмат, примите?", reply_markup = [[
                 {"text": "Принимаю", "callback": self.ans, "args":("y",)},
                 {"text": "Нет", "callback": self.ans, "args":("n",)}],
-                [{"text": "ВАЖНО","action":"answer","show_alert":True,"message":"В игре показаны фигуры в виде ASCII символов, но в тёмной теме фигуры едва различимы(как ♕♛ например).\n\nДля удобства различия они были заменены на Q(бел) и q(чёрн)",}
+                [{"text": "ВАЖНО","action":"answer","show_alert":True,"message":"В игре показаны фигуры в виде ASCII символов, но в тёмной теме фигуры едва различимы как минимум '♕♛'.\n\nДля удобства различия они были заменены на Q(бел) и q(чёрн)",}
             ]], disable_security = True, on_unload=self.outdated()
         )
     @loader.command() 
