@@ -47,6 +47,7 @@ class Chess(loader.Module):
         self.chsn = False
         self.saymyname = (await self.client.get_me()).first_name
         self.reverse = False
+        self.timeName = "❌ Без часов"
 
     def purgeSelf(self):
         self.board = {}
@@ -66,6 +67,18 @@ class Chess(loader.Module):
 
 
     #####Игра#####
+    async def settings(self, call):
+        if call.from_user.id not in self.you_n_me:
+            await call.answer("Настройки не для вас!")
+            return
+        await call.edit(text="Настройки этой партии",reply_markup=[[{"text":f"⏲️ Время: {self.timeName}","callback":self.time}],[])
+
+    async def time(self, call):
+        if call.from_user.id not in self.you_n_me:
+            await call.answer("Настройки не для вас!")
+            return
+        await call.edit(text="Настройки этой партии",reply_markup=[[{"text":"Пуля","callback":self.time}],[{"text":"1 минута}]])
+        
 
     @loader.command() 
     async def chess(self, message):
@@ -104,6 +117,7 @@ class Chess(loader.Module):
         await self.inline.form(message = message, text = f"<a href='tg://user?id={self.opp_id}'>{self.opp_name}</a>, вас пригласили сыграть партию шахмат, примите?", reply_markup = [[
                 {"text": "Принимаю", "callback": self.ans, "args":("y",)},
                 {"text": "Нет", "callback": self.ans, "args":("n",)}],
+                [{"text": "Настройки", "callback": self.settings}],
                 [{"text": "ВАЖНО","action":"answer","show_alert":True,"message":"В игре показаны фигуры в виде ASCII символов, но в тёмной теме фигуры едва различимы как минимум '♕♛'.\n\nДля удобного различия они были заменены на Q(бел) и q(чёрн)",}
             ]], disable_security = True, on_unload=self.outdated()
         )
@@ -201,8 +215,9 @@ class Chess(loader.Module):
     #####Ходы#####
 
     async def clicks_handle(self, call, coord):
-        if self.checkmate or self.stalemate:
+        if self.checkmate or self.stalemate or self.fifty:
             await call.answer("Партия окончена. Доступных ходов нет.")
+            self.purgeSelf()
             return
         if call.from_user.id not in self.you_n_me:
             await call.answer("Партия не ваша")
