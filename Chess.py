@@ -1,4 +1,4 @@
-__version__ = ("1","0","0")
+__version__ = (1,0,0)
 #░░░░░░░░░░░░░░░░░░░░░░
 #░░░░░░░░░░██░░██░░░░░░
 #░░░░░░░░░████████░░░░░
@@ -15,7 +15,7 @@ __version__ = ("1","0","0")
 #░░░░█░░███░░█░░█░█░█░█
 #░░░█░░░█░░░░█░░█░█░█░█
 #░░░███░███░░█░░███░███
-
+#H:Mods Team
 
 
 # meta developer: @nullmod
@@ -146,6 +146,9 @@ class Chess(loader.Module):
                 coord = f"{col}{row}"
                 piece = self.Board.piece_at(chess.parse_square(coord.lower()))
                 self.board[coord] =  self.symbols[piece.symbol()] if piece else " "
+        #if self.checkmate:
+            #for row in range(1,9):
+                 #chain(range(8,-1,-2),range(2,8,2))
                 
                 
                 
@@ -170,7 +173,7 @@ class Chess(loader.Module):
             for col in "ABCDEFGH":
                 coord = f"{col}{row}"
                 if any(place[-2:] == coord.lower() for place in self.places):
-                        self.board[coord] = "✖" if (move := next((chess.Move.from_uci(p) for p in self.places if p[-2:] == coord.lower()), None)) and self.Board.is_capture(move) else "●"
+                    self.board[coord] = "×" if (move := next((chess.Move.from_uci(p) for p in self.places if p[-2:] == coord.lower()), None)) and self.Board.is_capture(move) else "●"
                 else:
                     piece = self.Board.piece_at(chess.parse_square(coord.lower()))
                     self.board[coord] =  self.symbols[piece.symbol()] if piece else " "
