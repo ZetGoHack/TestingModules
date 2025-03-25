@@ -102,7 +102,7 @@ class Chess(loader.Module):
         await self.inline.form(message = message, text = f"<a href='tg://user?id={self.opp_id}'>{self.opp_name}</a>, вас пригласили сыграть партию шахмат, примите?", reply_markup = [[
                 {"text": "Принимаю", "callback": self.ans, "args":("y",)},
                 {"text": "Нет", "callback": self.ans, "args":("n",)}],
-                [{"text": "ВАЖНО","action":"answer","show_alert":True,"message":"В игре показаны фигуры в виде ASCII символов, но на тёмном фоне(база для кнопок ботов) фигуры едва различимы(как ♕♛ например).\n\nДля удобства различия они были заменены на Q(бел) и q(чёрн)",}
+                [{"text": "ВАЖНО","action":"answer","show_alert":True,"message":"В игре показаны фигуры в виде ASCII символов, но в тёмной теме фигуры едва различимы(как ♕♛ например).\n\nДля удобства различия они были заменены на Q(бел) и q(чёрн)",}
             ]], disable_security = True, on_unload=self.outdated()
         )
     @loader.command() 
@@ -281,58 +281,58 @@ class Chess(loader.Module):
         if not self.checkmate and not check and not self.stalemate:
             if self.reverse:
                 if self.you_play == "w":
-                    return f"♔ Белые - {self.saymyname}\n👉 ♚ Чёрные - {self.opp_name} (ваш ход)\n\nw - белые фигуры, \nb - чёрные фигуры."
+                    return f"[..] ♔ Белые - {self.saymyname}\n[👉] ♚ Чёрные - {self.opp_name} (ваш ход)"
                 else:
-                    return f"♔ Белые - {self.opp_name}\n👉 ♚ Чёрные - {self.saymyname} (ваш ход)\n\nw - белые фигуры, \nb - чёрные фигуры."
+                    return f"[..] ♔ Белые - {self.opp_name}\n[👉] ♚ Чёрные - {self.saymyname} (ваш ход)"
             else:
                 if self.you_play == "w":
-                    return f"👉 ♔ Белые - {self.saymyname} (ваш ход)\n♚ Чёрные - {self.opp_name}\n\nw - белые фигуры, \nb - чёрные фигуры."
+                    return f"[👉] ♔ Белые - {self.saymyname} (ваш ход)\n[..] ♚ Чёрные - {self.opp_name}"
                 else:
-                    return f"👉 ♔ Белые - {self.opp_name} (ваш ход)\n♚ Чёрные - {self.saymyname}\n\nw - белые фигуры, \nb - чёрные фигуры."
+                    return f"[👉] ♔ Белые - {self.opp_name} (ваш ход)\n[..] ♚ Чёрные - {self.saymyname}"
         elif self.checkmate:
             if self.reverse:
                 if self.you_play == "w":
-                    return f"♔ Белые - {self.saymyname}\n♚ Чёрные - {self.opp_name}\nШах и мат! Победил(а) {self.saymyname}"
+                    return f"♔ Белые - {self.saymyname}\n♚ Чёрные - {self.opp_name}\n🎉 Шах и мат! Победил(а) {self.saymyname}"
                 else:
-                    return f"♔ Белые - {self.opp_name}\n♚ Чёрные - {self.saymyname}\nШах и мат! Победил(а) {self.opp_name}"
+                    return f"♔ Белые - {self.opp_name}\n♚ Чёрные - {self.saymyname}\n🎉 Шах и мат! Победил(а) {self.opp_name}"
             else:
                 if self.you_play == "w":
-                    return f"♔ Белые - {self.saymyname} \n♚ Чёрные - {self.opp_name}\nШах и мат! Победил(а) {self.opp_name}"
+                    return f"♔ Белые - {self.saymyname} \n♚ Чёрные - {self.opp_name}\n🎉 Шах и мат! Победил(а) {self.opp_name}"
                 else:
-                    return f"♔ Белые - {self.opp_name} \n♚ Чёрные - {self.saymyname}\nШах и мат! Победил(а) {self.saymyname}"
+                    return f"♔ Белые - {self.opp_name} \n♚ Чёрные - {self.saymyname}\n🎉 Шах и мат! Победил(а) {self.saymyname}"
         elif check:
             if self.reverse:
                 if self.you_play == "w":
-                    return f"♔ Белые - {self.saymyname}\n👉 ♚ Чёрные - {self.opp_name}\nШах!\n\nw - белые фигуры, \nb - чёрные фигуры."
+                    return f"[..] ♔ Белые - {self.saymyname}\n[👉] ♚ Чёрные - {self.opp_name}\n❗ Шах!"
                 else:
-                    return f"♔ Белые - {self.opp_name}\n👉 ♚ Чёрные - {self.saymyname}\nШах!\n\nw - белые фигуры, \nb - чёрные фигуры."
+                    return f"[..] ♔ Белые - {self.opp_name}\n[👉] ♚ Чёрные - {self.saymyname}\n❗ Шах!"
             else:
                 if self.you_play == "w":
-                    return f"👉 ♔ Белые - {self.saymyname} \n♚ Чёрные - {self.opp_name}\nШах!\n\nw - белые фигуры, \nb - чёрные фигуры."
+                    return f"[👉] ♔ Белые - {self.saymyname} \n[..] ♚ Чёрные - {self.opp_name}\n❗ Шах!"
                 else:
-                    return f"👉 ♔ Белые - {self.opp_name} \n♚ Чёрные - {self.saymyname}\nШах!\n\nw - белые фигуры, \nb - чёрные фигуры."
+                    return f"[👉] ♔ Белые - {self.opp_name} \n[..] ♚ Чёрные - {self.saymyname}\n❗ Шах!"
         elif self.stalemate:
             if self.reverse:
                 if self.you_play == "w":
-                    return f"♔ Белые - {self.saymyname}\n♚ Чёрные - {self.opp_name}\nПат. Ничья"
+                    return f"♔ Белые - {self.saymyname}\n♚ Чёрные - {self.opp_name}\n🤝 Пат. Ничья"
                 else:
-                    return f"♔ Белые - {self.opp_name}\n♚ Чёрные - {self.saymyname}\nПат. Ничья"
+                    return f"♔ Белые - {self.opp_name}\n♚ Чёрные - {self.saymyname}\n🤝 Пат. Ничья"
             else:
                 if self.you_play == "w":
-                    return f"♔ Белые - {self.saymyname} \n♚ Чёрные - {self.opp_name}\nПат. Ничья"
+                    return f"♔ Белые - {self.saymyname} \n♚ Чёрные - {self.opp_name}\n🤝 Пат. Ничья"
                 else:
-                    return f"♔ Белые - {self.opp_name} \n♚ Чёрные - {self.saymyname}\nПат. Ничья"
+                    return f"♔ Белые - {self.opp_name} \n♚ Чёрные - {self.saymyname}\n🤝 Пат. Ничья"
         elif self.fifty:
             if self.reverse:
                 if self.you_play == "w":
-                    return f"♔ Белые - {self.saymyname}\n♚ Чёрные - {self.opp_name}\nПравило 50 ходов. ничья"
+                    return f"♔ Белые - {self.saymyname}\n♚ Чёрные - {self.opp_name}\n🤝 Правило 50 ходов. Ничья"
                 else:
-                    return f"♔ Белые - {self.opp_name}\n♚ Чёрные - {self.saymyname}\nПравило 50 ходов. ничья"
+                    return f"♔ Белые - {self.opp_name}\n♚ Чёрные - {self.saymyname}\n🤝 Правило 50 ходов. Ничья"
             else:
                 if self.you_play == "w":
-                    return f"♔ Белые - {self.saymyname} \n♚ Чёрные - {self.opp_name}\nПравило 50 ходов. ничья"
+                    return f"♔ Белые - {self.saymyname} \n♚ Чёрные - {self.opp_name}\n🤝 Правило 50 ходов. Ничья"
                 else:
-                    return f"♔ Белые - {self.opp_name} \n♚ Чёрные - {self.saymyname}\nПравило 50 ходов. ничья"
+                    return f"♔ Белые - {self.opp_name} \n♚ Чёрные - {self.saymyname}\n🤝 Правило 50 ходов. Ничья"
 
 
     #####Ходы#####
