@@ -22,6 +22,8 @@ __version__ = ("1","0","0")
 # requires: python-chess
 from .. import loader, utils
 import asyncio, random, chess
+from itertools import chain
+
 
 
 
@@ -196,6 +198,9 @@ class Chess(loader.Module):
     #####Ходы#####
 
     async def clicks_handle(self, call, coord):
+        if self.checkmate or self.stalemate:
+            await call.answer("Партия окончена. Доступных ходов нет.")
+            return
         if call.from_user.id not in self.you_n_me:
             await call.answer("Партия не ваша")
             return
@@ -203,8 +208,6 @@ class Chess(loader.Module):
         if call.from_user.id != current_player:
             await call.answer("Кыш от моих фигур")
             return
-        if self.checkmate or self.stalemate:
-            await call.answer("Партия окончена. Доступных ходов нет.")
             
         if self.chsn == False:
             #await self.client.send_message(self.message.chat_id, f"не выбрано. self.chsn={self.chsn},coord={coord.lower()},self.reverse{self.reverse},self.places={self.places if hasattr(self,'places') else None}")
