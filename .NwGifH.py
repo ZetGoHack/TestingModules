@@ -221,8 +221,7 @@ class GifHarem(loader.Module):
                             except:
                                 pass
                 count = 0
-                await self.client.send_message("me",f"на колени на колени {self.get('Glast_lout')}")
-                if not self.get("Glast_lout") or int(time.time()) - self.get("Glast_lout") > 86400:
+                if not self.get("Glast_lout") or int(time.time()) - self.get("Glast_lout") > 43200:
                     while count <= 2:
                         await conv.send_message("/lout")
                         try:
