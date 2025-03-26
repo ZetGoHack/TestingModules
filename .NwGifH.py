@@ -25,7 +25,7 @@ from telethon.tl.functions.channels import JoinChannelRequest, LeaveChannelReque
 from telethon.tl.functions.contacts import BlockRequest, UnblockRequest
 from hikkatl.tl.functions.messages import ImportChatInviteRequest
 from hikkatl.errors import YouBlockedUserError
-from hikkatl.tl.types import Message
+from hikkatl.tl.types import Message, InputChatlistDialogFilter
 from .. import loader, utils
 import asyncio
 import time
@@ -174,7 +174,8 @@ class GifHarem(loader.Module):
                 if "проверка пройдена" not in r.text:
                     to_leave = []
                     to_block = []
-                    folder = []
+                    folders = []
+                    chats_in_folder = []
                     wait_boost = False
                     if r.reply_markup:
                         a = r.buttons
@@ -188,15 +189,15 @@ class GifHarem(loader.Module):
                                             peers = peers.peers
                                             try:
                                                 a = await self.client(JoinChatlistInviteRequest(slug=slug, peers=peers))
-                                                
+                                                chats_in_folder.append(peers)
 
                                                 for update in a.updates:
                                                     if isinstance(update, hikkatl.tl.types.UpdateDialogFilter):   
-                                                        folder.append(update)
+                                                        folder.append(InputChatlistDialogFilter(filter_id=update.id))
                                         
                                             except:
                                                 pass
-                                            continue
+                                        continue
                                     if "/start?" in button.url:
                                         continue
                                     if "t.me/boost" in button.url:
@@ -230,6 +231,8 @@ class GifHarem(loader.Module):
                             await asyncio.sleep(5)
                             await m.click()
                             await asyncio.sleep(5)
+                        for folder, peer in zip(folders, peers):
+                            await client(LeaveChatlistRequest(peers=peer, chatlist=folder))
                         for bot in to_block:
                             await self.client(BlockRequest(bot))
                             await self.client.delete_dialog(bot)
