@@ -174,11 +174,29 @@ class GifHarem(loader.Module):
                 if "проверка пройдена" not in r.text:
                     to_leave = []
                     to_block = []
+                    folder = []
+                    wait_boost = False
                     if r.reply_markup:
                         a = r.buttons
                         for i in a:
                             for button in i:
                                 if button.url:
+                                    if "addlist/" in button.url:
+                                        slug = self.button.split('addlist/')[-1]
+                                        peers = await self.client(CheckChatlistInviteRequest(slug=slug))
+                                        if peers:
+                                            peers = peers.peers
+                                            try:
+                                                a = await self.client(JoinChatlistInviteRequest(slug=slug, peers=peers))
+                                                
+
+                                                for update in a.updates:
+                                                    if isinstance(update, hikkatl.tl.types.UpdateDialogFilter):   
+                                                        folder.append(update)
+                                        
+                                            except:
+                                                pass
+                                            continue
                                     if "/start?" in button.url:
                                         continue
                                     if "t.me/boost" in button.url:
