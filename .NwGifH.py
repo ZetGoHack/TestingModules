@@ -231,8 +231,8 @@ class GifHarem(loader.Module):
                             await asyncio.sleep(5)
                             await m.click()
                             await asyncio.sleep(5)
-                        for folder, peer in zip(folders, peers):
-                            await client(LeaveChatlistRequest(peers=peer, chatlist=folder))
+                        for folder, chats in zip(folders, chats_in_folders):
+                            await client(LeaveChatlistRequest(peers=chats, chatlist=folder))
                         for bot in to_block:
                             await self.client(BlockRequest(bot))
                             await self.client.delete_dialog(bot)
