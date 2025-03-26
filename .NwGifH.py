@@ -112,8 +112,8 @@ class GifHarem(loader.Module):
             if "заблудилась" in message.text.lower():
                 try:
                     await message.click()
-                    await asyncio.sleep(1)
-                    msgs = await message.client.get_messages(message.chat_id, limit=4)
+                    await asyncio.sleep(5)
+                    msgs = await message.client.get_messages(message.chat_id, limit=10)
                     for msg in msgs:
                         if self.config["Gcatch_output"] and msg.mentioned and "забрали" in msg.text:
                             match = re.search(r", Вы забрали (.+?)\. Вайфу", msg.text)
