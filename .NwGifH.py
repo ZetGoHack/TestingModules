@@ -175,7 +175,7 @@ class GifHarem(loader.Module):
                     to_leave = []
                     to_block = []
                     folders = []
-                    chats_in_folder = []
+                    chats_in_folders = []
                     wait_boost = False
                     if r.reply_markup:
                         a = r.buttons
