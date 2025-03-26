@@ -122,7 +122,7 @@ class GifHarem(loader.Module):
                             await self.client.send_file(self.id, caption=caption, file=message.media)
                             self.set("Gcatcher_time", int(time.time()))
                 except Exception as e:
-                    pass
+                    self.log.error(f"<i>Now you just somebody that I used to know</i>(error while catching waifu Gif): {e}")
                         
     # @loader.command()
     # async def catchGH(self, message):
