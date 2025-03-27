@@ -205,7 +205,11 @@ class GifHarem(loader.Module):
                                         continue
                                     if "t.me/+" in button.url:
                                         try:
-                                            await self.client(ImportChatInviteRequest(button.url.split("+")[-1]))
+                                            a = await self.client(CheckChatInviteRequest(button.url.split("+")[-1]))
+                                            if not a.request_needed:
+                                                await self.client(ImportChatInviteRequest(button.url.split("+")[-1]))
+                                            else:
+                                                continue
                                         except:
                                             await asyncio.sleep(2)
                                             await self.client(JoinChannelRequest(button.url))
@@ -214,7 +218,7 @@ class GifHarem(loader.Module):
                                         url = button.url.split("?")[0]
                                     entity = await self.client.get_entity(url)
                                     if hasattr(entity,'broadcast'):
-                                        await self.client(JoinChannelRequest(button.url))
+                                        #await self.client(JoinChannelRequest(button.url))
                                         to_leave.append(entity.id)
                                     elif hasattr(entity,'bot'):
                                         try:
