@@ -16,7 +16,7 @@ __version__ = ("ЧТОООООООООО","ЧИТЫ","В МАЙНКРАФТ😨�
 #░░░░█░░███░░█░░█░█░█░█
 #░░░█░░░█░░░░█░░█░█░█░█
 #░░░███░███░░█░░███░███
-# K:
+# K: Mods Team [💎]
 
 
 # meta developer: @nullmod
@@ -24,8 +24,8 @@ __version__ = ("ЧТОООООООООО","ЧИТЫ","В МАЙНКРАФТ😨�
 from telethon.tl.functions.channels import JoinChannelRequest, LeaveChannelRequest
 from telethon.tl.functions.contacts import BlockRequest, UnblockRequest
 from hikkatl.tl.functions.messages import ImportChatInviteRequest
-from hikkatl.errors import YouBlockedUserError
 from hikkatl.tl.types import Message, InputChatlistDialogFilter
+from hikkatl.errors import YouBlockedUserError
 from .. import loader, utils
 import asyncio
 import time
@@ -115,7 +115,7 @@ class GifHarem(loader.Module):
                     await asyncio.sleep(5)
                     msgs = await message.client.get_messages(message.chat_id, limit=10)
                     for msg in msgs:
-                        if self.config["Gcatch_output"] and msg.mentioned and "забрали" in msg.text:
+                        if self.config["Gcatch_output"] and msg.mentioned and "забрали" in msg.text and msg.sender_id == self.id:
                             match = re.search(r", Вы забрали (.+?)\. Вайфу", msg.text)
                             waifu = match.group(1)
                             caption = f"{waifu} в вашем гареме! <emoji document_id=5395592707580127159>😎</emoji>"
@@ -124,32 +124,17 @@ class GifHarem(loader.Module):
                 except Exception as e:
                     self.log.error(f"<i>Now you just somebody that I used to know</i>(error while catching waifu Gif): {e}")
                         
-    # @loader.command()
-    # async def catchGH(self, message):
-    #     """Переключить режим ловли. Вывод арта украденной вайфу в лс бота"""
-    #     self.state = not self.state
-    #     if not hasattr(self, "last_time"):
-    #         self.last_time = 1226061708
-    #     await message.edit(f"{'<emoji document_id=5954175920506933873>👤</emoji> Я ловлю вайфу.' if self.state else '<emoji document_id=5872829476143894491>🚫</emoji> Я не ловлю вайфу.'}")
-    # @loader.command()
-    # async def catchGH_output(self, message):
-    #     """Переключить вывод арта украденной вайфу."""
-    #     self.outptt = not self.outptt
-    #     await message.edit(f"{'<emoji document_id=5877530150345641603>👤</emoji> Я показываю вайфу.' if self.outptt else '<emoji document_id=5872829476143894491>🚫</emoji> Я не показываю вайфу.'}")
-    ########Ловец########
 
 
     ########Заработок########
-    #@loader.command()
     async def autobonus(self):
-        """Автоматически собирает бонус(а также бонус за подписку и отыгрывает 3 игры в /lout) каждые 4 часа"""
         #await self.client.send_message("me","начало пиздеца")
         wait_boost = False
         async with self._client.conversation(self.id) as conv:
             try:
                 await conv.send_message("/bonus")
             except YouBlockedUserError:
-                await self.client(UnblockRequest(7084965046))
+                await self.client(UnblockRequest(self.id))
                 await conv.send_message("/bonus")
             try:
                 r = await conv.get_response()
