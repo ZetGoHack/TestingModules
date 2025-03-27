@@ -253,7 +253,7 @@ class WaifuHarem(loader.Module):
                         else:
                             break
     @loader.command()
-    async def HornyMenu(self,message):
+    async def WaifuMenu(self,message):
         """Меню конфигурации"""
         self.call = await self.inline.form(
             message = message, 
