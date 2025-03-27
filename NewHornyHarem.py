@@ -263,7 +263,7 @@ class HornyHarem(loader.Module):
 
     async def callback_handler(self, callback, data):
         if data == "close":
-            await self.call.delete()
+            await self.call.edit(text="Меню закрыто.")
         elif data:
             self.config[data] = not self.config[data]
             if data == "ab":
