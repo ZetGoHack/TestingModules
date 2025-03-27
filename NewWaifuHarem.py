@@ -42,18 +42,6 @@ class WaifuHarem(loader.Module):
                 "Автобонус(/bonus, бонус за подписки, 'lights out')",
                 validator=loader.validators.Boolean(),
             ),
-            loader.ConfigValue(
-                "catch_output",
-                True,
-                "Выводить вайфу?(при ловле)",
-                validator=loader.validators.Boolean()
-            ),
-            loader.ConfigValue(
-                "catch",
-                False,
-                "Я ловлю вайфу?",
-                validator=loader.validators.Boolean(),
-            ),
         )
 
     strings = {
@@ -73,14 +61,16 @@ class WaifuHarem(loader.Module):
                 ],
                 [
                     {
-                        "text":"[✔️] Автоловля" if self.config["catch"] else "[❌] Автоловля",
-                        "callback":self.callback_handler,
-                        "args": ("catch",)
+                        "text":"[➖] Автоловля",
+                        "action":"answer",
+                        "show_alert": True,
+                        "message": "Довольно сложно даже самому угадать имя любого перса по одному арту, если вы нашли совпадение в Google Lens, то теперь ещё нужно угадать как разрабы придумали назвать этого персонажа в боте.."
                     },
                     {
-                        "text":"[✔️] Вывод вайфу" if self.config["catch_output"] else "[❌] Вывод вайфу", 
-                        "callback":self.callback_handler,
-                        "args": ("catch_output",)
+                        "text":"[➖] Вывод вайфу", 
+                        "action":"answer",
+                        "show_alert": True,
+                        "message": "может всю базу вайфу с гарема выкачать и так идти...?))"
                     }
                 ],
                 [
@@ -103,26 +93,6 @@ class WaifuHarem(loader.Module):
                 await self.autobonus()
                 
     ########loop########
-
-    ########Ловец########
-    @loader.watcher("only_messages","only_media")
-    async def watcher(self, message: Message):
-        """Watcher"""
-        if self.config["catch"] and message.sender_id == self.id and (not self.get("catcher_time") or int(time.time()) - int(self.get("catcher_time")) > 14400):
-            if "заблудилась" in message.text.lower():
-                try:
-                    await message.click()
-                    await asyncio.sleep(5)
-                    msgs = await message.client.get_messages(message.chat_id, limit=10)
-                    for msg in msgs:
-                        if self.config["catch_output"] and msg.mentioned and "забрали" in msg.text and msg.sender_id == self.id:
-                            match = re.search(r", Вы забрали (.+?)\. Вайфу", msg.text)
-                            waifu = match.group(1)
-                            caption = f"{waifu} в вашем гареме! <emoji document_id=5395592707580127159>😎</emoji>"
-                            await self.client.send_file(self.id, caption=caption, file=message.media)
-                            self.set("catcher_time", int(time.time()))
-                except Exception as e:
-                    self.log.error(f"<i>Now you just somebody that I used to know</i>(error while catching waifu Gif): {e}")
                         
 
 
@@ -263,7 +233,7 @@ class WaifuHarem(loader.Module):
 
     async def callback_handler(self, callback, data):
         if data == "close":
-            await self.call.delete()
+            await self.call.edit(text="Меню закрыто.")
         elif data:
             self.config[data] = not self.config[data]
             if data == "ab":
