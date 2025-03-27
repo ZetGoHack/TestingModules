@@ -48,6 +48,9 @@ class Chess(loader.Module):
         self.saymyname = (await self.client.get_me()).first_name
         self.reverse = False
         self.timeName = "❌ Без часов"
+        self.pTime = None
+        self.colorName = "Рандом"
+        self.you_play = None
 
     def purgeSelf(self):
         self.board = {}
@@ -62,6 +65,9 @@ class Chess(loader.Module):
         self.opp_name = None
         self.checkmate = False
         self.stalemate = False
+        self.timeName = "❌ Без часов"
+        self.pTime = None
+        self.colorName = "Рандом"
 
     #####Переменные#####
 
@@ -71,13 +77,89 @@ class Chess(loader.Module):
         if call.from_user.id not in self.you_n_me:
             await call.answer("Настройки не для вас!")
             return
-        await call.edit(text="Настройки этой партии",reply_markup=[[{"text":f"⏲️ Время: {self.timeName}","callback":self.time}],[])
+        await call.edit(
+            text="Настройки этой партии",
+            reply_markup=[
+                [
+                    {"text":f"⏲️ Время: {self.timeName}","callback":self.time}
+                ],
+                [
+                    {"text":f"Игра за... ({self.colorName})","callback":self.color}
+                ]
+            )
+    async def backToInvite(self,call):
+        if call.from_user.id not in self.you_n_me:
+            await call.answer("Настройки не для вас!")
+            return
+        await call.edit(text = f"<a href='tg://user?id={self.opp_id}'>{self.opp_name}</a>, вас пригласили сыграть партию шахмат, примите?", reply_markup = [[
+                {"text": "Принимаю", "callback": self.ans, "args":("y",)},
+                {"text": "Нет", "callback": self.ans, "args":("n",)}],
+                [{"text": "Настройки", "callback": self.settings}],
+                [{"text": "ВАЖНО","action":"answer","show_alert":True,"message":"В игре показаны фигуры в виде ASCII символов, но в тёмной теме фигуры едва различимы как минимум '♕♛'.\n\nДля удобного различия они были заменены на Q(бел) и q(чёрн)",}
+            ]])
 
     async def time(self, call):
         if call.from_user.id not in self.you_n_me:
             await call.answer("Настройки не для вас!")
             return
-        await call.edit(text="Настройки этой партии",reply_markup=[[{"text":"Пуля","callback":self.time}],[{"text":"1 минута}]])
+        await call.edit(
+            text=f"Настройки этой партии.\nВремя:{self.timeName}",
+            reply_markup=[
+                [
+                    {"text":"⚡ Блиц","action":"answer","message":"Блиц-Блиц - скорость без границ"}
+                ],
+                [
+                    {"text":"3 минуты","callback":self.time,"args":(3,"3 минуты",)},
+                    {"text":"5 минут","callback":self.time,"args":(5,"5 минут",)}
+                ],
+                [
+                    {"text":"⏱️ Рапид","action":"answer","message":"Обдумай своё поражение"}
+                ],
+                [
+                    {"text":"10 минут","callback":self.time,"args":(10,"10 минут",)},
+                    {"text":"15 минут","callback":self.time,"args":(15,"15 минут",)},
+                    {"text":"30 минут","callback":self.time,"args":(30,"30 минут",)},
+                    {"text":"60 минут","callback":self.time,"args":(60,"60 минут",)}
+                ],
+                [
+                    {"text":"❌ Нет часов", "callback":self.time,"args":(None,"❌ Нет часов",)}
+                ],
+                [
+                    {"text":"⚙️ Обратно к настройкам", "callback":self.settings}
+                ]
+            ]
+        )
+    async def time_handle(self,call,minutes,txt):
+        self.timeName = txt
+        self.pTime = minutes*60
+        await self.time(call)
+        
+    async def color(self,call):
+        if call.from_user.id not in self.you_n_me:
+            await call.answer("Настройки не для вас!")
+            return
+        await call.edit(
+            text=f"Настройки этой партии.\nХост играет за: {self.colorName}.\nВыберите цвеи его фигур",
+            reply_markup={
+                [
+                    {"text":"Белые","callback":self.time,"args":("w","Белый",)},
+                    {"text":"Чёрные","callback":self.time,"args":("b","Чёрный",)}
+                ],
+                [
+                    {"text":"Рандом", "callback":self.time,"args":(None,"Рандом",)}
+                ],
+                [
+                    {"text":"⚙️ Обратно к настройкам", "callback":self.settings}
+                ]
+            ]
+        )
+    async def color_handle(self,call,color,txt):
+        if call.from_user.id not in self.you_n_me:
+            await call.answer("Настройки не для вас!")
+            return
+        self.colorName = txt
+        self.you_play = color
+        await self.color(call)
         
 
     @loader.command() 
