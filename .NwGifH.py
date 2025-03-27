@@ -37,13 +37,13 @@ class GifHarem(loader.Module):
     def __init__(self):
         self.config = loader.ModuleConfig(
             loader.ConfigValue(
-                "abG",
+                "ab",
                 False,
                 "Автобонус(/bonus, бонус за подписки, 'lights out')",
                 validator=loader.validators.Boolean(),
             ),
             loader.ConfigValue(
-                "Gcatch_output",
+                "catch_output",
                 True,
                 "Выводить вайфу?(при ловле)",
                 validator=loader.validators.Boolean()
@@ -66,9 +66,9 @@ class GifHarem(loader.Module):
         return [
                 [
                     {
-                        "text": "[✔️] Автобонус" if self.config["abG"] else "[❌] Автобонус", 
+                        "text": "[✔️] Автобонус" if self.config["ab"] else "[❌] Автобонус", 
                         "callback": self.callback_handler,
-                        "args": ("abG",)
+                        "args": ("ab",)
                     }
                 ],
                 [
@@ -78,9 +78,9 @@ class GifHarem(loader.Module):
                         "args": ("catch",)
                     },
                     {
-                        "text":"[✔️] Вывод вайфу" if self.config["Gcatch_output"] else "[❌] Вывод вайфу", 
+                        "text":"[✔️] Вывод вайфу" if self.config["catch_output"] else "[❌] Вывод вайфу", 
                         "callback":self.callback_handler,
-                        "args": ("Gcatch_output",)
+                        "args": ("catch_output",)
                     }
                 ],
                 [
@@ -95,32 +95,32 @@ class GifHarem(loader.Module):
     ########loop########
     @loader.loop(interval=1, autostart=True)
     async def check_loop(self):
-        #await self.client.send_message("me",f"Запустились\n{self.get('ABonud_timeG')} {self.config['abG']}")
-        if self.config["abG"]:
-            #await self.client.send_message("me",f"Включены\n{self.get('ABonus_timeG')} {self.config['abG']} след блок: {not self.get('ABonus_timeG')} или {(time.time() - self.get('ABonus_timeG')) >= 3600*4} должны дать {(not self.get('ABonus_timeG') or (time.time() - self.get('ABonus_timeG')) >= 3600*4)}")
-            if (not self.get("ABonus_timeG") or (time.time() - self.get("ABonus_timeG")) >= 3600*4):
+        #await self.client.send_message("me",f"Запустились\n{self.get('ABonud_timeG')} {self.config['ab']}")
+        if self.config["ab"]:
+            #await self.client.send_message("me",f"Включены\n{self.get('ABonus_time')} {self.config['ab']} след блок: {not self.get('ABonus_time')} или {(time.time() - self.get('ABonus_time')) >= 3600*4} должны дать {(not self.get('ABonus_time') or (time.time() - self.get('ABonus_time')) >= 3600*4)}")
+            if (not self.get("ABonus_time") or (time.time() - self.get("ABonus_time")) >= 3600*4):
                 #await self.client.send_message("me", f"работаем-работаем {self.get('ABonud_timeG')}")
                 await self.autobonus()
-                self.set("ABonus_timeG", int(time.time()))
+                
     ########loop########
 
     ########Ловец########
     @loader.watcher("only_messages","only_media")
     async def watcher(self, message: Message):
         """Watcher"""
-        if self.config["catch"] and message.sender_id == self.id and (not self.get("Gcatcher_time") or int(time.time()) - int(self.get("Gcatcher_time")) > 14400):
+        if self.config["catch"] and message.sender_id == self.id and (not self.get("catcher_time") or int(time.time()) - int(self.get("catcher_time")) > 14400):
             if "заблудилась" in message.text.lower():
                 try:
                     await message.click()
                     await asyncio.sleep(5)
                     msgs = await message.client.get_messages(message.chat_id, limit=10)
                     for msg in msgs:
-                        if self.config["Gcatch_output"] and msg.mentioned and "забрали" in msg.text and msg.sender_id == self.id:
+                        if self.config["catch_output"] and msg.mentioned and "забрали" in msg.text and msg.sender_id == self.id:
                             match = re.search(r", Вы забрали (.+?)\. Вайфу", msg.text)
                             waifu = match.group(1)
                             caption = f"{waifu} в вашем гареме! <emoji document_id=5395592707580127159>😎</emoji>"
                             await self.client.send_file(self.id, caption=caption, file=message.media)
-                            self.set("Gcatcher_time", int(time.time()))
+                            self.set("catcher_time", int(time.time()))
                 except Exception as e:
                     self.log.error(f"<i>Now you just somebody that I used to know</i>(error while catching waifu Gif): {e}")
                         
@@ -145,6 +145,7 @@ class GifHarem(loader.Module):
                         break
                     except:
                         pass
+            self.set("ABonus_time", int(time.time()))
             if "Доступен бонус за подписки" in r.text:
                 await conv.send_message("/start flyer_bonus")
                 try:
@@ -231,7 +232,7 @@ class GifHarem(loader.Module):
                             except:
                                 pass
                 count = 0
-                if not self.get("Glast_lout") or int(time.time()) - self.get("Glast_lout") > 43200:
+                if not self.get("last_lout") or int(time.time()) - self.get("last_lout") > 43200:
                     while count <= 2:
                         await conv.send_message("/lout")
                         try:
@@ -247,7 +248,7 @@ class GifHarem(loader.Module):
                             m = await r.respond(".")
                             await self.lightsoutW(m,r)
                             await m.delete()
-                            self.set("Glast_lout", int(time.time()))
+                            self.set("last_lout", int(time.time()))
                             count += 1
                         else:
                             break
@@ -265,7 +266,7 @@ class GifHarem(loader.Module):
             await self.call.delete()
         elif data:
             self.config[data] = not self.config[data]
-            if data == "abG":
+            if data == "ab":
                 self.check_loop.start() if self.config[data] else self.check_loop.stop()
             await callback.edit(reply_markup=self.getmarkup())
         
