@@ -165,7 +165,7 @@ class WaifuHarem(loader.Module):
                                     if "t.me/+" in button.url:
                                         try:
                                             a = await self.client(CheckChatInviteRequest(button.url.split("+")[-1]))
-                                            if not a.request_needed:
+                                            if not hasattr(a, "request_needed") or not a.request_needed:
                                                 await self.client(ImportChatInviteRequest(button.url.split("+")[-1]))
                                             else:
                                                 continue
