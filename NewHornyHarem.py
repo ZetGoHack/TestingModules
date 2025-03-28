@@ -187,7 +187,7 @@ class HornyHarem(loader.Module):
                                             except:
                                                 pass
                                         continue
-                                    if "/start?" in button.url:
+                                    if bool(re.match(r'.+\/[^\/]+\/[^\/]+/?$',button.url):
                                         continue
                                     if "t.me/boost" in button.url:
                                         wait_boost = True
