@@ -21,9 +21,9 @@ __version__ = (2,0,"BETA") ###Да, это -- копирка модуля HornyH
 
 # meta developer: @nullmod
 
+from hikkatl.tl.functions.messages import ImportChatInviteRequest, CheckChatInviteRequest
 from telethon.tl.functions.channels import JoinChannelRequest, LeaveChannelRequest
 from telethon.tl.functions.contacts import BlockRequest, UnblockRequest
-from hikkatl.tl.functions.messages import ImportChatInviteRequest
 from hikkatl.tl.types import Message, InputChatlistDialogFilter
 from hikkatl.errors import YouBlockedUserError
 from .. import loader, utils
