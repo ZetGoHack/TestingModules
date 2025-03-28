@@ -28,8 +28,11 @@ from hikkatl.tl.types import Message, InputChatlistDialogFilter
 from hikkatl.errors import YouBlockedUserError
 from .. import loader, utils
 import asyncio
+import logging
 import time
 import re
+
+logger = logging.getLogger(__name__)
 
 @loader.tds
 class HornyHarem(loader.Module):
