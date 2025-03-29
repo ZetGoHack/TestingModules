@@ -1,5 +1,4 @@
-__version__ = (2,0,"BETA") 
-
+__version__ = (2,0,"BETA")
 #░░░░░░░░░░░░░░░░░░░░░░
 #░░░░░░░░░░██░░██░░░░░░
 #░░░░░░░░░████████░░░░░
@@ -21,12 +20,13 @@ __version__ = (2,0,"BETA")
 
 # meta developer: @nullmod
 
+from hikkatl.tl.functions.chatlists import CheckChatlistInviteRequest, JoinChatlistInviteRequest, LeaveChatlistRequest
 from hikkatl.tl.functions.messages import ImportChatInviteRequest, CheckChatInviteRequest
-from telethon.tl.functions.channels import JoinChannelRequest, LeaveChannelRequest
-from telethon.tl.functions.contacts import BlockRequest, UnblockRequest
+from hikkatl.tl.functions.channels import JoinChannelRequest, LeaveChannelRequest
+from hikkatl.tl.functions.contacts import BlockRequest, UnblockRequest
 from hikkatl.tl.types import Message, InputChatlistDialogFilter
-from hikkatl.errors import YouBlockedUserError
-from .. import loader, utils
+from hikkatl.errors import YouBlockedUserError, InviteRequestSentError
+from .. import loader
 import asyncio
 import logging
 import time
@@ -118,12 +118,11 @@ class HornyHarem(loader.Module):
                     await asyncio.sleep(5)
                     msgs = await message.client.get_messages(message.chat_id, limit=10)
                     for msg in msgs:
-                        if msg.mentioned and "забрали" in msg.text and msg.sender_id == self.id:
-                            if self.config["catch_output"]:
-                                match = re.search(r", Вы забрали (.+?)\. Вайфу", msg.text)
-                                waifu = match.group(1)
-                                caption = f"{waifu} в вашем гареме! <emoji document_id=5395592707580127159>😎</emoji>"
-                                await self.client.send_file(self.id, caption=caption, file=message.media)
+                        if self.config["catch_output"] and msg.mentioned and "забрали" in msg.text and msg.sender_id == self.id:
+                            match = re.search(r", Вы забрали (.+?)\. Вайфу", msg.text)
+                            waifu = match.group(1)
+                            caption = f"{waifu} в вашем гареме! <emoji document_id=5395592707580127159>😎</emoji>"
+                            await self.client.send_file(self.id, caption=caption, file=message.media)
                             self.set("catcher_time", int(time.time()))
                 except Exception as e:
                     logger.error(f"<i>Now you just somebody that I used to know</i>(error while catching waifu Horny): {e}")
@@ -172,6 +171,7 @@ class HornyHarem(loader.Module):
                         for i in a:
                             for button in i:
                                 if button.url:
+                                    alr = False
                                     if "addlist/" in button.url:
                                         slug = self.button.split('addlist/')[-1]
                                         peers = await self.client(CheckChatlistInviteRequest(slug=slug))
@@ -179,7 +179,7 @@ class HornyHarem(loader.Module):
                                             peers = peers.peers
                                             try:
                                                 a = await self.client(JoinChatlistInviteRequest(slug=slug, peers=peers))
-                                                chats_in_folder.append(peers)
+                                                chats_in_folders.append(peers)
 
                                                 for update in a.updates:
                                                     if isinstance(update, hikkatl.tl.types.UpdateDialogFilter):   
@@ -188,7 +188,7 @@ class HornyHarem(loader.Module):
                                             except:
                                                 pass
                                         continue
-                                    if bool(re.match(r'^https?:\/\/t\.me\/[^\/]+\/?$',button.url)):
+                                    if not bool(re.match(r'^https?:\/\/t\.me\/[^\/]+\/?$',button.url)):
                                         continue
                                     if "t.me/boost" in button.url:
                                         wait_boost = True
@@ -197,19 +197,29 @@ class HornyHarem(loader.Module):
                                         try:
                                             a = await self.client(CheckChatInviteRequest(button.url.split("+")[-1]))
                                             if not hasattr(a, "request_needed") or not a.request_needed:
-                                                await self.client(ImportChatInviteRequest(button.url.split("+")[-1]))
+                                                pass
                                             else:
                                                 continue
                                         except:
-                                            await asyncio.sleep(2)
-                                            await self.client(JoinChannelRequest(button.url))
+                                            continue
                                     url = button.url
                                     if "?" in button.url:
                                         url = button.url.split("?")[0]
-                                    entity = await self.client.get_entity(url)
+                                    try:
+                                        entity = await self.client.get_entity(url)
+                                    except:
+                                        try:
+                                            await self.client(ImportChatInviteRequest(button.url.split("+")[-1]))
+                                        except InviteRequestSentError:
+                                            pass
+                                        entity = await self.client(CheckChatInviteRequest(button.url.split("+")[-1]))
+                                        alr = True
                                     if hasattr(entity,'broadcast'):
-                                        #await self.client(JoinChannelRequest(button.url))
-                                        to_leave.append(entity.id)
+                                        if not alr:
+                                            await self.client(JoinChannelRequest(button.url))
+                                            to_leave.append(entity.id)
+                                        else:
+                                            to_leave.append(entity.chat.id)
                                     elif hasattr(entity,'bot'):
                                         try:
                                             await self.client(UnblockRequest(entity.username))
@@ -257,7 +267,7 @@ class HornyHarem(loader.Module):
                         else:
                             break
     @loader.command()
-    async def HornyMenu(self,message):
+    async def GifMenu(self,message):
         """Меню конфигурации"""
         self.call = await self.inline.form(
             message = message, 
