@@ -267,7 +267,7 @@ class HornyHarem(loader.Module):
                         else:
                             break
     @loader.command()
-    async def GifMenu(self,message):
+    async def HornyMenu(self,message):
         """Меню конфигурации"""
         self.call = await self.inline.form(
             message = message, 
