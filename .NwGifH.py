@@ -21,12 +21,13 @@ __version__ = (2,0,"BETA") ###Да, это -- копирка модуля HornyH
 
 # meta developer: @nullmod
 
+from hikkatl.tl.functions.chatlists import CheckChatlistInviteRequest, JoinChatlistInviteRequest, LeaveChatlistRequest
 from hikkatl.tl.functions.messages import ImportChatInviteRequest, CheckChatInviteRequest
-from telethon.tl.functions.channels import JoinChannelRequest, LeaveChannelRequest
-from telethon.tl.functions.contacts import BlockRequest, UnblockRequest
+from hikkatl.tl.functions.channels import JoinChannelRequest, LeaveChannelRequest
+from hikkatl.tl.functions.contacts import BlockRequest, UnblockRequest
 from hikkatl.tl.types import Message, InputChatlistDialogFilter
-from hikkatl.errors import YouBlockedUserError
-from .. import loader, utils
+from hikkatl.errors import YouBlockedUserError, InviteRequestSentError
+from .. import loader
 import asyncio
 import logging
 import time
@@ -171,6 +172,7 @@ class GifHarem(loader.Module):
                         for i in a:
                             for button in i:
                                 if button.url:
+                                    alr = False
                                     if "addlist/" in button.url:
                                         slug = self.button.split('addlist/')[-1]
                                         peers = await self.client(CheckChatlistInviteRequest(slug=slug))
@@ -178,7 +180,7 @@ class GifHarem(loader.Module):
                                             peers = peers.peers
                                             try:
                                                 a = await self.client(JoinChatlistInviteRequest(slug=slug, peers=peers))
-                                                chats_in_folder.append(peers)
+                                                chats_in_folders.append(peers)
 
                                                 for update in a.updates:
                                                     if isinstance(update, hikkatl.tl.types.UpdateDialogFilter):   
@@ -187,7 +189,7 @@ class GifHarem(loader.Module):
                                             except:
                                                 pass
                                         continue
-                                    if bool(re.match(r'^https?:\/\/t\.me\/[^\/]+\/?$',button.url)):
+                                    if not bool(re.match(r'^https?:\/\/t\.me\/[^\/]+\/?$',button.url)):
                                         continue
                                     if "t.me/boost" in button.url:
                                         wait_boost = True
@@ -196,19 +198,29 @@ class GifHarem(loader.Module):
                                         try:
                                             a = await self.client(CheckChatInviteRequest(button.url.split("+")[-1]))
                                             if not hasattr(a, "request_needed") or not a.request_needed:
-                                                await self.client(ImportChatInviteRequest(button.url.split("+")[-1]))
+                                                pass
                                             else:
                                                 continue
                                         except:
-                                            await asyncio.sleep(2)
-                                            await self.client(JoinChannelRequest(button.url))
+                                            continue
                                     url = button.url
                                     if "?" in button.url:
                                         url = button.url.split("?")[0]
-                                    entity = await self.client.get_entity(url)
+                                    try:
+                                        entity = await self.client.get_entity(url)
+                                    except:
+                                        try:
+                                            await self.client(ImportChatInviteRequest(button.url.split("+")[-1]))
+                                        except InviteRequestSentError:
+                                            pass
+                                        entity = await self.client(CheckChatInviteRequest(button.url.split("+")[-1]))
+                                        alr = True
                                     if hasattr(entity,'broadcast'):
-                                        #await self.client(JoinChannelRequest(button.url))
-                                        to_leave.append(entity.id)
+                                        if not alr:
+                                            await self.client(JoinChannelRequest(button.url))
+                                            to_leave.append(entity.id)
+                                        else:
+                                            to_leave.append(entity.chat.id)
                                     elif hasattr(entity,'bot'):
                                         try:
                                             await self.client(UnblockRequest(entity.username))
