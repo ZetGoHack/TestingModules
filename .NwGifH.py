@@ -125,7 +125,7 @@ class GifHarem(loader.Module):
                             await self.client.send_file(self.id, caption=caption, file=message.media)
                             self.set("catcher_time", int(time.time()))
                 except Exception as e:
-                    self.log.error(f"<i>Now you just somebody that I used to know</i>(error while catching waifu Gif): {e}")
+                    logger.error(f"<i>Now you just somebody that I used to know</i>(error while catching waifu Gif): {e}")
                         
 
 
@@ -187,7 +187,7 @@ class GifHarem(loader.Module):
                                             except:
                                                 pass
                                         continue
-                                    if bool(re.match(r'.+\/[^\/]+\/[^\/]+/?$',button.url)):
+                                    if bool(re.match(r'^https?:\/\/t\.me\/[^\/]+\/?$',button.url)):
                                         continue
                                     if "t.me/boost" in button.url:
                                         wait_boost = True
