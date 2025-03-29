@@ -118,14 +118,15 @@ class HornyHarem(loader.Module):
                     await asyncio.sleep(5)
                     msgs = await message.client.get_messages(message.chat_id, limit=10)
                     for msg in msgs:
-                        if self.config["catch_output"] and msg.mentioned and "забрали" in msg.text and msg.sender_id == self.id:
-                            match = re.search(r", Вы забрали (.+?)\. Вайфу", msg.text)
-                            waifu = match.group(1)
-                            caption = f"{waifu} в вашем гареме! <emoji document_id=5395592707580127159>😎</emoji>"
-                            await self.client.send_file(self.id, caption=caption, file=message.media)
+                        if msg.mentioned and "забрали" in msg.text and msg.sender_id == self.id:
+                            if self.config["catch_output"]:
+                                match = re.search(r", Вы забрали (.+?)\. Вайфу", msg.text)
+                                waifu = match.group(1)
+                                caption = f"{waifu} в вашем гареме! <emoji document_id=5395592707580127159>😎</emoji>"
+                                await self.client.send_file(self.id, caption=caption, file=message.media)
                             self.set("catcher_time", int(time.time()))
                 except Exception as e:
-                    self.log.error(f"<i>Now you just somebody that I used to know</i>(error while catching waifu Gif): {e}")
+                    logger.error(f"<i>Now you just somebody that I used to know</i>(error while catching waifu WH): {e}")
                         
 
 
@@ -187,7 +188,7 @@ class HornyHarem(loader.Module):
                                             except:
                                                 pass
                                         continue
-                                    if bool(re.match(r'.+\/[^\/]+\/[^\/]+/?$',button.url)):
+                                    if bool(re.match(r'^https?:\/\/t\.me\/[^\/]+\/?$',button.url)):
                                         continue
                                     if "t.me/boost" in button.url:
                                         wait_boost = True
