@@ -38,7 +38,8 @@ class Chess(loader.Module):
     async def client_ready(self):
         self.board = {}
         self.symbols = {
-    "r": "♜", "n": "♞", "b": "♝", "q": "𝗾", "k": "♚", "p": "♟", "R": "♖", "N": "♘", "B": "♗", "Q": "𝗤", "K": "♔", "P": "♙",
+            "r": "♜", "n": "♞", "b": "♝", "q": "𝗾", "k": "♚", "p": "♟",
+            "R": "♖", "N": "♘", "B": "♗", "Q": "𝗤", "K": "♔", "P": "♙",
         }
         # self.symbolsL = {
         #     "r": "𝗿", "n": "𝗻", "b": "𝗯", "q": "𝗾", "k": "𝗸", "p": "𝗽",
@@ -84,19 +85,30 @@ class Chess(loader.Module):
                     {"text":f"⏲️ Время: {self.timeName}","callback":self.time}
                 ],
                 [
-                    {"text":f"Игра за... ({self.colorName})","callback":self.color}
+                    {"text":f"☯ Цвет (хоста): ({self.colorName})","callback":self.color}
+                ],
+                [
+                    {"text":"⤴️ Вернуться","callback":self.backtoinvite}
                 ]
             )
     async def backToInvite(self,call):
         if call.from_user.id not in self.you_n_me:
-            await call.answer("Настройки не для вас!")
+            await call.answer("Это не для вас!")
             return
-        await call.edit(text = f"<a href='tg://user?id={self.opp_id}'>{self.opp_name}</a>, вас пригласили сыграть партию шахмат, примите?", reply_markup = [[
-                {"text": "Принимаю", "callback": self.ans, "args":("y",)},
-                {"text": "Нет", "callback": self.ans, "args":("n",)}],
-                [{"text": "Настройки", "callback": self.settings}],
-                [{"text": "ВАЖНО","action":"answer","show_alert":True,"message":"В игре показаны фигуры в виде ASCII символов, но в тёмной теме фигуры едва различимы как минимум '♕♛'.\n\nДля удобного различия они были заменены на Q(бел) и q(чёрн)",}
-            ]])
+        await call.edit(text = f"<a href='tg://user?id={self.opp_id}'>{self.opp_name}</a>, вас пригласили сыграть партию шахмат, примите?\n\nТекущие настройки:\nХост играет за {self.colorName} цвет\nВремя: {self.timeName}", 
+                               reply_markup = [
+                                   [
+                                       {"text": "🤝 Принимаю", "callback": self.ans, "args":("y",)},
+                                       {"text": "👎 Нет", "callback": self.ans, "args":("n",)}
+                                   ],
+                                   [
+                                       {"text": "⚙️ Настройки", "callback": self.settings}
+                                   ],
+                                   [
+                                       {"text": "❗ ВАЖНО","action":"answer","show_alert":True,"message":"В игре показаны фигуры в виде ASCII символов, но в тёмной теме фигуры едва различимы как минимум '♕♛'.\n\nДля удобного различия они были заменены на Q(бел) и q(чёрн)",}
+                                   ]
+                               ]
+                       )
 
     async def time(self, call):
         if call.from_user.id not in self.you_n_me:
@@ -139,14 +151,14 @@ class Chess(loader.Module):
             await call.answer("Настройки не для вас!")
             return
         await call.edit(
-            text=f"Настройки этой партии.\nХост играет за: {self.colorName}.\nВыберите цвеи его фигур",
-            reply_markup={
+            text=f"Настройки этой партии.\nХост играет за: {self.colorName} цвет.\nВыберите цвет его фигур",
+            reply_markup=[
                 [
-                    {"text":"Белые","callback":self.time,"args":("w","Белый",)},
-                    {"text":"Чёрные","callback":self.time,"args":("b","Чёрный",)}
+                    {"text":"✅ Белые" if self.you_play == "w" else "❌ Белые","callback":self.color_handle,"args":("w","Белый",)},
+                    {"text":"✅ Чёрные" if self.you_play == "b" else "❌ Чёрные","callback":self.color_handle,"args":("b","Чёрный",)}
                 ],
                 [
-                    {"text":"Рандом", "callback":self.time,"args":(None,"Рандом",)}
+                    {"text":"🎲 Рандом" if not self.you_play else "❌ Рандом", "callback":self.color_handle,"args":(None,"Рандом",)}
                 ],
                 [
                     {"text":"⚙️ Обратно к настройкам", "callback":self.settings}
@@ -166,7 +178,7 @@ class Chess(loader.Module):
     async def chess(self, message):
         """[reply/username/id] предложить человеку сыграть партию в чате"""
         if self.board:
-            await message.edit("Партия уже где-то запущена. Завершите или сбросьте её с <code>purgegame</code>")
+            await message.edit("<emoji document_id=5370724846936267183>🤔</emoji> Партия уже где-то запущена. Завершите или сбросьте её с <code>purgegame</code>")
             return
         self.message = message
         if message.is_reply:
@@ -177,7 +189,7 @@ class Chess(loader.Module):
         else:
             args = utils.get_args(message)
             if len(args)==0:
-                await message.edit("Вы не указали с кем играть")
+                await message.edit("<emoji document_id=5370724846936267183>🤔</emoji> Вы не указали с кем играть")
                 return
             opponent = args[0]
             try:
@@ -190,18 +202,26 @@ class Chess(loader.Module):
                     self.opp_name = opponent.first_name
                     self.opp_id = opponent.id
             except:
-                await message.edit("Я не нахожу такого пользователя")
+                await message.edit("❌ Я не нахожу такого пользователя")
                 return
         if self.opp_id == self.message.sender_id:
-            await message.edit("Одиночные шахматы? Простите, нет.")
+            await message.edit("<emoji document_id=5384398004172102616>😈</emoji> Одиночные шахматы? Простите, нет.")
             return
         self.you_n_me = [self.opp_id, self.message.sender_id]
-        await self.inline.form(message = message, text = f"<a href='tg://user?id={self.opp_id}'>{self.opp_name}</a>, вас пригласили сыграть партию шахмат, примите?", reply_markup = [[
-                {"text": "Принимаю", "callback": self.ans, "args":("y",)},
-                {"text": "Нет", "callback": self.ans, "args":("n",)}],
-                [{"text": "Настройки", "callback": self.settings}],
-                [{"text": "ВАЖНО","action":"answer","show_alert":True,"message":"В игре показаны фигуры в виде ASCII символов, но в тёмной теме фигуры едва различимы как минимум '♕♛'.\n\nДля удобного различия они были заменены на Q(бел) и q(чёрн)",}
-            ]], disable_security = True, on_unload=self.outdated()
+        await self.inline.form(message = message, text = f"<a href='tg://user?id={self.opp_id}'>{self.opp_name}</a>, вас пригласили сыграть партию шахмат, примите?\n\nТекущие настройки:\nХост играет за {self.colorName} цвет\nВремя: {self.timeName}", 
+                               reply_markup = [
+                                   [
+                                       {"text": "🤝 Принимаю", "callback": self.ans, "args":("y",)},
+                                       {"text": "👎 Нет", "callback": self.ans, "args":("n",)}
+                                   ],
+                                   [
+                                       {"text": "⚙️ Настройки", "callback": self.settings}
+                                   ],
+                                   [
+                                       {"text": "❗ ВАЖНО","action":"answer","show_alert":True,"message":"В игре показаны фигуры в виде ASCII символов, но в тёмной теме фигуры едва различимы как минимум '♕♛'.\n\nДля удобного различия они были заменены на Q(бел) и q(чёрн)",}
+                                   ]
+                               ], 
+                               disable_security = True, on_unload=self.outdated()
         )
     @loader.command() 
     async def purgeGame(self, message):
@@ -218,12 +238,12 @@ class Chess(loader.Module):
             return
         if data == 'y':
             self.Board = chess.Board()
-            
-            await call.edit(text="Выбираю стороны...")
-            await asyncio.sleep(0.5)
-            self.you_play = self.ranColor()
+            if not self.you_play:
+                await call.edit(text="Выбираю стороны...")
+                await asyncio.sleep(0.5)
+                self.you_play = self.ranColor()
             text = self.sttxt()
-            await call.edit(text="Готово. Загрузка доски")
+            await call.edit(text="Загрузка доски...")
             await asyncio.sleep(0.5)
             await self.LoadBoard(text, call)
         else:
