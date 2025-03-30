@@ -25,7 +25,6 @@ from .. import loader, utils
 from itertools import chain
 
 
-
 @loader.tds
 class Chess(loader.Module):
     """Шахматы для игры вдвоём."""
@@ -78,7 +77,7 @@ class Chess(loader.Module):
             await call.answer("Настройки не для вас!")
             return
         await call.edit(
-            text="Настройки этой партии",
+            text=f"Настройки этой партии\nХост играет за {self.colorName} цвет\nВремя: {self.timeName}",
             reply_markup=[
                 [
                     {"text":f"⏲️ Время: {self.timeName}","callback":self.time}
@@ -87,7 +86,7 @@ class Chess(loader.Module):
                     {"text":f"☯ Цвет (хоста): ({self.colorName})","callback":self.color}
                 ],
                 [
-                    {"text":"⤴️ Вернуться","callback":self.backtoinvite}
+                    {"text":"⤴️ Вернуться","callback":self.backToInvite}
                 ]
             ]
             )
@@ -95,17 +94,17 @@ class Chess(loader.Module):
         if call.from_user.id not in self.you_n_me:
             await call.answer("Это не для вас!")
             return
-        await call.edit(text = f"<a href='tg://user?id={self.opp_id}'>{self.opp_name}</a>, вас пригласили сыграть партию шахмат, примите?\n\nТекущие настройки:\nХост играет за {self.colorName} цвет\nВремя: {self.timeName}", 
+        await call.edit(text = f"<a href='tg://user?id={self.opp_id}'>{self.opp_name}</a>, вас пригласили сыграть партию шахмат, примите?\nТекущие настройки:\nХост играет за {self.colorName} цвет\nВремя: {self.timeName}", 
                                reply_markup = [
                                    [
-                                       {"text": "🤝 Принимаю", "callback": self.ans, "args":("y",)},
-                                       {"text": "👎 Нет", "callback": self.ans, "args":("n",)}
+                                       {"text": "Принимаю", "callback": self.ans, "args":("y",)},
+                                       {"text": "Нет", "callback": self.ans, "args":("n",)}
                                    ],
                                    [
-                                       {"text": "⚙️ Настройки", "callback": self.settings}
+                                       {"text": "Настройки", "callback": self.settings}
                                    ],
                                    [
-                                       {"text": "❗ ВАЖНО","action":"answer","show_alert":True,"message":"В игре показаны фигуры в виде ASCII символов, но в тёмной теме фигуры едва различимы как минимум '♕♛'.\n\nДля удобного различия они были заменены на Q(бел) и q(чёрн)",}
+                                       {"text": "ВАЖНО","action":"answer","show_alert":True,"message":"В игре показаны фигуры в виде ASCII символов, но в тёмной теме фигуры едва различимы как минимум '♕♛'.\n\nДля удобного различия они были заменены на Q(бел) и q(чёрн)",}
                                    ]
                                ]
                        )
