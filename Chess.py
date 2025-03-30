@@ -244,6 +244,8 @@ class Chess(loader.Module):
             text = self.sttxt()
             await call.edit(text="Загрузка доски...")
             await asyncio.sleep(0.5)
+            await call.edit(text="[!] Для лучшего различия фигур включите светлую тему!")
+            await asyncio.sleep(2.5)
             await self.LoadBoard(text, call)
         else:
             await call.edit(text="Отклонено.")
