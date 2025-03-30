@@ -77,13 +77,13 @@ class Chess(loader.Module):
             await call.answer("Настройки не для вас!")
             return
         await call.edit(
-            text=f"Настройки этой партии\nХост играет за {self.colorName} цвет\nВремя: {self.timeName}",
+            text=f"[⚙️] Настройки этой партии\n| - > Хост играет за {self.colorName} цвет\n| - > Время: {self.timeName}",
             reply_markup=[
                 [
-                    {"text":f"⏲️ Время: {self.timeName}","callback":self.time}
+                    {"text":f"⏱️ Время: {self.timeName}","callback":self.time}
                 ],
                 [
-                    {"text":f"☯ Цвет (хоста): ({self.colorName})","callback":self.color}
+                    {"text":f"♟️ Цвет (хоста): {self.colorName}","callback":self.color}
                 ],
                 [
                     {"text":"⤴️ Вернуться","callback":self.backToInvite}
@@ -94,7 +94,7 @@ class Chess(loader.Module):
         if call.from_user.id not in self.you_n_me:
             await call.answer("Это не для вас!")
             return
-        await call.edit(text = f"<a href='tg://user?id={self.opp_id}'>{self.opp_name}</a>, вас пригласили сыграть партию шахмат, примите?\nТекущие настройки:\nХост играет за {self.colorName} цвет\nВремя: {self.timeName}", 
+        await call.edit(text = f"<a href='tg://user?id={self.opp_id}'>{self.opp_name}</a>, вас пригласили сыграть партию шахмат, примите?\n-- --\n[⚙️] Текущие настройки:\n| - > • Хост играет за {self.colorName} цвет\n| - > • Время: {self.timeName}", 
                                reply_markup = [
                                    [
                                        {"text": "Принимаю", "callback": self.ans, "args":("y",)},
@@ -114,7 +114,7 @@ class Chess(loader.Module):
             await call.answer("Настройки не для вас!")
             return
         await call.edit(
-            text=f"Настройки этой партии.\nВремя:{self.timeName}",
+            text=f"• Настройки этой партии.\n| - > [⏱️] Время: {self.timeName}",
             reply_markup=[
                 [
                     {"text":"⚡ Блиц","action":"answer","message":"Блиц-Блиц - скорость без границ"}
@@ -136,7 +136,7 @@ class Chess(loader.Module):
                     {"text":"❌ Нет часов", "callback":self.time_handle,"args":(None,"❌ Нет часов",)}
                 ],
                 [
-                    {"text":"⚙️ Обратно к настройкам", "callback":self.settings}
+                    {"text":"⤴️ Обратно к настройкам", "callback":self.settings}
                 ]
             ]
         )
@@ -150,17 +150,17 @@ class Chess(loader.Module):
             await call.answer("Настройки не для вас!")
             return
         await call.edit(
-            text=f"Настройки этой партии.\nХост играет за: {self.colorName} цвет.\nВыберите цвет его фигур",
+            text=f"• Настройки этой партии.\n| - > [♟️] Хост играет за: {self.colorName} цвет.\nВыберите цвет его фигур",
             reply_markup=[
                 [
-                    {"text":"✅ Белые" if self.you_play == "w" else "❌ Белые","callback":self.color_handle,"args":("w","Белый",)},
-                    {"text":"✅ Чёрные" if self.you_play == "b" else "❌ Чёрные","callback":self.color_handle,"args":("b","Чёрный",)}
+                    {"text":"✅ Белые" if self.you_play == "w" else "❌ Белые","callback":self.color_handle,"args":("w","белый",)},
+                    {"text":"✅ Чёрные" if self.you_play == "b" else "❌ Чёрные","callback":self.color_handle,"args":("b","чёрный",)}
                 ],
                 [
-                    {"text":"🎲 Рандом" if not self.you_play else "❌ Рандом", "callback":self.color_handle,"args":(None,"Рандом",)}
+                    {"text":"🎲 Рандом" if not self.you_play else "❌ Рандом", "callback":self.color_handle,"args":(None,"рандом",)}
                 ],
                 [
-                    {"text":"⚙️ Обратно к настройкам", "callback":self.settings}
+                    {"text":"⤴️ Обратно к настройкам", "callback":self.settings}
                 ]
             ]
         )
@@ -207,7 +207,7 @@ class Chess(loader.Module):
             await message.edit("<emoji document_id=5384398004172102616>😈</emoji> Одиночные шахматы? Простите, нет.")
             return
         self.you_n_me = [self.opp_id, self.message.sender_id]
-        await self.inline.form(message = message, text = f"<a href='tg://user?id={self.opp_id}'>{self.opp_name}</a>, вас пригласили сыграть партию шахмат, примите?\n\nТекущие настройки:\nХост играет за {self.colorName} цвет\nВремя: {self.timeName}", 
+        await self.inline.form(message = message, text = f"<a href='tg://user?id={self.opp_id}'>{self.opp_name}</a>, вас пригласили сыграть партию шахмат, примите?\n-- --\n[⚙️] Текущие настройки:\n| - > • Хост играет за {self.colorName} цвет\n| - > • Время: {self.timeName}", 
                                reply_markup = [
                                    [
                                        {"text": "Принимаю", "callback": self.ans, "args":("y",)},
