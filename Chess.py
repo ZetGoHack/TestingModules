@@ -120,20 +120,20 @@ class Chess(loader.Module):
                     {"text":"⚡ Блиц","action":"answer","message":"Блиц-Блиц - скорость без границ"}
                 ],
                 [
-                    {"text":"3 минуты","callback":self.time,"args":(3,"3 минуты",)},
-                    {"text":"5 минут","callback":self.time,"args":(5,"5 минут",)}
+                    {"text":"3 минуты","callback":self.time_handle,"args":(3,"3 минуты",)},
+                    {"text":"5 минут","callback":self.time_handle,"args":(5,"5 минут",)}
                 ],
                 [
                     {"text":"⏱️ Рапид","action":"answer","message":"Обдумай своё поражение"}
                 ],
                 [
-                    {"text":"10 минут","callback":self.time,"args":(10,"10 минут",)},
-                    {"text":"15 минут","callback":self.time,"args":(15,"15 минут",)},
-                    {"text":"30 минут","callback":self.time,"args":(30,"30 минут",)},
-                    {"text":"60 минут","callback":self.time,"args":(60,"60 минут",)}
+                    {"text":"10 минут","callback":self.time_handle,"args":(10,"10 минут",)},
+                    {"text":"15 минут","callback":self.time_handle,"args":(15,"15 минут",)},
+                    {"text":"30 минут","callback":self.time_handle,"args":(30,"30 минут",)},
+                    {"text":"60 минут","callback":self.time_handle,"args":(60,"60 минут",)}
                 ],
                 [
-                    {"text":"❌ Нет часов", "callback":self.time,"args":(None,"❌ Нет часов",)}
+                    {"text":"❌ Нет часов", "callback":self.time_handle,"args":(None,"❌ Нет часов",)}
                 ],
                 [
                     {"text":"⚙️ Обратно к настройкам", "callback":self.settings}
@@ -210,8 +210,8 @@ class Chess(loader.Module):
         await self.inline.form(message = message, text = f"<a href='tg://user?id={self.opp_id}'>{self.opp_name}</a>, вас пригласили сыграть партию шахмат, примите?\n\nТекущие настройки:\nХост играет за {self.colorName} цвет\nВремя: {self.timeName}", 
                                reply_markup = [
                                    [
-                                       {"text": "🤝 Принимаю", "callback": self.ans, "args":("y",)},
-                                       {"text": "👎 Нет", "callback": self.ans, "args":("n",)}
+                                       {"text": "Принимаю", "callback": self.ans, "args":("y",)},
+                                       {"text": "Нет", "callback": self.ans, "args":("n",)}
                                    ],
                                    [
                                        {"text": "⚙️ Настройки", "callback": self.settings}
