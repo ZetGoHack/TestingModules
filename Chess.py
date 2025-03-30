@@ -90,6 +90,7 @@ class Chess(loader.Module):
                 [
                     {"text":"⤴️ Вернуться","callback":self.backtoinvite}
                 ]
+            ]
             )
     async def backToInvite(self,call):
         if call.from_user.id not in self.you_n_me:
@@ -399,7 +400,7 @@ class Chess(loader.Module):
         elif self.Board.is_stalemate():
             self.stalemate = True
         elif self.Board.can_claim_fifty_moves():
-            board.outcome()
+            self.Board.outcome()
             self.fifty = True
         if not self.checkmate and not check and not self.stalemate:
             if self.reverse:
