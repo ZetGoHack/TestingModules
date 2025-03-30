@@ -20,10 +20,9 @@ __version__ = (1,0,0)
 
 # meta developer: @nullmod
 # requires: python-chess
+import asyncio, random, chess, time
 from .. import loader, utils
-import asyncio, random, chess
 from itertools import chain
-
 
 
 
