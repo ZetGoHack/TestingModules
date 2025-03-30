@@ -101,10 +101,10 @@ class Chess(loader.Module):
                                        {"text": "Нет", "callback": self.ans, "args":("n",)}
                                    ],
                                    [
-                                       {"text": "Настройки", "callback": self.settings}
+                                       {"text": "⚙️ Настройки", "callback": self.settings}
                                    ],
                                    [
-                                       {"text": "ВАЖНО","action":"answer","show_alert":True,"message":"В игре показаны фигуры в виде ASCII символов, но в тёмной теме фигуры едва различимы как минимум '♕♛'.\n\nДля удобного различия они были заменены на Q(бел) и q(чёрн)",}
+                                       {"text": "❗ ВАЖНО","action":"answer","show_alert":True,"message":"В игре показаны фигуры в виде ASCII символов, но в тёмной теме фигуры едва различимы как минимум '♕♛'.\n\nДля удобного различия они были заменены на Q(бел) и q(чёрн)",}
                                    ]
                                ]
                        )
