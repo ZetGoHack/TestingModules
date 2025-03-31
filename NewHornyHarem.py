@@ -125,7 +125,7 @@ class HornyHarem(loader.Module):
                             await self.client.send_file(self.id, caption=caption, file=message.media)
                             self.set("catcher_time", int(time.time()))
                 except Exception as e:
-                    logger.error(f"<i>Now you just somebody that I used to know</i>(error while catching waifu Horny): {e}")
+                    logger.error("Ошибка при ловле вайфу(не критично): {e}")
                         
 
 
