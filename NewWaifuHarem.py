@@ -1,4 +1,4 @@
-__version__ = (2,0,"BETA")
+__version__ = (2,0,0)
 #░░░░░░░░░░██░░██░░░░░░
 #░░░░░░░░░████████░░░░░
 #░░░░░░░░░████████░░░░░
@@ -85,11 +85,8 @@ class WaifuHarem(loader.Module):
     ########loop########
     @loader.loop(interval=1, autostart=True)
     async def check_loop(self):
-        #await self.client.send_message("me",f"Запустились\n{self.get('ABonud_timeG')} {self.config['ab']}")
         if self.config["ab"]:
-            #await self.client.send_message("me",f"Включены\n{self.get('ABonus_time')} {self.config['ab']} след блок: {not self.get('ABonus_time')} или {(time.time() - self.get('ABonus_time')) >= 3600*4} должны дать {(not self.get('ABonus_time') or (time.time() - self.get('ABonus_time')) >= 3600*4)}")
             if (not self.get("ABonus_time") or (time.time() - self.get("ABonus_time")) >= 3600*4):
-                #await self.client.send_message("me", f"работаем-работаем {self.get('ABonud_timeG')}")
                 await self.autobonus()
                 
     ########loop########
@@ -98,7 +95,6 @@ class WaifuHarem(loader.Module):
 
     ########Заработок########
     async def autobonus(self):
-        #await self.client.send_message("me","начало пиздеца")
         wait_boost = False
         async with self._client.conversation(self.id) as conv:
             try:
