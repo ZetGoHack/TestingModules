@@ -136,7 +136,8 @@ class Chess(loader.Module):
         self.timer = False
         if self.Timer:
             self.Timer = None
-        self.time_message = None
+        if hasattr(self,"time_message"):
+            del self.time_message
 
     #####Переменные#####
 
@@ -341,6 +342,7 @@ class Chess(loader.Module):
         if call.from_user.id not in self.you_n_me:
             await call.answer("Партия не ваша!")
             return
+        await self.Timer.start()    
         self.time_message = call
         self.TimerLoop.start()
             
@@ -356,7 +358,7 @@ class Chess(loader.Module):
                 await self.inline.form(message=m,text=f"Таймер:\nБелые: {await self.Timer.white_time()}\nЧёрные: {await self.Timer.black_time()}\nНачнём?",reply_markup=[{"text":"Начать партию", "callback":self.start_timer}])
             
         elif self.Timer:
-            self.time_message.edit(text=f"Таймер:\nБелые: {await self.Timer.white_time()}\nЧёрные: {await self.Timer.black_time()}\n Остановлен! {self.reason}")
+            await self.time_message.edit(text=f"Таймер:\nБелые: {await self.Timer.white_time()}\nЧёрные: {await self.Timer.black_time()}\n Остановлен! {self.reason}")
             self.TimerLoop.stop()
         for row in range(1,9):
             rows = []
