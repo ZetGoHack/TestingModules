@@ -249,7 +249,7 @@ class Chess(loader.Module):
 
     @loader.loop(interval=1)
     async def TimerLoop(self):
-        await self.client.send_message(self.message.chat_id,f"я в цикле. класс таймера: {self.Timer}, должно быть тру: {self.timer}, секунд: {self.pTime}, название: {self.timeName}, существует ли уже сообщение: {hasattr(self,"time_message")}")
+        await self.client.send_message(self.message.chat_id,f"я в цикле. класс таймера: {self.Timer}, должно быть тру: {self.timer}, секунд: {self.pTime}, название: {self.timeName}, существует ли уже сообщение: {hasattr(self,'time_message')}")
         await self.time_message.edit(text=f"Таймер:\nБелые: {await self.Timer.white_time()}\nЧёрные: {await self.Timer.black_time()}")
         
 
@@ -343,7 +343,7 @@ class Chess(loader.Module):
         if call.from_user.id not in self.you_n_me:
             await call.answer("Партия не ваша!")
             return
-        await self.client.send_message(self.message.chat_id,f"вроде начало класс таймера: {self.Timer}, должно быть тру: {self.timer}, секунд: {self.pTime}, название: {self.timeName}, существует ли уже сообщение: {hasattr(self,"time_message")}")
+        await self.client.send_message(self.message.chat_id,f"вроде начало класс таймера: {self.Timer}, должно быть тру: {self.timer}, секунд: {self.pTime}, название: {self.timeName}, существует ли уже сообщение: {hasattr(self,'time_message')}")
         await self.Timer.start()    
         self.time_message = call
         self.TimerLoop.start()
@@ -355,9 +355,9 @@ class Chess(loader.Module):
     async def LoadBoard(self, text, call):
         #board = str(self.Board).split("\n")
         if self.timer:
-            await self.client.send_message(self.message.chat_id,f"таймер это тру. класс таймера: {self.Timer}, должно быть тру: {self.timer}, секунд: {self.pTime}, название: {self.timeName}, существует ли уже сообщение: {hasattr(self,"time_message")}")
+            await self.client.send_message(self.message.chat_id,f"таймер это тру. класс таймера: {self.Timer}, должно быть тру: {self.timer}, секунд: {self.pTime}, название: {self.timeName}, существует ли уже сообщение: {hasattr(self,'time_message')}")
             if not hasattr(self,'time_message'):
-                await self.client.send_message(self.message.chat_id,f"сообщения таймера не существует сосо. класс таймера: {self.Timer}, должно быть тру: {self.timer}, секунд: {self.pTime}, название: {self.timeName}, существует ли уже сообщение: {hasattr(self,"time_message")}")
+                await self.client.send_message(self.message.chat_id,f"сообщения таймера не существует сосо. класс таймера: {self.Timer}, должно быть тру: {self.timer}, секунд: {self.pTime}, название: {self.timeName}, существует ли уже сообщение: {hasattr(self,'time_message')}")
                 m = await self.client.send_message(self.message_chat,"Настройка таймера...")
                 await self.inline.form(message=m,text=f"Таймер:\nБелые: {await self.Timer.white_time()}\nЧёрные: {await self.Timer.black_time()}\nНачнём?",reply_markup=[{"text":"Начать партию", "callback":self.start_timer}])
             
