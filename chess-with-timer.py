@@ -248,11 +248,6 @@ class Chess(loader.Module):
         self.you_play = color
         await self.color(call)
         #####Настройки#####
-
-    @loader.loop(interval=1)
-    async def TimerLoop(self):
-        if self.loopState:
-            await self.time_message.edit(text=f"Белые: {int(await self.Timer.white_time())}\nЧёрные: {int(await self.Timer.black_time())}")
         
 
     @loader.command() 
@@ -348,6 +343,12 @@ class Chess(loader.Module):
         await self.Timer.start()    
         self.time_message = call
         self.TimerLoop.start()
+        self.loopState = True
+
+    @loader.loop(interval=1)
+    async def TimerLoop(self):
+        if self.loopState:
+            await self.time_message.edit(text=f"Белые: {int(await self.Timer.white_time())}\nЧёрные: {int(await self.Timer.black_time())}")
             
     #####Таймер#####
 
