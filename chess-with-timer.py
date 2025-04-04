@@ -114,6 +114,7 @@ class Chess(loader.Module):
         self.you_play = None
         self.timer = False
         self.Timer = None
+        self.loopState = False
 
     async def purgeSelf(self):
         self.board = {}
@@ -138,6 +139,7 @@ class Chess(loader.Module):
             self.Timer = None
         if hasattr(self,"time_message"):
             del self.time_message
+        self.loopState = False
 
     #####Переменные#####
 
@@ -249,8 +251,8 @@ class Chess(loader.Module):
 
     @loader.loop(interval=1)
     async def TimerLoop(self):
-        await self.client.send_message(self.message.chat_id,f"я в цикле. класс таймера: {self.Timer}, должно быть тру: {self.timer}, секунд: {self.pTime}, название: {self.timeName}, существует ли уже сообщение: {hasattr(self,'time_message')}")
-        await self.time_message.edit(text=f"Таймер:\nБелые: {await self.Timer.white_time()}\nЧёрные: {await self.Timer.black_time()}")
+        if self.loopState:
+            await self.time_message.edit(text=f"Белые: {int(await self.Timer.white_time())}\nЧёрные: {int(await self.Timer.black_time())}")
         
 
     @loader.command() 
@@ -343,7 +345,6 @@ class Chess(loader.Module):
         if call.from_user.id not in self.you_n_me:
             await call.answer("Партия не ваша!")
             return
-        await self.client.send_message(self.message.chat_id,f"вроде начало класс таймера: {self.Timer}, должно быть тру: {self.timer}, секунд: {self.pTime}, название: {self.timeName}, существует ли уже сообщение: {hasattr(self,'time_message')}")
         await self.Timer.start()    
         self.time_message = call
         self.TimerLoop.start()
@@ -355,15 +356,13 @@ class Chess(loader.Module):
     async def LoadBoard(self, text, call):
         #board = str(self.Board).split("\n")
         if self.timer:
-            await self.client.send_message(self.message.chat_id,f"таймер это тру. класс таймера: {self.Timer}, должно быть тру: {self.timer}, секунд: {self.pTime}, название: {self.timeName}, существует ли уже сообщение: {hasattr(self,'time_message')}")
             if not hasattr(self,'time_message'):
-                await self.client.send_message(self.message.chat_id,f"сообщения таймера не существует сосо. класс таймера: {self.Timer}, должно быть тру: {self.timer}, секунд: {self.pTime}, название: {self.timeName}, существует ли уже сообщение: {hasattr(self,'time_message')}")
                 m = await self.client.send_message(self.message_chat,"Настройка таймера...")
-                await self.inline.form(message=m,text=f"Таймер:\nБелые: {await self.Timer.white_time()}\nЧёрные: {await self.Timer.black_time()}\nНачнём?",reply_markup=[{"text":"Начать партию", "callback":self.start_timer}])
+                await self.inline.form(message=m,text=f"Белые: {await self.Timer.white_time()}\nЧёрные: {await self.Timer.black_time()}\nНачнём?",reply_markup=[{"text":"Начать партию", "callback":self.start_timer}])
             
         elif self.Timer:
-            await self.time_message.edit(text=f"Таймер:\nБелые: {await self.Timer.white_time()}\nЧёрные: {await self.Timer.black_time()}\n Остановлен! {self.reason}")
-            self.TimerLoop.stop()
+            self.loopState = False
+            await self.time_message.edit(text=f"Белые: {int(await self.Timer.white_time())}\nЧёрные: {int(await self.Timer.black_time())}\n Остановлен по причине: {self.reason}")
         for row in range(1,9):
             rows = []
             for col in "ABCDEFGH":
