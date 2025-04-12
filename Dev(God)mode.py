@@ -46,7 +46,7 @@ class devmode(loader.Module):
     
     async def setMenu(self,message=None,module=None):
         if module:#set reply markup for module
-            raw_vars,db = await self.getRaw(module)
+            raw_vars,db = await self.getRaw(module,alldb)
             filtered = await self.filter(raw_vars)
             await m.edit(f"filtered: {filtered}\n\ndb: {bd}")
             
@@ -54,7 +54,7 @@ class devmode(loader.Module):
             await m.edit(f"test: {41+1}")
             
     
-    async def getRaw(self,module):
+    async def getRaw(self,module,alldb):
         module = self.lookup(module).name#дб регистрозависимая сосо
         return dir(self.lookup(module)), next((n for n in alldb if n[0] == module), None)
         
