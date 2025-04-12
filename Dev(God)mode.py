@@ -23,7 +23,7 @@ from .. import loader, utils
 class devmode(loader.Module):
     """Модуль для исследования, просмотра и изменения переменных(датабаза, переменные класса) других модулей"""
     strings = {
-        "name": "Dev(god)mode",
+        "name": "Devmode",
         "notExist": " module does not exist"
     }
     strings_ru = {
@@ -45,13 +45,13 @@ class devmode(loader.Module):
             await self.setMenu(message)
     
     async def setMenu(self,message=None,module=None):
-        if module:#set reply markup for module
+        if module:#set reply markup for the module
             raw_vars,db = await self.getRaw(module,alldb)
             filtered = await self.filter(raw_vars)
-            await m.edit(f"filtered: {filtered}\n\ndb: {bd}")
+            await message.edit(f"filtered: {filtered}\n\ndb: {bd}")
             
-        else:#set reply markup for list of modules
-            await m.edit(f"test: {41+1}")
+        else:#set reply markup for the list of modules
+            await message.edit(f"test: {41+1}")
             
     
     async def getRaw(self,module,alldb):
@@ -59,6 +59,8 @@ class devmode(loader.Module):
         return dir(self.lookup(module)), next((n for n in alldb if n[0] == module), None)
         
     async def filter(self,vars):
+        def basicVar(val):
+            return isinstance(val, (int, float, str, bool, list, dict, tuple, type(None)))
         filtered = {
             "readableVars": {},
             "externalVars": {},
