@@ -37,7 +37,7 @@ class devmode(loader.Module):
         """[module/`empty`] open menu."""
         args = utils.get_args_raw(message)
         if args:
-            if not self.lookup(args):#self.allmodules.lookup(args):
+            if not self.lookup(args):
                 await message.edit("<emoji document_id=5210952531676504517>🚫</emoji> "+args+self.strings("notExist"))
                 return
             await self.setMenu(message,args)
@@ -45,18 +45,19 @@ class devmode(loader.Module):
             await self.setMenu(message)
     
     async def setMenu(self,message=None,module=None):
+        alldb = list(self._db.items())
         if module:#set reply markup for the module
             raw_vars,db = await self.getRaw(module,alldb)
             filtered = await self.filter(raw_vars)
-            await message.edit(f"filtered: {filtered}\n\ndb: {bd}")
+            await message.edit(f"filtered: {filtered}\n\ndb: {db}")
             
         else:#set reply markup for the list of modules
-            await message.edit(f"test: {41+1}")
+            await message.edit(f"test: {41+1/(2**2)*2/(1*3*(1+1)+2)}")
             
     
     async def getRaw(self,module,alldb):
         module = self.lookup(module).name#дб регистрозависимая сосо
-        return dir(self.lookup(module)), next((n for n in alldb if n[0] == module), None)
+        return self.lookup(module), next((n for n in alldb if n[0] == module), None)
         
     async def filter(self,vars):
         def basicVar(val):
@@ -65,17 +66,17 @@ class devmode(loader.Module):
             "readableVars": {},
             "externalVars": {},
             "func": {},
-            "config": {},
+            "config": {},    
             "hikka": {},
         }
-        for key,val in data.items():
+        for key,val in vars.__dict__.items():
             if key == "config" and isinstance(val, dict):
-                result["config"] = val
+                filtered["config"] = val
                 continue
             if "db" in key and not isinstance(val, (str, int)):
                 continue
             if callable(val):
-                filtered["functions"][key] = val
+                filtered["func"][key] = val
                 continue
             if basicVar(val):
                 filtered["readableVars"][key] = val
