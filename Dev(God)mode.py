@@ -46,8 +46,9 @@ class devmode(loader.Module):
     
     async def setMenu(self,m=None,module=None):
         if module:
-            db = self.lookup(module)._db.items#allmodules.lookup(args)._db.items
-            raw_vars = None
-            await m.edit(f"db: {db}")
+            alldb = list(self._db.items())
+            db = next((n for n in alldb if n[0] == module), None)
+            raw_vars = self.lookup(module)
+            await m.edit(f"db: {db}\nraw: {raw_vars}")
         else:
             await m.edit(f"test: {41+1}")
