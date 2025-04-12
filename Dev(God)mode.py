@@ -24,32 +24,59 @@ class devmode(loader.Module):
     """Модуль для исследования, просмотра и изменения переменных(датабаза, переменные класса) других модулей"""
     strings = {
         "name": "Dev(god)mode",
-        "notExist": " module is not exist."
+        "notExist": " module does not exist"
     }
     strings_ru = {
-        "notExist":" не существует."
+        "notExist":" не существует"
     }
     
     @loader.command(
-    ru_doc="[Название модуля/Пусто] открыть меню."
+    ru_doc="[Название модуля/Пусто] открыть меню"
     )
-    async def inspect(self,m):
+    async def inspect(self,message):
         """[module/`empty`] open menu."""
-        args = utils.get_args_raw(m)
+        args = utils.get_args_raw(message)
         if args:
             if not self.lookup(args):#self.allmodules.lookup(args):
-                await m.edit(args+self.strings("notExist"))
+                await message.edit("<emoji document_id=5210952531676504517>🚫</emoji> "+args+self.strings("notExist"))
                 return
-            await self.setMenu(m,args)
+            await self.setMenu(message,args)
         else:
-            await self.setMenu(m)
+            await self.setMenu(message)
     
-    async def setMenu(self,m=None,module=None):
-        alldb = list(self._db.items())
-        if module:
-            raw_vars = self.lookup(module).__dir__
-            module = self.lookup(module).name#дб регистрозависимая сосо
-            db = next((n for n in alldb if n[0] == module), None)
-            await m.edit(f"db: {db}\nraw: {raw_vars}")
-        else:
+    async def setMenu(self,message=None,module=None):
+        if module:#set reply markup for module
+            raw_vars,db = await self.getRaw(module)
+            filtered = await self.filter(raw_vars)
+            await m.edit(f"filtered: {filtered}\n\ndb: {bd}")
+            
+        else:#set reply markup for list of modules
             await m.edit(f"test: {41+1}")
+            
+    
+    async def getRaw(self,module):
+        module = self.lookup(module).name#дб регистрозависимая сосо
+        return dir(self.lookup(module)), next((n for n in alldb if n[0] == module), None)
+        
+    async def filter(self,vars):
+        filtered = {
+            "readableVars": {},
+            "externalVars": {},
+            "func": {},
+            "config": {},
+            "hikka": {},
+        }
+        for key,val in data.items():
+            if key == "config" and isinstance(val, dict):
+                result["config"] = val
+                continue
+            if "db" in key and not isinstance(val, (str, int)):
+                continue
+            if callable(val):
+                filtered["functions"][key] = val
+                continue
+            if basicVar(val):
+                filtered["readableVars"][key] = val
+            else:
+                filtered["externalVars"][key] = val
+        return filtered
