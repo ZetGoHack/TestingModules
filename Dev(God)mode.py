@@ -82,6 +82,8 @@ def filter(vars):
         "module_func": {},
         "idkWhatIsThis": {},    
     }
+    if not vars:
+        return None
     for key,val in vars.__dict__.items():               
         if key == "config" and isinstance(val, dict):
             filtered["config"] = val
@@ -122,6 +124,7 @@ def filter(vars):
 
 
 from .. import loader, utils
+import html
 @loader.tds
 class devmode(loader.Module):
     """Модуль для исследования, просмотра и изменения переменных(датабаза, переменные класса) других модулей"""
@@ -129,25 +132,27 @@ class devmode(loader.Module):
         "name": "DevMode",
         "notExist": "<emoji document_id=5210952531676504517>🚫</emoji> {args} module does not exist",
         "list_text": "List of modules",
+        "back": "◀ Back",
         "close_btn": "🔻 Close"
     }
     strings_ru = {
         "notExist": "<emoji document_id=5210952531676504517>🚫</emoji> Модуль {args} не существует",
         "list_text": "Список модулец",
+        "back": "◀ Назад",
         "close_btn": "🔻 Закрыть"
     }
     
     @loader.command(
     ru_doc="[Название модуля/Пусто] открыть меню."
     )
-    async def inspect(self,message):
+    async def inspect(self,message,args=None,page=0):
         """[module/`empty`] open menu."""
-        args = utils.get_args_raw(message)
-        if args:
-            if not self.lookup(args):
-                await utils.answer(message, self.strings("notExist").format(args))
+        arg = args if args else utils.get_args_raw(message)
+        if arg:
+            if not self.lookup(arg) and not next((n for n in list(self._db.items()) if n[0] == arg), None):
+                await utils.answer(message, self.strings("notExist").format(args=arg),reply_markup={"text":f"{self.strings('back')}","callback": self.setMenu, "args": (None,page,)})
                 return
-            await self.setMenu(message,args)
+            await self.setMenu(message,arg,page)
         else:
             await self.setMenu(message)
 
@@ -155,31 +160,34 @@ class devmode(loader.Module):
     async def setMenu(self,message,module=None,page=0):
         alldb = list(self._db.items())
         if module:#set reply markup for the module
-            raw_vars,db = await self.getRaw(module,alldb)
+            lookup = self.lookup(module)
+            raw_vars, db = (
+                lookup if lookup else None,next((n for n in alldb if n[0].lower() == module.lower()), None)
+            )
             filtered = filter(raw_vars)
-            await utils.answer(message, f"filtered:\n {filtered}\n\ndb: {db} ")
-            
+            await utils.answer(message, f"<pre><code class='language-{module}'>{html.escape(str(filtered))}</code></pre>\n\n<pre><code class='language-db'>{html.escape(str(db))}</code></pre>",reply_markup={"text":f"{self.strings('back')}","callback": self.setMenu,"args":(None,page,)})
+           
         else:#set reply markup for the list of modules
-            await utils.answer(message, self.strings("list_text"), reply_markup=self.generate_info_all_markup(page))
+            await utils.answer(message, self.strings("list_text"), reply_markup=self.generate_info_all_markup(3,4,page))
             
             
     ##### Генератор #####
 
-    def generate_info_all_markup(self, page_num=0):
+    def generate_info_all_markup(self,x,y,page_num=0):
         """Generate markup for inline form with 3x3 grid and navigation buttons"""
         items = list(self._db.items())
         markup = [[]]
-        items_per_page = 9
+        items_per_page = x*y
         num_pages = len(items) // items_per_page + (1 if len(items) % items_per_page != 0 else 0)
 
         page_items = items[page_num * items_per_page: (page_num + 1) * items_per_page]
         for item in page_items:
-            if len(markup[-1]) == 3:
+            if len(markup[-1]) == x:
                 markup.append([])
             markup[-1].append({
-                'text': f'{item[0]}',
-                'callback': self.setMenu,
-                'args': (item, page_num,),
+                'text': f'{item[0]}' if self.lookup(item[0]) else f'[N.E.] {item[0]}',
+                'callback': self.inspect,
+                'args': (item[0],page_num),
             })
 
         nav_markup = []
@@ -257,9 +265,4 @@ class devmode(loader.Module):
     
     async def change_page(self, call, page_num):
         """Change to the specified page"""
-        await call.edit(self.strings("list_text"), reply_markup=self.generate_info_all_markup(page_num))
-    
-    
-    async def getRaw(self,module,alldb):
-        module = self.lookup(module).name#дб регистрозависимая сосо
-        return self.lookup(module), next((n for n in alldb if n[0] == module), None)
+        await call.edit(self.strings("list_text"), reply_markup=self.generate_info_all_markup(3,4,page_num))
