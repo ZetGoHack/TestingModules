@@ -33,7 +33,7 @@
 
 ##### Фильтр #####
 
-def filter(vars):
+def _filter(vars):
     def basicVar(val):
         return isinstance(val, (int, float, str, bool, list, dict, tuple, type(None)))
     def fromWhichLib(val):
@@ -124,7 +124,7 @@ def filter(vars):
 
 
 from .. import loader, utils
-import html
+import html, io
 @loader.tds
 class devmode(loader.Module):
     """Модуль для исследования, просмотра и изменения переменных(датабаза, переменные класса) других модулей"""
@@ -132,12 +132,16 @@ class devmode(loader.Module):
         "name": "DevMode",
         "notExist": "<emoji document_id=5210952531676504517>🚫</emoji> {args} module does not exist",
         "list_text": "List of modules",
+        "vars_text": "[{module}] List of variables",
+        "db_text": "[{module}] DataBase",
         "back": "◀ Back",
         "close_btn": "🔻 Close"
     }
     strings_ru = {
         "notExist": "<emoji document_id=5210952531676504517>🚫</emoji> Модуль {args} не существует",
-        "list_text": "Список модулец",
+        "list_text": "Список модулей",
+        "vars_text": "[{module}] Список содержимого",
+        "db_text": "[{module}] Датабаза",
         "back": "◀ Назад",
         "close_btn": "🔻 Закрыть"
     }
@@ -164,20 +168,38 @@ class devmode(loader.Module):
             raw_vars, db = (
                 lookup if lookup else None,next((n for n in alldb if n[0].lower() == module.lower()), None)
             )
-            filtered = filter(raw_vars)
-            await utils.answer(message, f"<pre><code class='language-{module}'>{html.escape(str(filtered))}</code></pre>\n\n<pre><code class='language-db'>{html.escape(str(db))}</code></pre>",reply_markup={"text":f"{self.strings('back')}","callback": self.setMenu,"args":(None,page,)})
+            filtered = _filter(raw_vars)
+            await utils.answer(message, f"{module}",reply_markup=[
+                    [
+                        {"text":"📄 Module vars","callback":self.showVars, "args": (module,)},
+                        {"text":"📁 DB","callback":self.showDB, "args": (module,)}
+                    ],
+                    [
+                        {"text":f"{self.strings('back')}","callback": self.setMenu,"args":(None,page,)
+                        }
+                    ]
+                ]
+            ) #<pre><code class='language-{module}'>{html.escape(str(filtered))}</code></pre>\n\n<pre><code class='language-db'>{html.escape(str(db))}</code></pre>
            
         else:#set reply markup for the list of modules
-            await utils.answer(message, self.strings("list_text"), reply_markup=self.generate_info_all_markup(3,4,page))
+            await utils.answer(message, self.strings("list_text"), reply_markup=self.generate_info_all_markup(0,list(self._db.items()),3,4,page))
             
+    async def showVars(self,call,module):
+        mode = 2
+        await call.edit(self.strings("vars_text").format(module=module), reply_markup=self.generate_info_all_markup(mode,self.lookup(module).__dict__,3,4))
+    async def showDB(self,call,module):
+        mode = 3
+        await call.edit(self.strings("db_text").format(module=module), reply_markup=self.generate_info_all_markup(mode,next((n[1] for n in list(self._db.items()) if n[0].lower() == module.lower()), None),2,5))
             
     ##### Генератор #####
 
-    def generate_info_all_markup(self,x,y,page_num=0):
+    def generate_info_all_markup(self,mode,items,x,y,page_num=0):
         """Generate markup for inline form with 3x3 grid and navigation buttons"""
-        items = list(self._db.items())
         markup = [[]]
         items_per_page = x*y
+        if items == False:
+            markup[0].append({"text":f"{self.strings('back')}","callback": self.setMenu,"args":(None,page_num,)})
+            return markup
         num_pages = len(items) // items_per_page + (1 if len(items) % items_per_page != 0 else 0)
 
         page_items = items[page_num * items_per_page: (page_num + 1) * items_per_page]
@@ -185,7 +207,7 @@ class devmode(loader.Module):
             if len(markup[-1]) == x:
                 markup.append([])
             markup[-1].append({
-                'text': f'{item[0]}' if self.lookup(item[0]) else f'[N.E.] {item[0]}',
+                'text': f'{item[0]}' if self.lookup(item[0]) else f'[{item[0]}]',
                 'callback': self.inspect,
                 'args': (item[0],page_num),
             })
@@ -194,7 +216,7 @@ class devmode(loader.Module):
         if page_num > 0:
             nav_markup.extend([
             {
-                'text': '⇤',
+                'text': '⇤' if page_num != 1 else ' ',
                 'callback': self.change_page,
                 'args': [0],
             },
@@ -229,7 +251,7 @@ class devmode(loader.Module):
                 'args': [page_num + 1],
             },
             {
-                'text': '⇥',
+                'text': '⇥' if page_num != num_pages -2 else ' ',
                 'callback': self.change_page,
                 'args': [num_pages - 1],
             }
@@ -263,6 +285,25 @@ class devmode(loader.Module):
         
     ##### Генератор #####
     
-    async def change_page(self, call, page_num):
+    async def change_page(self, call, page_num, mode, module=None):
         """Change to the specified page"""
-        await call.edit(self.strings("list_text"), reply_markup=self.generate_info_all_markup(3,4,page_num))
+        if mode == 0:
+            await call.edit(self.strings("list_text"), reply_markup=self.generate_info_all_markup(mode,list(self._db.items()),3,4,page_num))
+        if mode == 1:
+            pass
+        if mode == 2:
+            await call.edit(self.strings("vars_text").format(module=module), reply_markup=self.generate_info_all_markup(mode,list(self.lookup(module).__dict__.items()),3,4,page_num))
+        if mode == 3:
+            await call.edit(self.strings("db_text").format(module=module), reply_markup=self.generate_info_all_markup(mode,next((n[1] for n in list(self._db.items()) if n[0].lower() == module.lower()), None),3,4,page_num))
+            
+            
+            
+            
+    #####Backup#####
+    backup = io.BytesIO(json.dumps(self._db).encode())
+            backup.name = (
+                f"hikka-db-backup-{datetime.datetime.now():%d-%m-%Y-%H-%M}.json"
+            )
+
+            await self._client.send_file(self._backup_channel, backup)
+            self.set("last_backup", round(time.time()))
