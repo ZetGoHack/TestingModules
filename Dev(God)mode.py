@@ -182,29 +182,28 @@ class devmode(loader.Module):
             ) #<pre><code class='language-{module}'>{html.escape(str(filtered))}</code></pre>\n\n<pre><code class='language-db'>{html.escape(str(db))}</code></pre>
            
         else:#set reply markup for the list of modules
-            await utils.answer(message, self.strings("list_text"), reply_markup=self.generate_info_all_markup(0,list(self._db.items()),3,4,page))
+            await utils.answer(message, self.strings("list_text"), reply_markup=self.generate_info_all_markup(page))
             
     async def showVars(self,call,module):
         mode = 2
-        await call.edit(self.strings("vars_text").format(module=module), reply_markup=self.generate_info_all_markup(mode,self.lookup(module).__dict__,3,4))
+        await call.edit(self.strings("vars_text").format(module=module), reply_markup="")
+        
     async def showDB(self,call,module):
         mode = 3
-        await call.edit(self.strings("db_text").format(module=module), reply_markup=self.generate_info_all_markup(mode,next((n[1] for n in list(self._db.items()) if n[0].lower() == module.lower()), None),2,5))
+        await call.edit(self.strings("db_text").format(module=module), reply_markup="")
             
     ##### Генератор #####
 
-    def generate_info_all_markup(self,mode,items,x,y,page_num=0):
+    def generate_info_all_markup(self,page_num=0):
         """Generate markup for inline form with 3x3 grid and navigation buttons"""
+        items = list(self._db.items())
         markup = [[]]
-        items_per_page = x*y
-        if items == False:
-            markup[0].append({"text":f"{self.strings('back')}","callback": self.setMenu,"args":(None,page_num,)})
-            return markup
+        items_per_page = 3*4
         num_pages = len(items) // items_per_page + (1 if len(items) % items_per_page != 0 else 0)
 
         page_items = items[page_num * items_per_page: (page_num + 1) * items_per_page]
         for item in page_items:
-            if len(markup[-1]) == x:
+            if len(markup[-1]) == 3:
                 markup.append([])
             markup[-1].append({
                 'text': f'{item[0]}' if self.lookup(item[0]) else f'[{item[0]}]',
@@ -285,25 +284,13 @@ class devmode(loader.Module):
         
     ##### Генератор #####
     
-    async def change_page(self, call, page_num, mode, module=None):
+    async def change_page(self, call, page_num, mode=0):
         """Change to the specified page"""
         if mode == 0:
-            await call.edit(self.strings("list_text"), reply_markup=self.generate_info_all_markup(mode,list(self._db.items()),3,4,page_num))
+            await call.edit(self.strings("list_text"), reply_markup=self.generate_info_all_markup(page_num))
         if mode == 1:
             pass
         if mode == 2:
             await call.edit(self.strings("vars_text").format(module=module), reply_markup=self.generate_info_all_markup(mode,list(self.lookup(module).__dict__.items()),3,4,page_num))
         if mode == 3:
             await call.edit(self.strings("db_text").format(module=module), reply_markup=self.generate_info_all_markup(mode,next((n[1] for n in list(self._db.items()) if n[0].lower() == module.lower()), None),3,4,page_num))
-            
-            
-            
-            
-    #####Backup#####
-    backup = io.BytesIO(json.dumps(self._db).encode())
-            backup.name = (
-                f"hikka-db-backup-{datetime.datetime.now():%d-%m-%Y-%H-%M}.json"
-            )
-
-            await self._client.send_file(self._backup_channel, backup)
-            self.set("last_backup", round(time.time()))
