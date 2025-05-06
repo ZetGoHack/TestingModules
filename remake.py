@@ -22,12 +22,25 @@
 from .. import loader
 
 def generator(
-    rows: int, # Л
-    columns: int, # Е
-    *buttons: dict, # Н
-    navigation: False = bool, # Ь
-    back_to: None = dict # !
-):
+    rows: int,
+    columns: int,
+    *buttons: dict,
+    navigation: bool = False,
+    back_to: dict = None
+) -> list: 
+    """# Генератор списка кнопок
+Принимает размер сетки кнопок, сами кнопки, поддерживает дополнения списка кнопок навигацией и кнопкой назад,
+
+**Принимает:**
+- **rows:** `int <= 8`
+- **columns:** `int | rows * columns <= 100`
+- **buttons**: `[{'text':...,},...,{'text':...,}]`
+- **navigation**: `bool`
+- **back_to**: `dict`
+
+**Возвращает:** 
+- `list`(reply_markup)
+"""
     pass
 
 def buttons():
