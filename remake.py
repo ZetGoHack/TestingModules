@@ -42,8 +42,16 @@ def generator(
 - `list`(reply_markup)
 """
     pass
+    reply_markup = []
 
-def buttons():
+
+def buttons(
+    texts: list,
+    types: list,
+    contains: list,
+    subtypes: list,
+    subcont: list
+    ):
     pass
 
 @loader.tds
