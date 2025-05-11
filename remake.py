@@ -63,6 +63,10 @@ def _generator(
         reply_markup.append(_nav_generator(page, page_count, page_func))
     if back_to:
         reply_markup.append([back_to])
+    reply_markup.append({
+        'text': module.strings['close'],
+        'action': 'close'
+    })
     return reply_markup
 
 def _nav_generator(page, page_count, page_func):
@@ -143,13 +147,15 @@ class debugger(loader.Module):
         'name': 'debugger',
         'main': 'List of modules',
         'module': '[{module}] List of variables',
-        'back': '◀ Back'
+        'back': '◀ Back',
+        'close': '"🔻 Close'
     }
 
     strings_ru = {
         'main': 'Список модулей',
         'module': '[{module}] Список содержимого',
-        'back': '◀ Назад'
+        'back': '◀ Назад',
+        'close': '🔻 Закрыть'
     }
     async def client_ready(self):
         global module
@@ -164,7 +170,7 @@ class debugger(loader.Module):
     async def _debugger(self, call, page=0):
         await utils.answer(call, self.strings['main'], reply_markup=self._generate_main_list(page))
 
-    async def _module(self, call):
+    async def _module(self, call, item, is_installed):
         pass
 
     def _generate_main_list(self, page=0):
@@ -173,12 +179,12 @@ class debugger(loader.Module):
         for item in items:
             buttons.append({
                 'text': f'{item[0]}' if self.lookup(item[0]) else f'[{item[0]}]',
-                'callback': self._generate_module_list,
-                'args': (item[0],)
+                'callback': self._module,
+                'args': (item[0], True if self.lookup(item[0]) else False)
             })
         return _generator(3, 4, buttons, page, page_func=self._debugger)
         
-    def _generate_module_list(self, call, page):
+    def _generate_module_list(self, page=0):
         back_to = {
             'text': self.strings['back'],
             'callback': self._debugger,
