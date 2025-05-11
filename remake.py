@@ -1,10 +1,4 @@
-__version__ = ("'","'","'")
-# ░░░███░░░░░░░███░███
-# ░░░░░█░░░░░░░█░░░█░█
-# ░░░░█░░░███░░█░█░█░█
-# ░░░█░░░░░░░░░█░█░█░█
-# ░░░███░░░░░░░███░███
-# H:Mods Team [💎]
+__version__ = (0,1,1)
 (
 #                     ⚠️⚠️⚠️                    #
 #
@@ -15,6 +9,7 @@ __version__ = ("'","'","'")
 
 #                     ⚠️⚠️⚠️                    #
 )
+# H:Mods Team [💎]
 # meta developer: @nullmod
 
 from .. import loader, utils
@@ -25,7 +20,7 @@ def _generator(
     rows: int,
     columns: int,
     buttons: list,
-    page: int = -1,
+    page: int = 0,
     page_func: Callable = None,
     back_to: dict = None
 ): 
@@ -43,9 +38,12 @@ def _generator(
 **Возвращает:** 
 - `list`(reply_markup)
     """
+    if rows < 1 or columns < 1 or rows*columns > 100:
+        raise ValueError("rows*columns должны быть между 1 и 100")
     per_page = rows * columns
     on_page = buttons
     reply_markup = []
+    nav = False
     if len(buttons) > per_page:
         page_count = len(buttons) // per_page + (
                 1 if len(buttons) % per_page != 0 else 0
@@ -149,7 +147,7 @@ class debugger(loader.Module):
         'main': 'List of modules',
         'module': '[{module}] List of variables',
         'back': '◀ Back',
-        'close': '"🔻 Close'
+        'close': '🔻 Close'
     }
 
     strings_ru = {
@@ -172,13 +170,13 @@ class debugger(loader.Module):
         await utils.answer(call, self.strings['main'], reply_markup=self._generate_main_list(page))
 
     async def _module(self, call, item, is_installed):
-        pass
+        pass # TODO
 
     async def _vars(self, call, item, page=0):
-        pass
+        pass # TODO
 
     async def _db(self, call, item, page=0):
-        pass
+        pass # TODO
 
     def _generate_main_list(self, page=0):
         buttons = []
@@ -199,10 +197,10 @@ class debugger(loader.Module):
         }
 
     def _generate_module_vars(self, page=0):
-        pass
+        pass # TODO
 
     def _generate_module_db(self, page=0):
-        pass
+        pass # TODO
 
     async def change_page(self, call, page, page_func):
         await page_func(call, page)
