@@ -25,7 +25,7 @@ def _generator(
     rows: int,
     columns: int,
     buttons: list,
-    page: int = None,
+    page: int = -1,
     page_func: Callable = None,
     back_to: dict = None
 ): 
@@ -55,11 +55,11 @@ def _generator(
     for _ in range(columns):
         reply_markup.append([])
         for _ in range(rows):
-            if i <= len(on_page):
+            if i < len(on_page):
                 reply_markup[-1].append(on_page[i])
                 i += 1
             else: break
-    if page:
+    if page > -1:
         reply_markup.append(_nav_generator(page, page_count, page_func))
     if back_to:
         reply_markup.append([back_to])
@@ -99,7 +99,7 @@ def _nav_generator(page, page_count, page_func):
         )
     nav_markup.append(
         {
-            "text": f"{page}/{page_count}",
+            "text": f"{page + 1}/{page_count}",
             "callback": module.change_page,
             "args": [page, page_func],
         }
@@ -161,13 +161,13 @@ class debugger(loader.Module):
         await self._debugger(message)
 
 
-    async def _debugger(self, call, page=1):
+    async def _debugger(self, call, page=0):
         await utils.answer(call, self.strings['main'], reply_markup=self._generate_main_list(page))
 
     async def _module(self, call):
         pass
 
-    def _generate_main_list(self, page=1):
+    def _generate_main_list(self, page=0):
         buttons = []
         items = list(self._db.items())
         for item in items:
@@ -178,7 +178,7 @@ class debugger(loader.Module):
             })
         return _generator(3, 4, buttons, page, page_func=self._debugger)
         
-    def _generate_module_list(self, page):
+    def _generate_module_list(self, call, page):
         back_to = {
             'text': self.strings['back'],
             'callback': self._debugger,
