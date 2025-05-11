@@ -19,12 +19,14 @@ __version__ = ("'","'","'")
 
 from .. import loader, utils
 
+from typing import Callable
+
 def _generator(
     rows: int,
     columns: int,
     buttons: list,
     page: int = None,
-    page_func: function = None,
+    page_func: Callable = None,
     back_to: dict = None
 ): 
     """# Генератор списка кнопок
