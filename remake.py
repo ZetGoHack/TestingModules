@@ -5,7 +5,16 @@ __version__ = ("'","'","'")
 # ░░░█░░░░░░░░░█░█░█░█
 # ░░░███░░░░░░░███░███
 # H:Mods Team [💎]
+(
+#                     ⚠️⚠️⚠️                    #
+#
+#  Идея генератора был  взята и адаптирована из  #
+#  модуля:  https://mods.xdesai.org/managedb.py  #
+#              Разработчик: @xdesai              #
+#                Спасибо большое!                #
 
+#                     ⚠️⚠️⚠️                    #
+)
 # meta developer: @nullmod
 
 from .. import loader, utils
@@ -14,24 +23,114 @@ def _generator(
     rows: int,
     columns: int,
     buttons: list,
-    navigation: bool = False,
+    page: int = None,
+    page_func: function = None,
     back_to: dict = None
-) -> list: 
+): 
     """# Генератор списка кнопок
-Принимает размер сетки кнопок, сами кнопки, поддерживает дополнения списка кнопок навигацией и кнопкой назад,
+Принимает размер сетки кнопок, сами кнопки, поддерживает дополнения списка кнопок навигацией и кнопкой "назад",
 
 **Принимает:**
 - **rows:** `int <= 8`
 - **columns:** `int | rows * columns <= 100`
 - **buttons**: `[{'text':...,},...,{'text':...,}]`
-- **navigation**: `bool`
+- **page**: `int`
+- **page_func**: `function`
 - **back_to**: `dict`
 
 **Возвращает:** 
 - `list`(reply_markup)
-"""
-    pass
+    """
+    per_page = rows * columns
+    on_page = buttons
     reply_markup = []
+    if len(buttons) > per_page:
+        page_count = len(buttons) // per_page + (
+                1 if len(buttons) % per_page != 0 else 0
+            )
+        on_page = buttons[per_page * page : per_page * (page + 1)]
+    i = 0
+    for _ in range(columns):
+        reply_markup.append([])
+        for _ in range(rows):
+            reply_markup[-1].append(on_page[i])
+            i += 1
+    if page:
+        reply_markup.append(_nav_generator(page, page_count, page_func))
+    if back_to:
+        reply_markup.append([back_to])
+    return reply_markup
+
+def _nav_generator(page, page_count, page_func):
+    nav_markup = []
+    if page > 0:
+        nav_markup.extend(
+            [
+                {
+                    "text": "⇤" if page != 1 else " ",
+                    "callback": module.change_page,
+                    "args": [0, page_func],
+                },
+                {
+                    "text": "←",
+                    "callback": module.change_page,
+                    "args": [page - 1, page_func],
+                },
+            ]
+        )
+    else:
+        nav_markup.extend(
+            [
+                {
+                    "text": " ",
+                    "callback": module.change_page,
+                    "args": [page, page_func],
+                },
+                {
+                    "text": " ",
+                    "callback": module.change_page,
+                    "args": [page, page_func],
+                },
+            ]
+        )
+    nav_markup.append(
+        {
+            "text": f"{page+1}/{page_count}",
+            "callback": module.change_page,
+            "args": [page, page_func],
+        }
+    )
+    if page < page_count - 1:
+        nav_markup.extend(
+            [
+                {
+                    "text": "→",
+                    "callback": module.change_page,
+                    "args": [page + 1, page_func],
+                },
+                {
+                    "text": "⇥" if page != page_count - 2 else " ",
+                    "callback": module.change_page,
+                    "args": [page_count - 1, page_func],
+                },
+            ]
+        )
+    else:
+        nav_markup.extend(
+            [
+                {
+                    "text": " ",
+                    "callback": module.change_page,
+                    "args": [page, page_func],
+                },
+                {
+                    "text": " ",
+                    "callback": module.change_page,
+                    "args": [page, page_func],
+                },
+            ]
+        )
+    return nav_markup
 
 @loader.tds
 class debugger(loader.Module):
@@ -48,6 +147,9 @@ class debugger(loader.Module):
         'module': '[{module}] Список содержимого',
         'back': '◀ Назад'
     }
+    async def client_ready(self):
+        global module
+        module = self
 
     async def cmdcmd(self, message):
         """[module/nothing] open debugger"""
@@ -70,7 +172,7 @@ class debugger(loader.Module):
                 'callback': self._generate_module_list,
                 'args': (item[0],)
             })
-        return _generator(3, 4, buttons)
+        return _generator(3, 4, buttons, page, page_func=self._debugger)
         
     def _generate_module_list(self, page):
         back_to = {
@@ -78,3 +180,5 @@ class debugger(loader.Module):
             'callback': self._debugger,
             'args': (page,)
         }
+    async def change_page(self, call, page, page_func):
+        await page_func(call, page)
