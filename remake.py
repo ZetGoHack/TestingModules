@@ -55,8 +55,10 @@ def _generator(
     for _ in range(columns):
         reply_markup.append([])
         for _ in range(rows):
-            reply_markup[-1].append(on_page[i])
-            i += 1
+            if i <= len(on_page):
+                reply_markup[-1].append(on_page[i])
+                i += 1
+            else: break
     if page:
         reply_markup.append(_nav_generator(page, page_count, page_func))
     if back_to:
@@ -97,7 +99,7 @@ def _nav_generator(page, page_count, page_func):
         )
     nav_markup.append(
         {
-            "text": f"{page+1}/{page_count}",
+            "text": f"{page}/{page_count}",
             "callback": module.change_page,
             "args": [page, page_func],
         }
