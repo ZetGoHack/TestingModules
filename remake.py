@@ -51,6 +51,7 @@ def _generator(
                 1 if len(buttons) % per_page != 0 else 0
             )
         on_page = buttons[per_page * page : per_page * (page + 1)]
+        nav = True
     i = 0
     for _ in range(columns):
         reply_markup.append([])
@@ -59,7 +60,7 @@ def _generator(
                 reply_markup[-1].append(on_page[i])
                 i += 1
             else: break
-    if page > -1:
+    if nav:
         reply_markup.append(_nav_generator(page, page_count, page_func))
     if back_to:
         reply_markup.append([back_to])
@@ -173,6 +174,12 @@ class debugger(loader.Module):
     async def _module(self, call, item, is_installed):
         pass
 
+    async def _vars(self, call, item, page=0):
+        pass
+
+    async def _db(self, call, item, page=0):
+        pass
+
     def _generate_main_list(self, page=0):
         buttons = []
         items = list(self._db.items())
@@ -190,5 +197,12 @@ class debugger(loader.Module):
             'callback': self._debugger,
             'args': (page,)
         }
+
+    def _generate_module_vars(self, page=0):
+        pass
+
+    def _generate_module_db(self, page=0):
+        pass
+
     async def change_page(self, call, page, page_func):
         await page_func(call, page)
