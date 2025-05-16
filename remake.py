@@ -39,7 +39,7 @@ def _generator(
 - `list`(reply_markup)
     """
     if rows < 1 or columns < 1 or rows*columns > 100:
-        raise ValueError("rows*columns должны быть между 1 и 100")
+        raise ValueError("rows*columns должны быть между 1 и 100!")
     per_page = rows * columns
     on_page = buttons
     reply_markup = []
@@ -69,6 +69,12 @@ def _generator(
     return reply_markup
 
 def _nav_generator(page, page_count, page_func):
+    e_btn = {
+            "text": " ",
+            "callback": module.change_page,
+            "args": [page, page_func],
+        }
+    
     nav_markup = []
     if page > 0:
         nav_markup.extend(
@@ -88,16 +94,8 @@ def _nav_generator(page, page_count, page_func):
     else:
         nav_markup.extend(
             [
-                {
-                    "text": " ",
-                    "callback": module.change_page,
-                    "args": [page, page_func],
-                },
-                {
-                    "text": " ",
-                    "callback": module.change_page,
-                    "args": [page, page_func],
-                },
+                e_btn,
+                e_btn,
             ]
         )
     nav_markup.append(
@@ -125,16 +123,8 @@ def _nav_generator(page, page_count, page_func):
     else:
         nav_markup.extend(
             [
-                {
-                    "text": " ",
-                    "callback": module.change_page,
-                    "args": [page, page_func],
-                },
-                {
-                    "text": " ",
-                    "callback": module.change_page,
-                    "args": [page, page_func],
-                },
+                e_btn,
+                e_btn,
             ]
         )
     return nav_markup
@@ -169,14 +159,16 @@ class debugger(loader.Module):
     async def _debugger(self, call, page=0):
         await utils.answer(call, self.strings['main'], reply_markup=self._generate_main_list(page))
 
-    async def _module(self, call, item, is_installed):
-        pass # TODO
+    async def _module(self, call, item, is_installed, page=0):
+        # TODO(мб): крч чтобы не носить в каждой функе значение страницы буду использовать их хранилище. Будет айди с рандом хешем и внутри номера страниц [1,2,3] по степени вложенности
+        await utils.answer(call, self.strings['module'], reply_markup=self._generate_module_list(item, is_installed, page))
 
     async def _vars(self, call, item, page=0):
         pass # TODO
 
     async def _db(self, call, item, page=0):
         pass # TODO
+
 
     def _generate_main_list(self, page=0):
         buttons = []
@@ -185,16 +177,17 @@ class debugger(loader.Module):
             buttons.append({
                 'text': f'{item[0]}' if self.lookup(item[0]) else f'[{item[0]}]',
                 'callback': self._module,
-                'args': (item[0], True if self.lookup(item[0]) else False)
+                'args': (item[0], True if self.lookup(item[0]) else False, page)
             })
         return _generator(3, 4, buttons, page, page_func=self._debugger)
         
-    def _generate_module_list(self, page=0):
+    def _generate_module_list(self, module, onlydb, page=0):
         back_to = {
             'text': self.strings['back'],
             'callback': self._debugger,
             'args': (page,)
         }
+        return back_to
 
     def _generate_module_vars(self, page=0):
         pass # TODO
