@@ -164,7 +164,7 @@ class debugger(loader.Module):
         await utils.answer(call, self.strings['module'], reply_markup=self._generate_module_list(item, is_installed, page))
 
     async def _vars(self, call, item, page=0):
-        pass # TODO
+        pass # TODO 
 
     async def _db(self, call, item, page=0):
         pass # TODO
