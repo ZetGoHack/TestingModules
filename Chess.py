@@ -20,19 +20,21 @@ __version__ = (1,1,2)
 
 # meta developer: @nullmod
 # requires: python-chess
+import asyncio, random, chess, chess.pgn, time
+
+from datetime import datetime, timezone
 from hikkatl.tl.types import PeerUser
-import asyncio, random, chess, time
 from .. import loader, utils
 
 #######Таймер#######
-class Timer:#еее мой первый класс
+class Timer:
     def __init__(self, scnds):#start
         self.timers = {"white": scnds, "black": scnds}
         self.running = {"white": False, "black": False}
         self.started = {"white": False, "black": False}
         self.last_time = time.monotonic()#Monotonic clock, cannot go backward
         self.t = None
-    async def count(self):#func
+    async def _count(self):#func
         while True:
             await asyncio.sleep(0.1)
             now = time.monotonic()
@@ -40,11 +42,11 @@ class Timer:#еее мой первый класс
             self.last_time = now
             for color in ("white", "black"):
                 if self.running[color]:
-                    self.timers[color] = max(0, self.timers[color] - elapsed)#нам не надо в минус уходить
+                    self.timers[color] = max(0, self.timers[color] - elapsed)
 
     async def start(self): ##to use
         self.last_time = time.monotonic()
-        self.t = asyncio.create_task(self.count())
+        self.t = asyncio.create_task(self._count())
 
     async def white(self): ##to use
         await self.turn("white")
@@ -117,7 +119,7 @@ class Chess(loader.Module):
         self.loopState = False
         self.game = False
         self.reason = False
-        self.style = self.style1
+        self.style = self.style2
 
     async def purgeSelf(self):
         self.board = {}
