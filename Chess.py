@@ -1,4 +1,4 @@
-__version__ = (1,1,2)
+__version__ = (1, 1, 2)
 #░░░░░░░░░░░░░░░░░░░░░░
 #░░░░░░░░░░██░░██░░░░░░
 #░░░░░░░░░████████░░░░░
@@ -93,7 +93,43 @@ class Timer:
 class Chess(loader.Module):
     """Шахматы для игры вдвоём."""
     strings = {
-        "name": "Chess"
+        "name": "Chess",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
+    }
+    strings_ru = {
+        "": "",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
+        "": "",
     }
     #####Переменные#####
 
@@ -119,6 +155,7 @@ class Chess(loader.Module):
         self.loopState = False
         self.game = False
         self.reason = False
+        self.Resign = False
         self.style = self.style2
 
     async def purgeSelf(self):
@@ -142,11 +179,12 @@ class Chess(loader.Module):
         self.timer = False
         if self.Timer:
             self.Timer = None
-        if hasattr(self,"time_message"):
+        if hasattr(self, "time_message"):
             del self.time_message
         self.loopState = False
         self.game = False
         self.reason = False
+        self.Resign = False
 
     #####Переменные#####
 
@@ -161,35 +199,35 @@ class Chess(loader.Module):
             text=f"[⚙️] Настройки этой партии\n| - > Хост играет за {self.colorName} цвет\n| - > Время: {self.timeName}\n| - > Стиль: #{1 if self.style == self.style1 else 2}",
             reply_markup=[
                 [
-                    {"text":f"⏱️ Время: {self.timeName}","callback":self.time, "args":(nT,)} if not nT else {"text":f"❌ Время: ...","action":"answer","show_alert":True,"message":"Приглашение находится в чате.\n\nИз-за ограничений для ботов, партии на время могут проводиться только в лс"}
+                    {"text":f"⏱️ Время: {self.timeName}", "callback":self.time, "args": (nT, )} if not nT else {"text":f"❌ Время: ...", "action": "answer", "show_alert":True, "message": "Приглашение находится в чате.\n\nИз-за ограничений для ботов, партии на время могут проводиться только в лс"}
                 ],
                 [
-                    {"text":f"♟️ Цвет (хоста): {self.colorName}","callback":self.color, "args":(nT,)}
+                    {"text":f"♟️ Цвет (хоста): {self.colorName}", "callback":self.color, "args": (nT, )}
                 ],
                 [
-                    {"text":f"🎛️ Стиль доски: #{1 if self.style == self.style1 else 2}","callback":self._style, "args":(nT,)}
+                    {"text":f"🎛️ Стиль доски: #{1 if self.style == self.style1 else 2}", "callback":self._style, "args": (nT, )}
                 ],
                 [
-                    {"text":"⤴️ Вернуться","callback":self.backToInvite, "args":(nT,)}
+                    {"text": "⤴️ Вернуться", "callback":self.backToInvite, "args": (nT, )}
                 ]
             ]
         )
 
-    async def backToInvite(self,call,nT):
+    async def backToInvite(self, call, nT):
         if call.from_user.id not in self.you_n_me:
             await call.answer("Это не для вас!")
             return
         await call.edit(text = f"<a href='tg://user?id={self.opp_id}'>{self.opp_name}</a>, вас пригласили сыграть партию шахмат, примите?\n-- --\n[⚙️] Текущие настройки:\n| - > • Хост играет за {self.colorName} цвет\n| - > • Время: {self.timeName}\n| - > • Стиль: #{1 if self.style == self.style1 else 2}", 
                                reply_markup = [
                                    [
-                                       {"text": "Принимаю", "callback": self.ans, "args":("y",)},
-                                       {"text": "Нет", "callback": self.ans, "args":("n",)}
+                                       {"text": "Принимаю", "callback": self.ans, "args": ("y", )},
+                                       {"text": "Нет", "callback": self.ans, "args": ("n", )}
                                    ],
                                    [
-                                       {"text": "⚙️ Настройки", "callback": self.settings, "args":(nT,)}
+                                       {"text": "⚙️ Настройки", "callback": self.settings, "args": (nT, )}
                                    ],
                                    [
-                                       {"text": "❗ ВАЖНО","action":"answer","show_alert":True,"message":"В игре фигуры показаны ASCII-символами, но в тёмной теме их трудно различить, особенно '♕' и '♛'.\n\nДля удобства они были заменены на Q (бел) и q (чёрн).",}
+                                       {"text": "❗ ВАЖНО", "action": "answer", "show_alert":True, "message": "В игре фигуры показаны ASCII-символами, но в тёмной теме их трудно различить, особенно '♕' и '♛'.\n\nДля удобства они были заменены на Q (бел) и q (чёрн).", }
                                    ]
                                ]
                        )
@@ -202,35 +240,35 @@ class Chess(loader.Module):
             text=f"• Настройки этой партии.\n| - > [⏱️] Время: {self.timeName}",
             reply_markup=[
                 [
-                    {"text":"⚡ Блиц","action":"answer","message":"Блиц-Блиц - скорость без границ"}
+                    {"text": "⚡ Блиц", "action": "answer", "message": "Блиц-Блиц - скорость без границ"}
                 ],
                 [
-                    {"text":"3 минуты","callback":self.time_handle,"args":(3,"3 минуты",nT,)},
-                    {"text":"5 минут","callback":self.time_handle,"args":(5,"5 минут",nT,)}
+                    {"text": "3 минуты", "callback":self.time_handle, "args": (3, "3 минуты", nT, )},
+                    {"text": "5 минут", "callback":self.time_handle, "args": (5, "5 минут", nT, )}
                 ],
                 [
-                    {"text":"⏱️ Рапид","action":"answer","message":"Обдумай своё поражение"}
+                    {"text": "⏱️ Рапид", "action": "answer", "message": "Обдумай своё поражение"}
                 ],
                 [
-                    {"text":"10 минут","callback":self.time_handle,"args":(10,"10 минут",nT,)},
-                    {"text":"15 минут","callback":self.time_handle,"args":(15,"15 минут",nT,)},
-                    {"text":"30 минут","callback":self.time_handle,"args":(30,"30 минут",nT,)},
-                    {"text":"60 минут","callback":self.time_handle,"args":(60,"60 минут",nT,)}
+                    {"text": "10 минут", "callback":self.time_handle, "args": (10, "10 минут", nT, )},
+                    {"text": "15 минут", "callback":self.time_handle, "args": (15, "15 минут", nT, )},
+                    {"text": "30 минут", "callback":self.time_handle, "args": (30, "30 минут", nT, )},
+                    {"text": "60 минут", "callback":self.time_handle, "args": (60, "60 минут", nT, )}
                 ],
                 [
-                    {"text":"❌ Нет часов", "callback":self.time_handle,"args":(None,"❌ Нет часов",nT,)}
+                    {"text": "❌ Нет часов", "callback":self.time_handle, "args": (None, "❌ Нет часов", nT, )}
                 ],
                 [
-                    {"text":"⤴️ Обратно к настройкам", "callback":self.settings, "args":(nT,)}
+                    {"text": "⤴️ Обратно к настройкам", "callback":self.settings, "args": (nT, )}
                 ]
             ]
         )
-    async def time_handle(self,call,minutes,txt,nT):
+    async def time_handle(self, call, minutes, txt, nT):
         self.timeName = txt
         self.pTime = minutes*60
-        await self.time(call,nT)
+        await self.time(call, nT)
 
-    async def color(self,call,nT):
+    async def color(self, call, nT):
         if call.from_user.id not in self.you_n_me:
             await call.answer("Настройки не для вас!")
             return
@@ -238,25 +276,25 @@ class Chess(loader.Module):
             text=f"• Настройки этой партии.\n| - > [♟️] Хост играет за: {self.colorName} цвет.\nВыберите цвет его фигур",
             reply_markup=[
                 [
-                    {"text":"✅ Белые" if self.you_play == "w" else "❌ Белые","callback":self.color_handle,"args":("w","белый",nT,)},
-                    {"text":"✅ Чёрные" if self.you_play == "b" else "❌ Чёрные","callback":self.color_handle,"args":("b","чёрный",nT,)}
+                    {"text": "✅ Белые" if self.you_play == "w" else "❌ Белые", "callback":self.color_handle, "args": ("w", "белый", nT, )},
+                    {"text": "✅ Чёрные" if self.you_play == "b" else "❌ Чёрные", "callback":self.color_handle, "args": ("b", "чёрный", nT, )}
                 ],
                 [
-                    {"text":"🎲 Рандом" if not self.you_play else "❌ Рандом", "callback":self.color_handle,"args":(None,"рандом",nT)}
+                    {"text": "🎲 Рандом" if not self.you_play else "❌ Рандом", "callback":self.color_handle, "args": (None, "рандом", nT)}
                 ],
                 [
-                    {"text":"⤴️ Обратно к настройкам", "callback":self.settings, "args":(nT,)}
+                    {"text": "⤴️ Обратно к настройкам", "callback":self.settings, "args": (nT, )}
                 ]
             ]
         )
 
-    async def color_handle(self,call,color,txt,nT):
+    async def color_handle(self, call, color, txt, nT):
         if call.from_user.id not in self.you_n_me:
             await call.answer("Настройки не для вас!")
             return
         self.colorName = txt
         self.you_play = color
-        await self.color(call,nT)
+        await self.color(call, nT)
 
     async def _style(self, call, nT):
         if call.from_user.id not in self.you_n_me:
@@ -266,11 +304,11 @@ class Chess(loader.Module):
             text=f"• Настройки этой партии.\n| - > [🎛️] Текущий стиль доски: #{1 if self.style == self.style1 else 2} цвет.\nВыберите стиль доски",
             reply_markup=[
                 [
-                    {"text":("✅ " if self.style == self.style1 else "❌ ") + "Стиль #1", "callback":self._show_style,"args":(1,nT,)},
-                    {"text":("✅ " if self.style != self.style1 else "❌ ") + "Стиль #2", "callback":self._show_style,"args":(2,nT,)}
+                    {"text": ("✅ " if self.style == self.style1 else "❌ ") + "Стиль #1", "callback":self._show_style, "args": (1, nT, )},
+                    {"text": ("✅ " if self.style != self.style1 else "❌ ") + "Стиль #2", "callback":self._show_style, "args": (2, nT, )}
                 ],
                 [
-                    {"text":"⤴️ Обратно к настройкам", "callback":self.settings, "args":(nT,)}
+                    {"text": "⤴️ Обратно к настройкам", "callback":self.settings, "args": (nT, )}
                 ]
             ]
         )
@@ -282,7 +320,7 @@ class Chess(loader.Module):
         self.Board = chess.Board()
         btns = []
         # - - -
-        for row in range(1,9):
+        for row in range(1, 9):
             rows = []
             for col in "ABCDEFGH":
                 coord = f"{col}{row}"
@@ -290,16 +328,16 @@ class Chess(loader.Module):
                 self.board[coord] =  self.style[piece.symbol()] if piece else " "
         # - - -
         self.Board = None
-        for row in range(1,9):
+        for row in range(1, 9):
             rows = []
             for col in "ABCDEFGH":
                 coord = f"{col}{row}"
-                rows.append({"text": f"{self.board[f'{col}{row}']}", "action":"answer", "message":"😨 Вот это фигура, да?"})
+                rows.append({"text": f"{self.board[f'{col}{row}']}", "action": "answer", "message": "😨 Вот это фигура, да?"})
             btns.append(rows)
         btns = btns[::-1]
         self.board = {}
-        btns.append([{"text":"⤴️ Назад", "callback":self._style, "args":(nT,)}])
-        await call.edit(text=f"🎛️ Выбран стиль: #{1 if self.style == self.style1 else 2}\n\nВот как он выглядит",reply_markup=btns)
+        btns.append([{"text": "⤴️ Назад", "callback":self._style, "args": (nT, )}])
+        await call.edit(text=f"🎛️ Выбран стиль: #{1 if self.style == self.style1 else 2}\n\nВот как он выглядит", reply_markup=btns)
         
         #####Настройки#####
 
@@ -314,7 +352,7 @@ class Chess(loader.Module):
         self.message = message
         self.message_chat = message.chat_id
         noTimer = False
-        if not isinstance(message.peer_id,PeerUser):
+        if not isinstance(message.peer_id, PeerUser):
             noTimer = True
         if message.is_reply:
             r = await message.get_reply_message()
@@ -346,14 +384,14 @@ class Chess(loader.Module):
         await self.inline.form(message = message, text = f"<a href='tg://user?id={self.opp_id}'>{self.opp_name}</a>, вас пригласили сыграть партию шахмат, примите?\n-- --\n[⚙️] Текущие настройки:\n| - > • Хост играет за {self.colorName} цвет\n| - > • Время: {self.timeName}\n| - > • Стиль: #{1 if self.style == self.style1 else 2}", 
                                reply_markup = [
                                    [
-                                       {"text": "Принимаю", "callback": self.ans, "args":("y",)},
-                                       {"text": "Нет", "callback": self.ans, "args":("n",)}
+                                       {"text": "Принимаю", "callback": self.ans, "args": ("y", )},
+                                       {"text": "Нет", "callback": self.ans, "args": ("n", )}
                                    ],
                                    [
-                                       {"text": "⚙️ Настройки", "callback": self.settings, "args":(noTimer,)}
+                                       {"text": "⚙️ Настройки", "callback": self.settings, "args": (noTimer, )}
                                    ],
                                    [
-                                       {"text": "❗ ВАЖНО","action":"answer","show_alert":True,"message":"В игре фигуры показаны ASCII-символами, но в тёмной теме их трудно различить, особенно '♕' и '♛'.\n\nДля удобства они были заменены на Q (бел) и q (чёрн) в первом стиле.",}
+                                       {"text": "❗ ВАЖНО", "action": "answer", "show_alert":True, "message": "В игре фигуры показаны ASCII-символами, но в тёмной теме их трудно различить, особенно '♕' и '♛'.\n\nДля удобства они были заменены на Q (бел) и q (чёрн) в первом стиле.", }
                                    ]
                                ], 
                                disable_security = True, on_unload=self.outdated()
@@ -390,14 +428,14 @@ class Chess(loader.Module):
                 self.game = True    
             await call.edit(text="[!] Для лучшего различия фигур включите светлую тему!")
             await asyncio.sleep(2.5)
-            await self.LoadBoard(text, call)
+            await self.LoadBoard(call, text)
         else:
             await call.edit(text="Отклонено.")
 
     #####Игра#####
 
     #####Таймер#####
-    async def start_timer(self,call):
+    async def start_timer(self, call):
         if call.from_user.id not in self.you_n_me:
             await call.answer("Партия не ваша!")
             return
@@ -413,37 +451,64 @@ class Chess(loader.Module):
             await self.time_message.edit(text=f"♔ Белые: {int(await self.Timer.white_time())}\n♚ Чёрные: {int(await self.Timer.black_time())}")
             t = await self.sttxt()
             if not self.timer and self.Timer:
-                await self.LoadBoard(t,self.brd)
+                await self.LoadBoard(self.brd, t)
 
     #####Таймер#####
 
     #####Доска#####
 
-    async def LoadBoard(self, text, call):
+    async def LoadBoard(self, call, text, resign = False):
         if self.timer:
-            if not hasattr(self,'time_message'):
-                m = await self.client.send_message(self.message_chat,"Настройка таймера...")
-                await self.inline.form(message=m,text=f"♔ Белые: {await self.Timer.white_time()}\n♚ Чёрные: {await self.Timer.black_time()}\n⏳ Начнём?",reply_markup=[{"text":"Начать партию", "callback":self.start_timer}],disable_security=True)
+            if not hasattr(self, 'time_message'):
+                m = await self.client.send_message(self.message_chat, "Настройка таймера...")
+                await self.inline.form(message=m, text=f"♔ Белые: {await self.Timer.white_time()}\n♚ Чёрные: {await self.Timer.black_time()}\n⏳ Начнём?", reply_markup=[{"text": "Начать партию", "callback":self.start_timer}], disable_security=True)
 
         elif self.Timer:
             self.loopState = False
             await self.time_message.edit(text=f"♔ Белые: {int(await self.Timer.white_time())}\n♚ Чёрные: {int(await self.Timer.black_time())}\n❌ Остановлен по причине: {self.reason}")
-        for row in range(1,9):
+        for row in range(1, 9):
             rows = []
             for col in "ABCDEFGH":
                 coord = f"{col}{row}"
                 piece = self.Board.piece_at(chess.parse_square(coord.lower()))
                 self.board[coord] =  self.style[piece.symbol()] if piece else " "
 
-
-
         btns = []
-        for row in range(1,9):
+        for row in range(1, 9):
             rows = []
             for col in "ABCDEFGH":
                 coord = f"{col}{row}"
-                rows.append({"text": f"{self.board[f'{col}{row}']}", "callback": self.clicks_handle, "args":(coord,)})
+                rows.append({"text": f"{self.board[f'{col}{row}']}", "callback": self.clicks_handle, "args": (coord, )})
             btns.append(rows)
+        if resign:
+            txt = await self.sttxt()
+        btns.append(
+            [
+                {
+                    "text": "🏳️", 
+                    "callback": self.resign, 
+                    "args": (True, )
+                },
+                {
+                    "text": "🤝", 
+                    "callback": self.resign, 
+                    "args": (False, )
+                }
+            ]
+            if not resign else
+            [
+                {
+                    "text": "Нет",
+                    "callback": self.LoadBoard,
+                    "args": (txt)
+                },
+                {
+                    "text": "Да",
+                    "callback": self.resign,
+                    "args": (True if resign[0] else False, True)
+                }
+            ]
+        )
 
         await call.edit(text = text,
             reply_markup = btns[::-1],
@@ -451,29 +516,15 @@ class Chess(loader.Module):
         )
 
     async def UpdBoard(self, call):
-        for row in range(1,9):
-            rows = []
-            for col in "ABCDEFGH":
-                coord = f"{col}{row}"
-                for place in self.places:
-                    if place[2:4] == coord.lower():
-                        if len(place) == 5:
-                            self.board[coord] = "×↻" if (move := next((chess.Move.from_uci(p) for p in self.places if p[2:4] == coord.lower()), None)) and self.Board.is_capture(move) else "↻"
-                        else:
-                            self.board[coord] = "×" if (move := next((chess.Move.from_uci(p) for p in self.places if p[2:4] == coord.lower()), None)) and self.Board.is_capture(move) else "●"
-                        break
-                       
-                    else:
-                        piece = self.Board.piece_at(chess.parse_square(coord.lower()))
-                        self.board[coord] =  self.style[piece.symbol()] if piece else " "
+        await self.drawBoard()
 
         text = await self.sttxt()  
         btns = []
-        for row in range(1,9):
+        for row in range(1, 9):
             rows = []
             for col in "ABCDEFGH":
                 coord = f"{col}{row}"
-                rows.append({"text": f"{self.board[f'{col}{row}']}", "callback": self.clicks_handle, "args":(coord,)})
+                rows.append({"text": f"{self.board[f'{col}{row}']}", "callback": self.clicks_handle, "args": (coord, )})
             btns.append(rows)
 
         await call.edit(text = text,
@@ -486,7 +537,7 @@ class Chess(loader.Module):
     
     #####Функи#####(для будующей оптимизации кода)
     async def drawBoard(self):
-        for row in range(1,9):
+        for row in range(1, 9):
             rows = []
             for col in "ABCDEFGH":
                 coord = f"{col}{row}"
@@ -504,45 +555,45 @@ class Chess(loader.Module):
         return
        
          
-    async def moveTo(s,ca,c):
+    async def moveTo(s, ca, c):
         s.Board.push(chess.Move.from_uci(c))
         s.reverse = not s.reverse
         s.chsn = False
         t = await s.sttxt()
-        await s.LoadBoard(t,ca)
+        await s.LoadBoard(ca, t)
             
     
     #####Функи#####
 
     #####Ходы#####
     
-    async def choose_figure(self,p,c):
+    async def choose_figure(self, p, c):
         text = await self.sttxt()  
         btns = []
         await self.drawBoard()
-        for row in range(1,9):
+        for row in range(1, 9):
             rows = []
             for col in "ABCDEFGH":
                 coord = f"{col}{row}"
-                rows.append({"text": f"{self.board[f'{col}{row}']}", "action":"answer", "message":"Вы не можете ходить, пока не будет сделан выбор","show_alert":True})
+                rows.append({"text": f"{self.board[f'{col}{row}']}", "action": "answer", "message": "Вы не можете ходить, пока не будет сделан выбор", "show_alert":True})
             btns.append(rows)
         p = p[0:4]
         btns = btns[::-1]
-        btns.append([{"text":"⬇️↻⬇️", "action":"answer", "message":"Выберите фигуру для превращения"}])
-        btns.append([{"text":"♛","callback":self.are_u,"args":(p+"q",)},{"text":"♜","callback":self.are_u,"args":(p+"r",)},{"text":"♞","callback":self.are_u,"args":(p+"n",)},{"text":"♝","callback":self.are_u,"args":(p+"b",)},])
+        btns.append([{"text": "⬇️↻⬇️", "action": "answer", "message": "Выберите фигуру для превращения"}])
+        btns.append([{"text": "♛", "callback":self.are_u, "args": (p+"q", )}, {"text": "♜", "callback":self.are_u, "args": (p+"r", )}, {"text": "♞", "callback":self.are_u, "args": (p+"n", )}, {"text": "♝", "callback":self.are_u, "args": (p+"b", )}, ])
         await c.edit(text = text,
             reply_markup = btns,
             disable_security = True
         )
-    async def are_u(s,c,p):#SCP FOUNDATION
+    async def are_u(s, c, p):#SCP FOUNDATION
         current_player = s.message.sender_id if (s.you_play == "w") ^ s.reverse else s.opp_id
         if c.from_user.id != current_player:
             await c.answer("Выбор за вашим оппонентом")
             return
-        await s.moveTo(c,p)
+        await s.moveTo(c, p)
 
     async def clicks_handle(self, call, coord):
-        if self.checkmate or self.stalemate or self.fifty or self.reason:
+        if self.checkmate or self.stalemate or self.fifty or self.reason or self.Resign:
             await call.answer("Партия окончена. Доступных ходов нет.")
             await self.purgeSelf()
             return
@@ -558,13 +609,13 @@ class Chess(loader.Module):
             return
 
         if self.chsn == False:
-            await self.checkMove(call,coord)
+            await self.checkMove(call, coord)
         else:
             matching_place = None
             for place in self.places:
                 if place[2:4] == coord.lower():
                     if len(place) == 5:
-                        await self.choose_figure(place,call)######
+                        await self.choose_figure(place, call)######
                         return
                     matching_place = place
                     break
@@ -580,19 +631,19 @@ class Chess(loader.Module):
                 if prev_place:
                     self.chsn = False
                     self.places = []
-                    await self.LoadBoard(text,call)
+                    await self.LoadBoard(call, text)
                     return
-                if not await self.checkMove(call,coord):
+                if not await self.checkMove(call, coord):
                     self.chsn = False
                     self.places = []
-                    await self.LoadBoard(text,call)
+                    await self.LoadBoard(call, text)
                     return
                 else:
                     return
             text = await self.sttxt()
-            await self.LoadBoard(text,call)
+            await self.LoadBoard(call, text)
 
-    async def checkMove(self,call,coord):
+    async def checkMove(self, call, coord):
         if self.Board.piece_at(chess.parse_square(coord.lower())):
             square = chess.parse_square(coord.lower())
             moves = [move for move in self.Board.legal_moves if move.from_square == square]
@@ -610,12 +661,29 @@ class Chess(loader.Module):
         await call.answer(f"Доступные ходы:")
         await self.UpdBoard(call)
         return True
+    
+    async def resign(self, call, isResign, final):
+        caller = call.from_user.id
+        if caller not in self.you_n_me:
+            await call.answer("Никогда не сдавайся! (когда партия не твоя)")
+            return
+        if final:
+            if isResign:
+                self.Resign = True
+            else:
+                pass
+        text = await self.sttxt((True, isResign, caller))
+        self.LoadBoard(text=text, call=call, resign=[isResign])
+    
 
-    async def sttxt(self):
+    async def sttxt(self, resign: tuple = False):
         check = False
         self.checkmate = False
         self.stalemate = False
         self.fifty = False
+        if self.Resign:
+            self.timer = False
+            self.reason = ""
         if self.Board.is_checkmate():
             self.checkmate = True
             self.timer = False
@@ -644,69 +712,73 @@ class Chess(loader.Module):
                 if self.Timer:
                     await self.Timer.black()
                 if self.you_play == "w":
-                    return f"[..] ♔ Белые - {self.saymyname}\n[👉] ♚ Чёрные - {self.opp_name} (ваш ход)"
+                    txt = f"[..] ♔ Белые - {self.saymyname}\n[👉] ♚ Чёрные - {self.opp_name} (ваш ход)"
                 else:
-                    return f"[..] ♔ Белые - {self.opp_name}\n[👉] ♚ Чёрные - {self.saymyname} (ваш ход)"
+                    txt = f"[..] ♔ Белые - {self.opp_name}\n[👉] ♚ Чёрные - {self.saymyname} (ваш ход)"
             else:
                 if self.Timer:
                     await self.Timer.white()
                 if self.you_play == "w":
-                    return f"[👉] ♔ Белые - {self.saymyname} (ваш ход)\n[..] ♚ Чёрные - {self.opp_name}"
+                    txt = f"[👉] ♔ Белые - {self.saymyname} (ваш ход)\n[..] ♚ Чёрные - {self.opp_name}"
                 else:
-                    return f"[👉] ♔ Белые - {self.opp_name} (ваш ход)\n[..] ♚ Чёрные - {self.saymyname}"
+                    txt = f"[👉] ♔ Белые - {self.opp_name} (ваш ход)\n[..] ♚ Чёрные - {self.saymyname}"
         elif self.checkmate:
             if self.reverse:
                 if self.you_play == "w":
-                    return f"♔ Белые - {self.saymyname}\n♚ Чёрные - {self.opp_name}\n\n🎉 Шах и мат! Победил(а) {self.saymyname}"
+                    txt = f"♔ Белые - {self.saymyname}\n♚ Чёрные - {self.opp_name}\n\n🎉 Шах и мат! Победил(а) {self.saymyname}"
                 else:
-                    return f"♔ Белые - {self.opp_name}\n♚ Чёрные - {self.saymyname}\n\n🎉 Шах и мат! Победил(а) {self.opp_name}"
+                    txt = f"♔ Белые - {self.opp_name}\n♚ Чёрные - {self.saymyname}\n\n🎉 Шах и мат! Победил(а) {self.opp_name}"
             else:
                 if self.you_play == "w":
-                    return f"♔ Белые - {self.saymyname} \n♚ Чёрные - {self.opp_name}\n\n🎉 Шах и мат! Победил(а) {self.opp_name}"
+                    txt = f"♔ Белые - {self.saymyname} \n♚ Чёрные - {self.opp_name}\n\n🎉 Шах и мат! Победил(а) {self.opp_name}"
                 else:
-                    return f"♔ Белые - {self.opp_name} \n♚ Чёрные - {self.saymyname}\n\n🎉 Шах и мат! Победил(а) {self.saymyname}"
+                    txt = f"♔ Белые - {self.opp_name} \n♚ Чёрные - {self.saymyname}\n\n🎉 Шах и мат! Победил(а) {self.saymyname}"
         elif check:
             if self.reverse:
                 if self.Timer:
                     await self.Timer.black()
                 if self.you_play == "w":
-                    return f"[..] ♔ Белые - {self.saymyname}\n[👉] ♚ Чёрные - {self.opp_name}\n\n❗ Шах!"
+                    txt = f"[..] ♔ Белые - {self.saymyname}\n[👉] ♚ Чёрные - {self.opp_name}\n\n❗ Шах!"
                 else:
-                    return f"[..] ♔ Белые - {self.opp_name}\n[👉] ♚ Чёрные - {self.saymyname}\n\n❗ Шах!"
+                    txt = f"[..] ♔ Белые - {self.opp_name}\n[👉] ♚ Чёрные - {self.saymyname}\n\n❗ Шах!"
             else:
                 if self.Timer:
                     await self.Timer.white()
                 if self.you_play == "w":
-                    return f"[👉] ♔ Белые - {self.saymyname} \n[..] ♚ Чёрные - {self.opp_name}\n\n❗ Шах!"
+                    txt = f"[👉] ♔ Белые - {self.saymyname} \n[..] ♚ Чёрные - {self.opp_name}\n\n❗ Шах!"
                 else:
-                    return f"[👉] ♔ Белые - {self.opp_name} \n[..] ♚ Чёрные - {self.saymyname}\n\n❗ Шах!"
+                    txt = f"[👉] ♔ Белые - {self.opp_name} \n[..] ♚ Чёрные - {self.saymyname}\n\n❗ Шах!"
         elif self.stalemate:
             if self.reverse:
                 if self.you_play == "w":
-                    return f"♔ Белые - {self.saymyname}\n♚ Чёрные - {self.opp_name}\n\n🤝 Пат. Ничья"
+                    txt = f"♔ Белые - {self.saymyname}\n♚ Чёрные - {self.opp_name}\n\n🤝 Пат. Ничья"
                 else:
-                    return f"♔ Белые - {self.opp_name}\n♚ Чёрные - {self.saymyname}\n\n🤝 Пат. Ничья"
+                    txt = f"♔ Белые - {self.opp_name}\n♚ Чёрные - {self.saymyname}\n\n🤝 Пат. Ничья"
             else:
                 if self.you_play == "w":
-                    return f"♔ Белые - {self.saymyname} \n♚ Чёрные - {self.opp_name}\n\n🤝 Пат. Ничья"
+                    txt = f"♔ Белые - {self.saymyname} \n♚ Чёрные - {self.opp_name}\n\n🤝 Пат. Ничья"
                 else:
-                    return f"♔ Белые - {self.opp_name} \n♚ Чёрные - {self.saymyname}\n\n🤝 Пат. Ничья"
+                    txt = f"♔ Белые - {self.opp_name} \n♚ Чёрные - {self.saymyname}\n\n🤝 Пат. Ничья"
         elif self.fifty:
             if self.reverse:
                 if self.you_play == "w":
-                    return f"♔ Белые - {self.saymyname}\n♚ Чёрные - {self.opp_name}\n\n🤝 Правило 50 ходов. Ничья"
+                    txt = f"♔ Белые - {self.saymyname}\n♚ Чёрные - {self.opp_name}\n\n🤝 Правило 50 ходов. Ничья"
                 else:
-                    return f"♔ Белые - {self.opp_name}\n♚ Чёрные - {self.saymyname}\n\n🤝 Правило 50 ходов. Ничья"
+                    txt = f"♔ Белые - {self.opp_name}\n♚ Чёрные - {self.saymyname}\n\n🤝 Правило 50 ходов. Ничья"
             else:
                 if self.you_play == "w":
-                    return f"♔ Белые - {self.saymyname} \n♚ Чёрные - {self.opp_name}\n\n🤝 Правило 50 ходов. Ничья"
+                    txt = f"♔ Белые - {self.saymyname} \n♚ Чёрные - {self.opp_name}\n\n🤝 Правило 50 ходов. Ничья"
                 else:
-                    return f"♔ Белые - {self.opp_name} \n♚ Чёрные - {self.saymyname}\n\n🤝 Правило 50 ходов. Ничья"
+                    txt = f"♔ Белые - {self.opp_name} \n♚ Чёрные - {self.saymyname}\n\n🤝 Правило 50 ходов. Ничья"
         elif self.Timer and self.reason:
             if int(await self.Timer.white_time()) == 0:
-                return f"♔ Белые - {self.saymyname}\n♚ Чёрные - {self.opp_name}\n\n❗⏱️ Истекло время: {self.opp_name}. 🎉 Победил(а) {self.saymyname}"
+                txt = f"♔ Белые - {self.saymyname}\n♚ Чёрные - {self.opp_name}\n\n❗⏱️ Истекло время: {self.opp_name}. 🎉 Победил(а) {self.saymyname}"
             else:
-                return f"♔ Белые - {self.opp_name}\n♚ Чёрные - {self.saymyname}\n\n❗⏱️ Истекло время: {self.saymyname}. 🎉 Победил(а) {self.opp_name}"
+                txt = f"♔ Белые - {self.opp_name}\n♚ Чёрные - {self.saymyname}\n\n❗⏱️ Истекло время: {self.saymyname}. 🎉 Победил(а) {self.opp_name}"
+        if resign:
+            if not self.Resign:
+                txt = txt + f"\n\n{'🤝🤝🤝 Ничья? 🤝🤝🤝' if resign[1] else f'🏳️🏳️🏳️ Сдаться? 🏳️🏳️🏳️'}\n{'🤝' if resign[1] else '🏳️'} {self.saymyname if resign[2] == self.you_n_me[1] else self.opp_name}"
+        return txt
 
 
     #####Ходы#####
@@ -719,5 +791,5 @@ class Chess(loader.Module):
 
 
     def ranColor(self):
-        return "w" if random.randint(1,2) == 1 else "b"
+        return "w" if random.randint(1, 2) == 1 else "b"
     #########
