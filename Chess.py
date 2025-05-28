@@ -723,6 +723,9 @@ class Chess(loader.Module):
                     txt = f"[👉] ♔ Белые - {self.saymyname} (ваш ход)\n[..] ♚ Чёрные - {self.opp_name}"
                 else:
                     txt = f"[👉] ♔ Белые - {self.opp_name} (ваш ход)\n[..] ♚ Чёрные - {self.saymyname}"
+                    if resign:
+                        if not self.Resign:
+                            txt = txt + f"\n\n{'🤝🤝🤝 Ничья? 🤝🤝🤝' if resign[1] else f'🏳️🏳️🏳️ Сдаться? 🏳️🏳️🏳️'}\n{'🤝' if resign[1] else '🏳️'} {self.saymyname if resign[2] == self.you_n_me[1] else self.opp_name}"
         elif self.checkmate:
             if self.reverse:
                 if self.you_play == "w":
@@ -776,11 +779,12 @@ class Chess(loader.Module):
                 txt = f"♔ Белые - {self.saymyname}\n♚ Чёрные - {self.opp_name}\n\n❗⏱️ Истекло время: {self.opp_name}. 🎉 Победил(а) {self.saymyname}"
             else:
                 txt = f"♔ Белые - {self.opp_name}\n♚ Чёрные - {self.saymyname}\n\n❗⏱️ Истекло время: {self.saymyname}. 🎉 Победил(а) {self.opp_name}"
-        if resign:
-            if not self.Resign:
-                txt = txt + f"\n\n{'🤝🤝🤝 Ничья? 🤝🤝🤝' if resign[1] else f'🏳️🏳️🏳️ Сдаться? 🏳️🏳️🏳️'}\n{'🤝' if resign[1] else '🏳️'} {self.saymyname if resign[2] == self.you_n_me[1] else self.opp_name}"
+        elif self.Resign:
+            if self.you_play == "w":
+                txt = f"[..] ♔ Белые - {self.saymyname}\n[..] ♚ Чёрные - {self.opp_name} (ваш ход)"
             else:
-                txt = txt + f"\n\n{'🤝 Игроки согласились на ничью.' if resign[1] else f'🏳️ Игрок {self.saymyname if resign[2] == self.you_n_me[1] else self.opp_name} сдался.'}"
+                txt = f"[..] ♔ Белые - {self.opp_name}\n[..] ♚ Чёрные - {self.saymyname} (ваш ход)"
+            txt = txt + f"\n\n{'🤝 Игроки согласились на ничью.' if resign[1] else f'🏳️ Игрок {self.saymyname if resign[2] == self.you_n_me[1] else self.opp_name} сдался.'}"
         return txt
 
 
