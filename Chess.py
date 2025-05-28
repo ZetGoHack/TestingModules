@@ -705,7 +705,7 @@ class Chess(loader.Module):
                 self.timer = False
                 self.reason = "Истекло время у белых"
 
-        if not self.checkmate and not check and not self.stalemate and not self.reason:
+        if not self.checkmate and not check and not self.stalemate and self.timer:
             if self.reverse:
                 if self.Timer:
                     await self.Timer.black()
