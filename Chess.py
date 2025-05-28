@@ -1,4 +1,4 @@
-__version__ = (1, 1, 2)
+__version__ = (1, 1, 3)
 #░░░░░░░░░░░░░░░░░░░░░░
 #░░░░░░░░░░██░░██░░░░░░
 #░░░░░░░░░████████░░░░░
@@ -674,7 +674,7 @@ class Chess(loader.Module):
             else:
                 pass
         text = await self.sttxt((True, isResign, caller))
-        self.LoadBoard(text=text, call=call, resign=[isResign])
+        await self.LoadBoard(text=text, call=call, resign=[isResign])
     
 
     async def sttxt(self, resign: tuple = False):
