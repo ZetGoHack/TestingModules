@@ -682,9 +682,6 @@ class Chess(loader.Module):
         self.checkmate = False
         self.stalemate = False
         self.fifty = False
-        if self.Resign:
-            self.timer = False
-            self.reason = 'Ничья.' if resign[1] else f'🏳️ Игрок {self.saymyname if resign[2] == self.you_n_me[1] else self.opp_name} сдался.'
         if self.Board.is_checkmate():
             self.checkmate = True
             self.timer = False
@@ -776,10 +773,12 @@ class Chess(loader.Module):
                 txt = f"♔ Белые - {self.saymyname}\n♚ Чёрные - {self.opp_name}\n\n❗⏱️ Истекло время: {self.opp_name}. 🎉 Победил(а) {self.saymyname}"
             else:
                 txt = f"♔ Белые - {self.opp_name}\n♚ Чёрные - {self.saymyname}\n\n❗⏱️ Истекло время: {self.saymyname}. 🎉 Победил(а) {self.opp_name}"
-        if resign:
+        if resign or self.Resign:
             if not self.Resign:
                 txt = txt + f"\n\n{'🤝🤝🤝 Ничья? 🤝🤝🤝' if resign[1] else f'🏳️🏳️🏳️ Сдаться? 🏳️🏳️🏳️'}\n{'🤝' if resign[1] else '🏳️'} {self.saymyname if resign[2] == self.you_n_me[1] else self.opp_name}"
             else:
+                self.timer = False
+                self.reason = 'Ничья.' if resign[1] else f'🏳️ Игрок {self.saymyname if resign[2] == self.you_n_me[1] else self.opp_name} сдался.'
                 txt = txt + f"\n\n{'🤝 Игроки согласились на ничью.' if resign[1] else f'🏳️ Игрок {self.saymyname if resign[2] == self.you_n_me[1] else self.opp_name} сдался.'}"
         return txt
 
