@@ -482,6 +482,7 @@ class Chess(loader.Module):
             btns.append(rows)
         if resign:
             txt = await self.sttxt()
+        btns = btns[::-1]
         btns.append(
             [
                 {
@@ -511,7 +512,7 @@ class Chess(loader.Module):
         )
 
         await call.edit(text = text,
-            reply_markup = btns[::-1],
+            reply_markup = btns,
             disable_security = True
         )
 
@@ -662,7 +663,7 @@ class Chess(loader.Module):
         await self.UpdBoard(call)
         return True
     
-    async def resign(self, call, isResign, final):
+    async def resign(self, call, isResign, final = False):
         caller = call.from_user.id
         if caller not in self.you_n_me:
             await call.answer("Никогда не сдавайся! (когда партия не твоя)")
