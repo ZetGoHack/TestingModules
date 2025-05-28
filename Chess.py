@@ -684,7 +684,7 @@ class Chess(loader.Module):
         self.fifty = False
         if self.Resign:
             self.timer = False
-            self.reason = ""
+            self.reason = 'Ничья.' if resign[1] else f'🏳️ Игрок {self.saymyname if resign[2] == self.you_n_me[1] else self.opp_name} сдался.'
         if self.Board.is_checkmate():
             self.checkmate = True
             self.timer = False
@@ -780,7 +780,7 @@ class Chess(loader.Module):
             if not self.Resign:
                 txt = txt + f"\n\n{'🤝🤝🤝 Ничья? 🤝🤝🤝' if resign[1] else f'🏳️🏳️🏳️ Сдаться? 🏳️🏳️🏳️'}\n{'🤝' if resign[1] else '🏳️'} {self.saymyname if resign[2] == self.you_n_me[1] else self.opp_name}"
             else:
-                txt = txt + f"\n\n{'🤝 Игроки согласились на ничью.' if reign[1] else f'🏳️ Игрок {self.saymyname if resign[2] == self.you_n_me[1] else self.opp_name} сдался.'}"
+                txt = txt + f"\n\n{'🤝 Игроки согласились на ничью.' if resign[1] else f'🏳️ Игрок {self.saymyname if resign[2] == self.you_n_me[1] else self.opp_name} сдался.'}"
         return txt
 
 
