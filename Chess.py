@@ -1,4 +1,4 @@
-__version__ = (1, 1, 3)
+__version__ = (1, 1, "*")
 #░░░░░░░░░░░░░░░░░░░░░░
 #░░░░░░░░░░██░░██░░░░░░
 #░░░░░░░░░████████░░░░░
@@ -501,7 +501,7 @@ class Chess(loader.Module):
                 {
                     "text": "Нет",
                     "callback": self.LoadBoard,
-                    "args": (txt)
+                    "args": (txt,)
                 },
                 {
                     "text": "Да",
@@ -779,6 +779,8 @@ class Chess(loader.Module):
         if resign:
             if not self.Resign:
                 txt = txt + f"\n\n{'🤝🤝🤝 Ничья? 🤝🤝🤝' if resign[1] else f'🏳️🏳️🏳️ Сдаться? 🏳️🏳️🏳️'}\n{'🤝' if resign[1] else '🏳️'} {self.saymyname if resign[2] == self.you_n_me[1] else self.opp_name}"
+            else:
+                txt = txt + f"\n\n{'🤝 Игроки согласились на ничью.' if reign[1] else f'🏳️ Игрок {self.saymyname if resign[2] == self.you_n_me[1] else self.opp_name} сдался.'}"
         return txt
 
 
