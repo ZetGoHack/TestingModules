@@ -483,7 +483,8 @@ class Chess(loader.Module):
         if resign:
             txt = await self.sttxt()
         btns = btns[::-1]
-        btns.append(
+        if not self.Resign:
+            btns.append(
             [
                 {
                     "text": "🏳️", 
@@ -668,14 +669,13 @@ class Chess(loader.Module):
         if caller not in self.you_n_me:
             await call.answer("Никогда не сдавайся! (когда партия не твоя)")
             return
+        self.Resign = False
         if final:
             if isResign:
                 self.Resign = True
                 await call.answer("Ты сдался тип")
             else:
                 await call.answer("Ничья")
-        else:
-            self.Resign = False
         text = await self.sttxt((True, isResign, caller))
         await self.LoadBoard(text=text, call=call, resign=[isResign])
     
