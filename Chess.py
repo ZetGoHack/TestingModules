@@ -1,4 +1,4 @@
-__version__ = (1, 1, "~")
+__version__ = (1, 1, "~~")
 #░░░░░░░░░░░░░░░░░░░░░░
 #░░░░░░░░░░██░░██░░░░░░
 #░░░░░░░░░████████░░░░░
@@ -711,7 +711,7 @@ class Chess(loader.Module):
                 self.timer = False
                 self.reason = "Истекло время у белых"
 
-        if not self.checkmate and not check and not self.stalemate and not self.reason:
+        if not self.checkmate and not check and not self.stalemate and not self.reason and not self.Resign:
             if self.reverse:
                 if self.Timer:
                     await self.Timer.black()
@@ -726,9 +726,8 @@ class Chess(loader.Module):
                     txt = f"[👉] ♔ Белые - {self.saymyname} (ваш ход)\n[..] ♚ Чёрные - {self.opp_name}"
                 else:
                     txt = f"[👉] ♔ Белые - {self.opp_name} (ваш ход)\n[..] ♚ Чёрные - {self.saymyname}"
-                    if resign:
-                        if not self.Resign:
-                            txt = txt + f"\n\n{f'🏳️🏳️🏳️ Сдаться? 🏳️🏳️🏳️' if resign[1] else '🤝🤝🤝 Ничья? 🤝🤝🤝'}\n{'🤝' if resign[1] else '🏳️'} {self.saymyname if resign[2] == self.you_n_me[1] else self.opp_name}"
+            if resign:
+                txt = txt + f"\n\n{f'🏳️🏳️🏳️ Сдаться? 🏳️🏳️🏳️' if resign[1] else '🤝🤝🤝 Ничья? 🤝🤝🤝'}\n{'🤝' if resign[1] else '🏳️'} {self.saymyname if resign[2] == self.you_n_me[1] else self.opp_name}"
         elif self.checkmate:
             if self.reverse:
                 if self.you_play == "w":
