@@ -1,4 +1,4 @@
-__version__ = (1, 1, "~~")
+__version__ = (1, 1, "~~~")
 #░░░░░░░░░░░░░░░░░░░░░░
 #░░░░░░░░░░██░░██░░░░░░
 #░░░░░░░░░████████░░░░░
@@ -500,14 +500,14 @@ class Chess(loader.Module):
             if not resign else
             [
                 {
-                    "text": "Нет",
-                    "callback": self.LoadBoard,
-                    "args": (txt,)
-                },
-                {
                     "text": "Да",
                     "callback": self.resign,
                     "args": (True if resign[0] else False, True)
+                },
+                {
+                    "text": "Нет",
+                    "callback": self.LoadBoard,
+                    "args": (txt,)
                 }
             ]
         )
