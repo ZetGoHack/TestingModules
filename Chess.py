@@ -598,6 +598,7 @@ class Chess(loader.Module):
         if self.checkmate or self.stalemate or self.fifty or self.reason or self.Resign:
             await call.answer("Партия окончена. Доступных ходов нет.")
             await self.purgeSelf()
+            self.checkmate = True
             return
         if call.from_user.id not in self.you_n_me:
             await call.answer("Партия не ваша или уже сброшена")
