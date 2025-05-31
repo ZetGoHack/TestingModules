@@ -100,8 +100,8 @@ class Chess(loader.Module):
 
     async def get_players(self, message):
         sender = {
-            "id": message.sender.id,
-            "first_name": message.from_id if isinstance(message.peer_id, PeerUser) else message.sender.first_name
+            "id": message.from_id if isinstance(message.peer_id, PeerUser) else message.sender.id,
+            "first_name": message.sender.first_name
         }
         if message.is_reply:
             r = await message.get_reply_message()
