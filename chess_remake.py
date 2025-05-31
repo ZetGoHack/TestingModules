@@ -138,7 +138,7 @@ class Chess(loader.Module):
         
         sender, opponent = await self.get_players(message)
         if not sender or not opponent: return
-        game_hash = f"[#{next(reversed(self.games.values()))["game_id"] + 1}]" + hashlib.sha256(f"{sender["id"]}{opponent["id"]}{time.time()}".encode()).hexdigest()
+        game_hash = f"[#{next(reversed(self.games.values()))['game_id'] + 1}]" + hashlib.sha256(f"{sender['id']}{opponent['id']}{time.time()}".encode()).hexdigest()
         self.games[game_hash] = {
             "game_id": next(reversed(self.games.values()))["game_id"] + 1,
             "sender": sender,
