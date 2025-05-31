@@ -82,14 +82,20 @@ class Chess(loader.Module):
         "name": "Chess",
         "noargs": "<emoji document_id=5370724846936267183>🤔</emoji> You did not specify who to play with",
         "whosthat": "<emoji document_id=5019523782004441717>❌</emoji> I cannot find such a user",
-        "": "",
-        "": "",
+        "test1": "<emoji document_id=5978568938156461643>🔄</emoji> Game created with hash: {}",
+        "test2": "White: {} ({})",
+        "test3": "Black: {} ({})",
+        "test4": "Timer: {}",
         "": "",
         "": "",
         }
     strings_ru = {
         "noargs": "<emoji document_id=5370724846936267183>🤔</emoji> Вы не указали с кем играть",
-        "whosthat": "<emoji document_id=5019523782004441717>❌</emoji> Я не нахожу такого пользователя"
+        "whosthat": "<emoji document_id=5019523782004441717>❌</emoji> Я не нахожу такого пользователя",
+        "test1": "<emoji document_id=5978568938156461643>🔄</emoji> Игра создана с хэшем: {}",
+        "test2": "Белые: {} ({})",
+        "test3": "Чёрные: {} ({})",
+        "test4": "Таймер: {}"
     }
     
     async def client_ready(self):
@@ -146,7 +152,7 @@ class Chess(loader.Module):
             "Timer": True if isinstance(message.peer_id, PeerUser) else False,
             "time": time.time()
         }
-        await utils.answer(message, f"<emoji document_id=5978568938156461643>🔄</emoji> Game created with hash: {game_hash}\n"
-                                    f"White: {sender['name']} ({sender['id']})\n"
-                                    f"Black: {opponent['name']} ({opponent['id']})\n"
-                                    f"Timer: {'Enabled' if self.games[game_hash]['Timer'] else 'Disabled'}")
+        await utils.answer(message, f"{self.strings['test1'].format(game_hash)}\n"
+                                    f"{self.strings['test2'].format(sender['name'], sender['id'])}\n"
+                                    f"{self.strings['test3'].format(opponent['name'], opponent['id'])}\n"
+                                    f"{self.strings['test4'].format('Enabled' if self.games[game_hash]['Timer'] else 'Disabled')}")
