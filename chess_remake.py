@@ -101,7 +101,7 @@ class Chess(loader.Module):
     async def get_players(self, message):
         sender = {
             "id": message.sender.id,
-            "first_name": message.sender.first_name
+            "first_name": message.from_id if isinstance(message.peer_id, PeerUser) else message.sender.first_name
         }
         if message.is_reply:
             r = await message.get_reply_message()
@@ -112,7 +112,7 @@ class Chess(loader.Module):
             args = utils.get_args(message)
             if len(args)==0:
                 await utils.answer(message, self.strings["noargs"])
-                return
+                return None, None
             opponent = args[0]
             try:
                 if opponent.isdigit():
@@ -129,7 +129,7 @@ class Chess(loader.Module):
                     opp_id = opponent.id
             except:
                 await utils.answer(self.message, self.strings["whosthat"])
-                return
+                return None, None
             return sender, opponent
 
     @loader.command(ru_doc="[reply/username/id] - предложить человеку сыграть партию в чате")
@@ -143,7 +143,7 @@ class Chess(loader.Module):
             "game_id": next(reversed(self.games.values()))["game_id"] + 1,
             "sender": sender,
             "opponent": opponent,
-            "Timer": True if isinstance(message, PeerUser) else False,
+            "Timer": True if isinstance(message.peer_id, PeerUser) else False,
             "time": time.time()
         }
         await utils.answer(message, f"<emoji document_id=5978568938156461643>🔄</emoji> Game created with hash: {game_hash}\n"
