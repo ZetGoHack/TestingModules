@@ -101,7 +101,7 @@ class Chess(loader.Module):
     async def get_players(self, message):
         sender = {
             "id": message.from_id if isinstance(message.peer_id, PeerUser) else message.sender.id,
-            "first_name": message.sender.first_name
+            "first_name": (await self.client.get_entity(message.from_id if isinstance(message.peer_id, PeerUser) else message.sender.id)).first_name
         }
         if message.is_reply:
             r = await message.get_reply_message()
@@ -126,11 +126,11 @@ class Chess(loader.Module):
             except:
                 await utils.answer(message, self.strings["whosthat"])
                 return (None, None)
-            opponent = {
-                "id": opp_id,
-                "name": opp_name
-            }
-            return (sender, opponent)
+        opponent = {
+            "id": opp_id,
+            "name": opp_name
+        }
+        return (sender, opponent)
 
     @loader.command(ru_doc="[reply/username/id] - предложить человеку сыграть партию в чате")
     async def chess(self, message):
