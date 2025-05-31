@@ -146,6 +146,7 @@ class Chess(loader.Module):
         if not sender or not opponent: return
         if sender['id'] == opponent['id']:
             await utils.answer(message, self.strings["playing_with_yourself?"])
+            return
         game_id = f"[#{next(reversed(self.games.values()))['game_id'] + 1}]"
         self.games[game_id] = {
             "game_id": next(reversed(self.games.values()))["game_id"] + 1,
