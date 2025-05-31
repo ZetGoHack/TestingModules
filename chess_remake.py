@@ -78,7 +78,7 @@ class Timer:
 @loader.tds
 class Chess(loader.Module):
     """A reworked version of the Chess module"""
-    strings_english = {
+    strings = {
         "name": "Chess",
         "noargs": "<emoji document_id=5370724846936267183>🤔</emoji> You did not specify who to play with",
         "whosthat": "<emoji document_id=5019523782004441717>❌</emoji> I cannot find such a user",
