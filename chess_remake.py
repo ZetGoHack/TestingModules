@@ -82,20 +82,21 @@ class Chess(loader.Module):
         "name": "Chess",
         "noargs": "<emoji document_id=5370724846936267183>🤔</emoji> You did not specify who to play with",
         "whosthat": "<emoji document_id=5019523782004441717>❌</emoji> I cannot find such a user",
-        "test1": "<emoji document_id=5978568938156461643>🔄</emoji> Game created with hash: {}",
+        "playing_with_yourself?": "<emoji document_id=5384398004172102616>😈</emoji> Playing alone? Sorry, you can't",
+        "test1": "<emoji document_id=5978568938156461643>🔄</emoji> Game {} created",
         "test2": "White: {} ({})",
         "test3": "Black: {} ({})",
         "test4": "Timer: {}",
-        "": "",
         "": "",
         }
     strings_ru = {
         "noargs": "<emoji document_id=5370724846936267183>🤔</emoji> Вы не указали с кем играть",
         "whosthat": "<emoji document_id=5019523782004441717>❌</emoji> Я не нахожу такого пользователя",
-        "test1": "<emoji document_id=5978568938156461643>🔄</emoji> Игра создана с хэшем: {}",
+        "playing_with_yourself?": "<emoji document_id=5384398004172102616>😈</emoji> Одиночные шахматы? Простите, нет",
+        "test1": "<emoji document_id=5978568938156461643>🔄</emoji> Игра {} создана",
         "test2": "Белые: {} ({})",
         "test3": "Чёрные: {} ({})",
-        "test4": "Таймер: {}"
+        "test4": "Таймер: {}",
     }
     
     async def client_ready(self):
@@ -141,18 +142,19 @@ class Chess(loader.Module):
     @loader.command(ru_doc="[reply/username/id] - предложить человеку сыграть партию в чате")
     async def chess(self, message):
         """[reply/username/id] - propose a person to play a game in the chat"""
-        
         sender, opponent = await self.get_players(message)
         if not sender or not opponent: return
-        game_hash = f"[#{next(reversed(self.games.values()))['game_id'] + 1}]" + hashlib.sha256(f"{sender['id']}{opponent['id']}{time.time()}".encode()).hexdigest()
-        self.games[game_hash] = {
+        if sender['id'] == opponent['id']:
+            await utils.answer(message, self.strings["playing_with_yourself?"])
+        game_id = f"[#{next(reversed(self.games.values()))['game_id'] + 1}]"
+        self.games[game_id] = {
             "game_id": next(reversed(self.games.values()))["game_id"] + 1,
             "sender": sender,
             "opponent": opponent,
             "Timer": True if isinstance(message.peer_id, PeerUser) else False,
-            "time": time.time()
+            "time": int(time.time())
         }
-        await utils.answer(message, f"{self.strings['test1'].format(game_hash)}\n"
+        await utils.answer(message, f"{self.strings['test1'].format(game_id)}\n"
                                     f"{self.strings['test2'].format(sender['name'], sender['id'])}\n"
                                     f"{self.strings['test3'].format(opponent['name'], opponent['id'])}\n"
-                                    f"{self.strings['test4'].format('Enabled' if self.games[game_hash]['Timer'] else 'Disabled')}")
+                                    f"{self.strings['test4'].format('Enabled' if self.games[game_id]['Timer'] else 'Disabled')}")
