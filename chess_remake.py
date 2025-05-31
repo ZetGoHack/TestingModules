@@ -112,25 +112,25 @@ class Chess(loader.Module):
             args = utils.get_args(message)
             if len(args)==0:
                 await utils.answer(message, self.strings["noargs"])
-                return None, None
+                return (None, None)
             opponent = args[0]
             try:
                 if opponent.isdigit():
                     opp_id = int(opponent)
                     opponent = await self.client.get_entity(opp_id)
                     opp_name = opponent.first_name
-                    opponent = {
-                        "id": opp_id,
-                        "first_name": opp_name
-                    }
                 else:
                     opponent = await self.client.get_entity(opponent)
                     opp_name = opponent.first_name
                     opp_id = opponent.id
             except:
-                await utils.answer(self.message, self.strings["whosthat"])
-                return None, None
-            return sender, opponent
+                await utils.answer(message, self.strings["whosthat"])
+                return (None, None)
+            opponent = {
+                "id": opp_id,
+                "name": opp_name
+            }
+            return (sender, opponent)
 
     @loader.command(ru_doc="[reply/username/id] - предложить человеку сыграть партию в чате")
     async def chess(self, message):
@@ -147,6 +147,6 @@ class Chess(loader.Module):
             "time": time.time()
         }
         await utils.answer(message, f"<emoji document_id=5978568938156461643>🔄</emoji> Game created with hash: {game_hash}\n"
-                                    f"White: {sender['first_name']} ({sender['id']})\n"
-                                    f"Black: {opponent['first_name']} ({opponent['id']})\n"
+                                    f"White: {sender['name']} ({sender['id']})\n"
+                                    f"Black: {opponent['name']} ({opponent['id']})\n"
                                     f"Timer: {'Enabled' if self.games[game_hash]['Timer'] else 'Disabled'}")
