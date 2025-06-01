@@ -12,7 +12,7 @@
 # -      main      - #
 from .. import loader, utils
 # -      func      - #
-import datetime
+import time
 from herokutl.tl.functions.payments import GetSavedStarGiftsRequest
 # -      types     - #
 from herokutl.tl.types import SavedStarGift, StarGift, StarGiftUnique, PeerUser
@@ -102,7 +102,7 @@ class Gifts(loader.Module):
                         "num": gift.gift.num,
                         "availability_total": gift.gift.availability_total,
                         "pinned_to_top": f"<emoji document_id=5796440171364749940>📌</emoji> <b>{self.strings['p']}</b>" if gift.pinned_to_top else f"<emoji document_id=5794314463200940940>📌</emoji> <b>{self.strings['up']}</b>",
-                        "can_transfer_at": gift.can_transfer_at.strftime("%H:%M %d.%m.%Y")
+                        "can_transfer_at": time.strftime("%H:%M %d.%m.%Y", time.gmtime(gift.can_transfer_at))
                     })
                 elif isinstance(gift.gift, StarGift):
                     gifts[0]["gifts"].append({
