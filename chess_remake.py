@@ -155,7 +155,7 @@ class Chess(loader.Module):
             "Timer": True if isinstance(message.peer_id, PeerUser) else False,
             "time": int(time.time())
         }
-        await utils.answer(message, self.strings['test1'].format(game_id) + "\n"
-                                    + self.strings['test2'].format(sender['name'], sender['id']) + "\n"
-                                    + self.strings['test3'].format(opponent['name'], opponent['id']) + "\n"
-                                    + self.strings['test4'].format('Enabled' if self.games[game_id]['Timer'] else 'Disabled'))
+        await utils.answer(message, f"{self.strings['test1'].format(game_id)}\n"
+                                    f"{self.strings['test2'].format(sender['name'], sender['id'])}\n"
+                                    f"{self.strings['test3'].format(opponent['name'], opponent['id'])}\n"
+                                    f"{self.strings['test4'].format('Enabled' if self.games[game_id]['Timer'] else 'Disabled')}")
