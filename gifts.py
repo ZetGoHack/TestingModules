@@ -36,7 +36,7 @@ class Gifts(loader.Module):
         "name": "Gifts",
         "toomany": "<emoji document_id=5019523782004441717>❌</emoji> Too many arguments",
         "notexist": "<emoji document_id=5019523782004441717>❌</emoji> User does not exist",
-        "firstline": "<emoji document_id=6032644646587338669>🎁</emoji> <b>Gifts({}) of {}</b>",
+        "firstline": "<emoji document_id=6032644646587338669>🎁</emoji> <b>Gifts({}) of {}</b>\n",
         "exp": "<blockquote expandable>{}</blockquote>",
         "nfts": """\n{} <a href='https://t.me/nft/{}'>{} #{}</a>
   {}
@@ -51,7 +51,7 @@ class Gifts(loader.Module):
     strings_ru = {
         "toomany": "Слишком много аргументов",
         "notexist": "<emoji document_id=5019523782004441717>❌</emoji> Такого пользователя не существует",
-        "firstline": "<emoji document_id=5875180111744995604>🎁</emoji> <b>Подарки({}) у {}</b>",
+        "firstline": "<emoji document_id=5402269792587495767>🎁</emoji> <b>Подарки({}) у {}</b>\n",
         "nfts": """\n{} <a href='https://t.me/nft/{}'>{} #{}</a>
   {}
   <emoji document_id=5776219138917668486>📈</emoji> <b>Всего подарков: </b><code>{}</code>
