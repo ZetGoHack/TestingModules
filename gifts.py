@@ -101,7 +101,7 @@ class Gifts(loader.Module):
                         "slug": gift.gift.slug,
                         "num": gift.gift.num,
                         "availability_total": gift.gift.availability_total,
-                        "pinned_to_top": f"<emoji document_id=5796440171364749940>📌</emoji> <b>{self.strings["p"]}</b>" if gift.pinned_to_top else f"<emoji document_id=5794314463200940940>📌</emoji> <b>{self.strings["up"]}</b>",
+                        "pinned_to_top": f"<emoji document_id=5796440171364749940>📌</emoji> <b>{self.strings['p']}</b>" if gift.pinned_to_top else f"<emoji document_id=5794314463200940940>📌</emoji> <b>{self.strings['up']}</b>",
                         "can_transfer_at": gift.can_transfer_at.strftime("%H:%M %d.%m.%Y")
                     })
                 elif isinstance(gift.gift, StarGift):
