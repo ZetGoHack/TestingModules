@@ -12,20 +12,37 @@
 # -      main      - #
 from .. import loader, utils
 # -      func      - #
-from telethon.tl.functions.payments import GetSavedStarGiftsRequest
-# -       --       - #
+import datetime
+from herokutl.tl.functions.payments import GetSavedStarGiftsRequest
+# -      types     - #
+from herokutl.tl.types import SavedStarGift, StarGift, StarGiftUnique, PeerUser
+# -      end       - #
 
 @loader.tds
 class Gifts(loader.Module):
     """Just a module for working with gifts"""
     strings = {
         "name": "Gifts",
-        "toomany": "Too many arguments",
-        "": "",
-        "": "",
+        "toomany": "<emoji document_id=5019523782004441717>❌</emoji> Too many arguments",
+        "notexist": "<emoji document_id=5019523782004441717>❌</emoji> User does not exist",
+        "firstline": "<emoji document_id=5875180111744995604>🎁</emoji> <b>Gifts({}) of {}</b>",
+        "exp": "<blockquote expandable>{}</blockquote>",
+        "nfts": """{} <a href='https://t.me/nft/{}'>{} #{}</a>
+  {}
+  <emoji document_id=5776219138917668486>📈</emoji> <b>Availability: </b><code>{}</code>
+  <emoji document_id=5776213190387961618>🕓</emoji> <b>Can transfer at</b> <code>{}</code>""",
+        "p": "Pinned",
+        "up": "Unpinned",
+        "giftline": "\n<emoji document_id=5402269792587495767>🎁</emoji> <b>Gifts:</b>\n",
+        "gift": "{} — <code>{}</code>",
     }
     strings_ru = {
-        "toomany": "Слишком много аргументов"
+        "toomany": "Слишком много аргументов",
+        "notexist": "<emoji document_id=5019523782004441717>❌</emoji> Такого пользователя не существует",
+        "firstline": "<emoji document_id=5875180111744995604>🎁</emoji> <b>Подарки({}) у {}</b>",
+        "p": "Закреплено",
+        "up": "Не закреплено",
+        "giftline": "\n<emoji document_id=5402269792587495767>🎁</emoji> <b>Подарки:</b>\n",
     }
 
     @loader.command(ru_doc="[юзернейм/ответ/'me'] посмотреть подарки пользователя")
@@ -37,7 +54,59 @@ class Gifts(loader.Module):
             return
         if len(args):
             username = args[0]
-            user_gifts = await self._get_gifts(username)
+        else:
+            if message.is_reply:
+                reply = await message.get_reply_message()
+                username = reply.from_id.user_id if isinstance(reply.peer_id, PeerUser) else reply.sender.id
+            else:
+                username = "me"
+        user_gifts = await self._get_gifts(username)
+        if not user_gifts:
+            await utils.answer(message, self.strings["notexist"])
+            return
+        if user_gifts[0]["nfts"] or user_gifts[0]["gifts"]:
+            text = self.strings["firstline"].format(user_gifts[1], username)
+            if user_gifts[0]["nfts"]:
+                text += "<emoji document_id=5807868868886009920>👑</emoji> <b>NFTs</b>\n"
+                nfts = ""
+                for nft in user_gifts[0]["nfts"]:
+                    nfts += self.strings["nfts"].format(nft["emoji"], nft["slug"], nft["name"],
+                                                        nft["num"], nft["pinned_to_top"],
+                                                        nft["availability_total"], nft["can_transfer_at"])
+                text += self.strings["exp"].format(nfts)
+            if user_gifts[0]["gifts"]:
+                text += self.strings["giftline"]
+                gifts = ""
+                for gift in user_gifts[0]["gifts"]:
+                    gifts += self.strings["gift"].format(gift["emoji"], gift["stars"])
+                text += self.strings["exp"].format(gifts)
+            await utils.answer(message, text)
 
     async def _get_gifts(self, username):
-        return None
+        gifts = [{
+            "nfts": [],
+            "gifts": [],
+        }]
+        try:
+            gifts_info = await self.client(GetSavedStarGiftsRequest(peer=username, offset='', limit=5))
+            gifts.append(gifts_info.count)
+        except:
+            return None
+        for gift in gifts_info.gifts:
+            if isinstance(gift, SavedStarGift):
+                if isinstance(gift.gift, StarGiftUnique):
+                    gifts[0]["nfts"].append({
+                        "emoji": "<emoji document_id={}>{}</emoji>".format(gift.gift.attributes[0].document.id, gift.gift.attributes[0].document.attributes[1].alt),
+                        "name": gift.gift.title,
+                        "slug": gift.gift.slug,
+                        "num": gift.gift.num,
+                        "availability_total": gift.gift.availability_total,
+                        "pinned_to_top": f"<emoji document_id=5796440171364749940>📌</emoji> <b>{self.strings["p"]}</b>" if gift.pinned_to_top else f"<emoji document_id=5794314463200940940>📌</emoji> <b>{self.strings["up"]}</b>",
+                        "can_transfer_at": gift.can_transfer_at.strftime("%H:%M %d.%m.%Y")
+                    })
+                elif isinstance(gift.gift, StarGift):
+                    gifts[0]["gifts"].append({
+                        "emoji": "<emoji document_id={}>{}</emoji>".format(gift.gift.sticker.id, gift.gift.sticker.attributes[1].alt),
+                        "stars": str(gift.gift.stars) + " <emoji document_id=5951810621887484519>⭐️</emoji>"
+                    })
+        return gifts

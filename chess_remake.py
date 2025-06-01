@@ -82,7 +82,7 @@ class Chess(loader.Module):
         "name": "Chess",
         "noargs": "<emoji document_id=5370724846936267183>🤔</emoji> You did not specify who to play with",
         "whosthat": "<emoji document_id=5019523782004441717>❌</emoji> I cannot find such a user",
-        "playing_with_yourself?": "<emoji document_id=5384398004172102616>😈</emoji> Playing alone? Sorry, you can't",
+        "playing_with_yourself?": "<emoji document_id=5384398004172102616>😈</emoji> Playing with yourself? Sorry, you can't",
         "test1": "<emoji document_id=5978568938156461643>🔄</emoji> Game {} created",
         "test2": "White: {} ({})",
         "test3": "Black: {} ({})",
