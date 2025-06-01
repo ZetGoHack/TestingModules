@@ -21,11 +21,22 @@ from herokutl.tl.types import SavedStarGift, StarGift, StarGiftUnique, PeerUser
 @loader.tds
 class Gifts(loader.Module):
     """Just a module for working with gifts"""
+
+    def __init__(self):
+        self.config = loader.ModuleConfig(
+            loader.ConfigValue(
+                "gift_limit",
+                20,
+                "0 to show all gifts",
+                validator=loader.validators.Integer(),
+            ),
+        )
+
     strings = {
         "name": "Gifts",
         "toomany": "<emoji document_id=5019523782004441717>❌</emoji> Too many arguments",
         "notexist": "<emoji document_id=5019523782004441717>❌</emoji> User does not exist",
-        "firstline": "<emoji document_id=5875180111744995604>🎁</emoji> <b>Gifts({}) of {}</b>",
+        "firstline": "<emoji document_id=6032644646587338669>🎁</emoji> <b>Gifts({}) of {}</b>",
         "exp": "<blockquote expandable>{}</blockquote>",
         "nfts": """\n{} <a href='https://t.me/nft/{}'>{} #{}</a>
   {}
@@ -34,7 +45,7 @@ class Gifts(loader.Module):
         "p": "Pinned",
         "up": "Unpinned",
         "giftline": "\n<emoji document_id=5402269792587495767>🎁</emoji> <b>Gifts:</b>\n",
-        "gift": "{} — <code>{}</code>\n\n",
+        "gift": "{} — {}\n\n",
         "doesnthave": "<emoji document_id=5325773049201434770>😭</emoji><b> User {} doesnt have any public gifts</b>",
     }
     strings_ru = {
@@ -59,19 +70,20 @@ class Gifts(loader.Module):
             await utils.answer(message, self.strings["toomany"])
             return
         if len(args):
-            username = args[0]
+            id = args[0]
         else:
             if message.is_reply:
                 reply = await message.get_reply_message()
-                username = reply.from_id.user_id if isinstance(reply.peer_id, PeerUser) else reply.sender.id
+                id = reply.sender.id
             else:
-                username = "me"
-        user_gifts = await self._get_gifts(username)
+                id = "me"
+        user_gifts = await self._get_gifts(id)
         if not user_gifts:
             await utils.answer(message, self.strings["notexist"])
             return
+        name = (await self.client.get_entity(id)).first_name
         if user_gifts[0]["nfts"] or user_gifts[0]["gifts"]:
-            text = self.strings["firstline"].format(user_gifts[1], username)
+            text = self.strings["firstline"].format(user_gifts[1], name)
             if user_gifts[0]["nfts"]:
                 text += "\n<emoji document_id=5807868868886009920>👑</emoji> <b>NFTs</b>\n"
                 nfts = ""
@@ -88,7 +100,7 @@ class Gifts(loader.Module):
                 text += self.strings["exp"].format(gifts)
             await utils.answer(message, text)
         else:
-            await utils.answer(message, self.strings["doesnthave"].format(username))
+            await utils.answer(message, self.strings["doesnthave"].format(name))
 
     async def _get_gifts(self, username):
         gifts = [{
@@ -96,7 +108,7 @@ class Gifts(loader.Module):
             "gifts": [],
         }]
         try:
-            gifts_info = await self.client(GetSavedStarGiftsRequest(peer=username, offset='', limit=10))
+            gifts_info = await self.client(GetSavedStarGiftsRequest(peer=username, offset='', limit=int(self.config["gift_limit"])))
             gifts.append(gifts_info.count)
         except:
             return None
@@ -115,6 +127,6 @@ class Gifts(loader.Module):
                 elif isinstance(gift.gift, StarGift):
                     gifts[0]["gifts"].append({
                         "emoji": "<emoji document_id={}>{}</emoji>".format(gift.gift.sticker.id, gift.gift.sticker.attributes[1].alt),
-                        "stars": str(gift.gift.stars) + " <emoji document_id=5951810621887484519>⭐️</emoji>"
+                        "stars": f"<code>{gift.gift.stars}</code>" + " <emoji document_id=5951810621887484519>⭐️</emoji>"
                     })
         return gifts
