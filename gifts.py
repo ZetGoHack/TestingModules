@@ -21,6 +21,17 @@ from herokutl.tl.types import SavedStarGift, StarGift, StarGiftUnique, PeerUser
 @loader.tds
 class Gifts(loader.Module):
     """Just a module for working with gifts"""
+
+    def __init__(self):
+        self.config = loader.ModuleConfig(
+            loader.ConfigValue(
+                "gift_limit",
+                20,
+                "0 to show all gifts",
+                validator=loader.validators.int(),
+            ),
+        )
+
     strings = {
         "name": "Gifts",
         "toomany": "<emoji document_id=5019523782004441717>❌</emoji> Too many arguments",
@@ -96,7 +107,7 @@ class Gifts(loader.Module):
             "gifts": [],
         }]
         try:
-            gifts_info = await self.client(GetSavedStarGiftsRequest(peer=username, offset='', limit=10))
+            gifts_info = await self.client(GetSavedStarGiftsRequest(peer=username, offset='', limit=int(self.config["gift_limit"])))
             gifts.append(gifts_info.count)
         except:
             return None
