@@ -69,7 +69,7 @@ class Gifts(loader.Module):
         if user_gifts[0]["nfts"] or user_gifts[0]["gifts"]:
             text = self.strings["firstline"].format(user_gifts[1], username)
             if user_gifts[0]["nfts"]:
-                text += "<emoji document_id=5807868868886009920>👑</emoji> <b>NFTs</b>\n"
+                text += "\n<emoji document_id=5807868868886009920>👑</emoji> <b>NFTs</b>\n"
                 nfts = ""
                 for nft in user_gifts[0]["nfts"]:
                     nfts += self.strings["nfts"].format(nft["emoji"], nft["slug"], nft["name"],
