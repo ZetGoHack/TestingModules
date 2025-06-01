@@ -27,7 +27,7 @@ class Gifts(loader.Module):
         "notexist": "<emoji document_id=5019523782004441717>❌</emoji> User does not exist",
         "firstline": "<emoji document_id=5875180111744995604>🎁</emoji> <b>Gifts({}) of {}</b>",
         "exp": "<blockquote expandable>{}</blockquote>",
-        "nfts": """{} <a href='https://t.me/nft/{}'>{} #{}</a>
+        "nfts": """\n{} <a href='https://t.me/nft/{}'>{} #{}</a>
   {}
   <emoji document_id=5776219138917668486>📈</emoji> <b>Availability: </b><code>{}</code>
   <emoji document_id=5776213190387961618>🕓</emoji> <b>Can transfer at</b> <code>{}</code>""",
@@ -35,6 +35,7 @@ class Gifts(loader.Module):
         "up": "Unpinned",
         "giftline": "\n<emoji document_id=5402269792587495767>🎁</emoji> <b>Gifts:</b>\n",
         "gift": "{} — <code>{}</code>",
+        "doesnthave": "<emoji document_id=5325773049201434770>😭</emoji><b> User {} doesnt have any public gifts</b>",
     }
     strings_ru = {
         "toomany": "Слишком много аргументов",
@@ -43,6 +44,7 @@ class Gifts(loader.Module):
         "p": "Закреплено",
         "up": "Не закреплено",
         "giftline": "\n<emoji document_id=5402269792587495767>🎁</emoji> <b>Подарки:</b>\n",
+        "doesnthave": "<emoji document_id=5325773049201434770>😭</emoji><b> Пользователь {} не имеет публичных подарков</b>",
     }
 
     @loader.command(ru_doc="[юзернейм/ответ/'me'] посмотреть подарки пользователя")
@@ -81,6 +83,8 @@ class Gifts(loader.Module):
                     gifts += self.strings["gift"].format(gift["emoji"], gift["stars"])
                 text += self.strings["exp"].format(gifts)
             await utils.answer(message, text)
+        else:
+            await utils.answer(message, self.strings["doesnthave"].format(username))
 
     async def _get_gifts(self, username):
         gifts = [{
@@ -88,7 +92,7 @@ class Gifts(loader.Module):
             "gifts": [],
         }]
         try:
-            gifts_info = await self.client(GetSavedStarGiftsRequest(peer=username, offset='', limit=5))
+            gifts_info = await self.client(GetSavedStarGiftsRequest(peer=username, offset='', limit=10))
             gifts.append(gifts_info.count)
         except:
             return None
