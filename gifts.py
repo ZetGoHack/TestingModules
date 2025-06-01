@@ -30,7 +30,7 @@ class Gifts(loader.Module):
         "nfts": """\n{} <a href='https://t.me/nft/{}'>{} #{}</a>
   {}
   <emoji document_id=5776219138917668486>📈</emoji> <b>Availability: </b><code>{}</code>
-  <emoji document_id=5776213190387961618>🕓</emoji> <b>Can transfer at</b> <code>{}</code>""",
+  <emoji document_id=5776213190387961618>🕓</emoji> <b>Can transfer after</b> <code>{}</code>""",
         "p": "Pinned",
         "up": "Unpinned",
         "giftline": "\n<emoji document_id=5402269792587495767>🎁</emoji> <b>Gifts:</b>\n",
@@ -41,6 +41,10 @@ class Gifts(loader.Module):
         "toomany": "Слишком много аргументов",
         "notexist": "<emoji document_id=5019523782004441717>❌</emoji> Такого пользователя не существует",
         "firstline": "<emoji document_id=5875180111744995604>🎁</emoji> <b>Подарки({}) у {}</b>",
+        "nfts": """\n{} <a href='https://t.me/nft/{}'>{} #{}</a>
+  {}
+  <emoji document_id=5776219138917668486>📈</emoji> <b>Всего подарков: </b><code>{}</code>
+  <emoji document_id=5776213190387961618>🕓</emoji> <b>Возможно передать после</b> <code>{}</code>""",
         "p": "Закреплено",
         "up": "Не закреплено",
         "giftline": "\n<emoji document_id=5402269792587495767>🎁</emoji> <b>Подарки:</b>\n",
