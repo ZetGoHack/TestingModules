@@ -36,7 +36,7 @@ class Gifts(loader.Module):
         "name": "Gifts",
         "toomany": "<emoji document_id=5019523782004441717>❌</emoji> Too many arguments",
         "notexist": "<emoji document_id=5019523782004441717>❌</emoji> User does not exist",
-        "firstline": "<emoji document_id=6032644646587338669>🎁</emoji> <b>Gifts({}) of {}</b>\n",
+        "firstline": "<emoji document_id=5875180111744995604>🎁</emoji> <b>Gifts({}) of {}</b>",
         "exp": "<blockquote expandable>{}</blockquote>",
         "nfts": """\n{} <a href='https://t.me/nft/{}'>{} #{}</a>
   {}
@@ -44,21 +44,21 @@ class Gifts(loader.Module):
   <emoji document_id=5776213190387961618>🕓</emoji> <b>Can transfer after</b> <code>{}</code>\n""",
         "p": "Pinned",
         "up": "Unpinned",
-        "giftline": "\n<emoji document_id=5402269792587495767>🎁</emoji> <b>Gifts:</b>\n",
+        "giftline": "\n<emoji document_id=6032644646587338669>🎁</emoji> <b>Gifts:</b>\n",
         "gift": "{} — {}\n\n",
         "doesnthave": "<emoji document_id=5325773049201434770>😭</emoji><b> User {} doesnt have any public gifts</b>",
     }
     strings_ru = {
         "toomany": "Слишком много аргументов",
         "notexist": "<emoji document_id=5019523782004441717>❌</emoji> Такого пользователя не существует",
-        "firstline": "<emoji document_id=5402269792587495767>🎁</emoji> <b>Подарки({}) у {}</b>\n",
+        "firstline": "<emoji document_id=5875180111744995604>🎁</emoji> <b>Подарки({}) у {}</b>",
         "nfts": """\n{} <a href='https://t.me/nft/{}'>{} #{}</a>
   {}
   <emoji document_id=5776219138917668486>📈</emoji> <b>Всего подарков: </b><code>{}</code>
   <emoji document_id=5776213190387961618>🕓</emoji> <b>Возможно передать после</b> <code>{}</code>\n""",
         "p": "Закреплено",
         "up": "Не закреплено",
-        "giftline": "\n<emoji document_id=5402269792587495767>🎁</emoji> <b>Подарки:</b>\n",
+        "giftline": "\n<emoji document_id=6032644646587338669>🎁</emoji> <b>Подарки:</b>\n",
         "doesnthave": "<emoji document_id=5325773049201434770>😭</emoji><b> Пользователь {} не имеет публичных подарков</b>",
     }
 
