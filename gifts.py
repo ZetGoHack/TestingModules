@@ -16,6 +16,8 @@ import time
 from herokutl.tl.functions.payments import GetSavedStarGiftsRequest
 # -      types     - #
 from herokutl.tl.types import SavedStarGift, StarGift, StarGiftUnique, PeerUser
+# -      error       - #
+from herokutl.errors.rpcerrorlist import DocumentInvalidError
 # -      end       - #
 
 @loader.tds
@@ -27,7 +29,7 @@ class Gifts(loader.Module):
             loader.ConfigValue(
                 "gift_limit",
                 20,
-                "0 to show all gifts",
+                "0 to show first 20 gifts",
                 validator=loader.validators.Integer(),
             ),
         )
@@ -40,13 +42,14 @@ class Gifts(loader.Module):
         "exp": "<blockquote expandable>{}</blockquote>",
         "nfts": """\n{} <a href='https://t.me/nft/{}'>{} #{}</a>
   {}
-  <emoji document_id=5776219138917668486>📈</emoji> <b>Availability: </b><code>{}</code>
+  <emoji document_id=5776219138917668486>📈</emoji> <b>Availability:</b> <code>{}</code>
   <emoji document_id=5776213190387961618>🕓</emoji> <b>Can transfer after</b> <code>{}</code>\n""",
         "p": "Pinned",
         "up": "Unpinned",
         "giftline": "\n<emoji document_id=6032644646587338669>🎁</emoji> <b>Gifts:</b>\n",
         "gift": "{} — {}\n\n",
-        "doesnthave": "<emoji document_id=5325773049201434770>😭</emoji><b> User {} doesnt have any public gifts</b>",
+        "doesnthave": "<emoji document_id=5325773049201434770>😭</emoji> <b>User {} doesn't have any public gifts</b>",
+        "docerror": "nahhhhh I can't show it",
     }
     strings_ru = {
         "toomany": "Слишком много аргументов",
@@ -54,12 +57,13 @@ class Gifts(loader.Module):
         "firstline": "<emoji document_id=5875180111744995604>🎁</emoji> <b>Подарки({}) у {}</b>",
         "nfts": """\n{} <a href='https://t.me/nft/{}'>{} #{}</a>
   {}
-  <emoji document_id=5776219138917668486>📈</emoji> <b>Всего подарков: </b><code>{}</code>
+  <emoji document_id=5776219138917668486>📈</emoji> <b>Всего подарков:</b> <code>{}</code>
   <emoji document_id=5776213190387961618>🕓</emoji> <b>Возможно передать после</b> <code>{}</code>\n""",
         "p": "Закреплено",
         "up": "Не закреплено",
         "giftline": "\n<emoji document_id=6032644646587338669>🎁</emoji> <b>Подарки:</b>\n",
-        "doesnthave": "<emoji document_id=5325773049201434770>😭</emoji><b> Пользователь {} не имеет публичных подарков</b>",
+        "doesnthave": "<emoji document_id=5325773049201434770>😭</emoji> <b>Пользователь {} не имеет публичных подарков</b>",
+        #"docerror": "nahhhhh I can't show it",
     }
 
     @loader.command(ru_doc="[юзернейм/ответ/'me'] посмотреть подарки пользователя")
@@ -98,7 +102,10 @@ class Gifts(loader.Module):
                 for gift in user_gifts[0]["gifts"]:
                     gifts += self.strings["gift"].format(gift["emoji"], gift["stars"])
                 text += self.strings["exp"].format(gifts)
-            await utils.answer(message, text)
+            try:
+                await utils.answer(message, text)
+            except DocumentInvalidError:
+                await utils.answer(message, self.strings["docerror"])
         else:
             await utils.answer(message, self.strings["doesnthave"].format(name))
 
@@ -116,7 +123,7 @@ class Gifts(loader.Module):
             if isinstance(gift, SavedStarGift):
                 if isinstance(gift.gift, StarGiftUnique):
                     gifts[0]["nfts"].append({
-                        "emoji": "<emoji document_id={}>{}</emoji>".format(gift.gift.attributes[0].document.id, gift.gift.attributes[0].document.attributes[1].alt),
+                        "emoji": "<emoji document_id={}>{}</emoji>".format(gift.gift.attributes[0].document.id, gift.gift.attributes[0].document.attributes[1].alt), 
                         "name": gift.gift.title,
                         "slug": gift.gift.slug,
                         "num": gift.gift.num,
@@ -126,7 +133,7 @@ class Gifts(loader.Module):
                     })
                 elif isinstance(gift.gift, StarGift):
                     gifts[0]["gifts"].append({
-                        "emoji": "<emoji document_id={}>{}</emoji>".format(gift.gift.sticker.id, gift.gift.sticker.attributes[1].alt),
+                        "emoji": "<emoji document_id={}>{}</emoji>".format(gift.gift.sticker.id, gift.gift.sticker.attributes[1].alt).replace("5231003994519794860", "5231134789158856498"), # < - jst dumpfix to avoid DocumentInvalidError
                         "stars": f"<code>{gift.gift.stars}</code>" + " <emoji document_id=5951810621887484519>⭐️</emoji>"
                     })
         return gifts
