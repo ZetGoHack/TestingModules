@@ -4,7 +4,7 @@
 #░░░█░░░█░░░░█░░█░█░█░█
 #░░░███░███░░█░░███░███
 #H:Mods Team [💎]
-
+v = (" доступно"," после"," релиза Heroku")
 # meta developer: @nullmod
 # scope: heroku_min 1.7.0
 # scope: hikka_min 1.7.0
@@ -33,6 +33,23 @@ class Gifts(loader.Module):
                 validator=loader.validators.Integer(),
             ),
         )
+        
+    async def client_ready(self):
+        usrnm = getattr(self._client.heroku_me, "username", "")
+        self.usernames = [
+            usrnm.lower()
+            if usrnm else
+            "",
+            str(self._client.heroku_me.id)
+        ]
+
+        self.usernames.extend(
+            u.username.lower()
+            for u in getattr(self._client.heroku_me, "usernames", [])
+            or []
+        )
+
+        self.usernames.append("me")
 
     strings = {
         "name": "Gifts",
@@ -47,8 +64,9 @@ class Gifts(loader.Module):
         "p": "Pinned",
         "up": "Unpinned",
         "giftline": "\n<emoji document_id=6032644646587338669>🎁</emoji> <b>Gifts:</b>\n",
-        "gift": "{} — {}\n\n",
+        "gift": "[{}] {} — {} (sum - {} <emoji document_id=5951810621887484519>⭐️</emoji>)\n\n",
         "doesnthave": "<emoji document_id=5325773049201434770>😭</emoji> <b>User {} doesn't have any public gifts</b>",
+        "not_available": "<b>Not available</b>",
         "docerror": "nahhhhh I can't show it",
     }
     strings_ru = {
@@ -62,26 +80,43 @@ class Gifts(loader.Module):
         "p": "Закреплено",
         "up": "Не закреплено",
         "giftline": "\n<emoji document_id=6032644646587338669>🎁</emoji> <b>Подарки:</b>\n",
+        "gift": "[{}] {} — {} (всего - {} <emoji document_id=5951810621887484519>⭐️</emoji>)\n\n",
         "doesnthave": "<emoji document_id=5325773049201434770>😭</emoji> <b>Пользователь {} не имеет публичных подарков</b>",
+        "not_available": "<b>Не доступно</b>"
         #"docerror": "nahhhhh I can't show it",
     }
 
     @loader.command(ru_doc="[юзернейм/ответ/'me'] посмотреть подарки пользователя")
     async def gifts(self, message):
         """[username/reply/'me'] view user's gifts"""
-        args = utils.get_args_raw(message).split()
+        params = {} # < - excluding args
+        args = utils.get_args_raw(message)
+        if "-nft" in args:
+            args = args.replace("-nft", "")
+            params["exclude_unique"] = True
+        if "-gifts" in args:
+            args = args.replace("-gifts", "")
+            params["exclude_unlimited"] = True
+        if "-limited" in args:
+            args = args.replace("-limited", "")
+            params["exclude_limited"] = True
+            
+        args = args.strip().split()
         if len(args) > 1:
             await utils.answer(message, self.strings["toomany"])
             return
         if len(args):
             id = args[0]
+            try:
+                id = int(id)
+            except: pass    
         else:
             if message.is_reply:
                 reply = await message.get_reply_message()
                 id = reply.sender.id
             else:
                 id = "me"
-        user_gifts = await self._get_gifts(id)
+        user_gifts = await self._get_gifts(id, params)
         if not user_gifts:
             await utils.answer(message, self.strings["notexist"])
             return
@@ -100,7 +135,7 @@ class Gifts(loader.Module):
                 text += self.strings["giftline"]
                 gifts = ""
                 for gift in user_gifts[0]["gifts"]:
-                    gifts += self.strings["gift"].format(gift["emoji"], gift["stars"])
+                    gifts += self.strings["gift"].format(gift["count"], gift["emoji"], gift["stars"], gift["sum"])
                 text += self.strings["exp"].format(gifts)
             try:
                 await utils.answer(message, text)
@@ -109,15 +144,17 @@ class Gifts(loader.Module):
         else:
             await utils.answer(message, self.strings["doesnthave"].format(name))
 
-    async def _get_gifts(self, username):
+    async def _get_gifts(self, username, parameters):
         gifts = [{
             "nfts": [],
             "gifts": [],
         }]
+        zzz = 0
         try:
-            gifts_info = await self.client(GetSavedStarGiftsRequest(peer=username, offset='', limit=int(self.config["gift_limit"])))
+            gifts_info = await self.client(GetSavedStarGiftsRequest(peer=username, offset='', limit=int(self.config["gift_limit"]), **parameters))
             gifts.append(gifts_info.count)
         except:
+            raise
             return None
         for gift in gifts_info.gifts:
             if isinstance(gift, SavedStarGift):
@@ -129,11 +166,27 @@ class Gifts(loader.Module):
                         "num": gift.gift.num,
                         "availability_total": gift.gift.availability_total,
                         "pinned_to_top": f"<emoji document_id=5796440171364749940>📌</emoji> <b>{self.strings['p']}</b>" if gift.pinned_to_top else f"<emoji document_id=5794314463200940940>📌</emoji> <b>{self.strings['up']}</b>",
-                        "can_transfer_at": time.strftime("%H:%M %d.%m.%Y", time.gmtime(gift.can_transfer_at))
+                        "can_transfer_at": (
+                            time.strftime("%H:%M %d.%m.%Y", time.gmtime(gift.can_transfer_at))
+                            if username in self.usernames else
+                            self.strings["not_available"])
                     })
                 elif isinstance(gift.gift, StarGift):
+                    st_id = str(gift.gift.sticker.id).replace("5231003994519794860", "5231134789158856498") # < - jst dumpfix to avoid DocumentInvalidError
+                    zzz = False
+                    for gft in gifts[0]["gifts"]:
+                        if st_id in gft["emoji"]:
+                            gft["count"] += 1
+                            gft["sum"] += gift.gift.stars
+                            zzz = True
+                            break
+                    if zzz: continue
                     gifts[0]["gifts"].append({
-                        "emoji": "<emoji document_id={}>{}</emoji>".format(gift.gift.sticker.id, gift.gift.sticker.attributes[1].alt).replace("5231003994519794860", "5231134789158856498"), # < - jst dumpfix to avoid DocumentInvalidError
-                        "stars": f"<code>{gift.gift.stars}</code>" + " <emoji document_id=5951810621887484519>⭐️</emoji>"
+                        "emoji": "<emoji document_id={}>{}</emoji>".format(st_id, gift.gift.sticker.attributes[1].alt),
+                        "stars": f"<code>{gift.gift.stars}</code>" + " <emoji document_id=5951810621887484519>⭐️</emoji>",
+                        "sum": gift.gift.stars,
+                        "count": 1,
                     })
         return gifts
+        
+__version__ = v
