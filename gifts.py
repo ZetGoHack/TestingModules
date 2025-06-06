@@ -86,16 +86,18 @@ class Gifts(loader.Module):
     }
 
     @loader.command(ru_doc="""[юзернейм/ответ/'me'] посмотреть подарки пользователя
+    
     Команда имеет несколько флагов для фильтрации вывода:
         -n(ft) — исключить NFT
         -g(ifts) — исключить обычные подарки(розы, мишки и т.п.)
         -l(imited) — исключить редкие подарки""")
     async def gifts(self, message):
         """[username/reply/'me'] view user's gifts
-        Module have some flags to filter output:
-        -n(ft) — excludes nft gifts
-        -g(ifts) — excludes regular gifts (not rare)
-        -l(imited) — excludes limited gifts"""
+        
+        Command have some flags to filter output:
+            -n(ft) — excludes nft gifts
+            -g(ifts) — excludes regular gifts (not rare)
+            -l(imited) — excludes limited gifts"""
         params = {} # < - excluding args
         args = utils.get_args_raw(message)
         if "-nft" in args or "-n" in args:
