@@ -55,18 +55,21 @@ class Gifts(loader.Module):
         "name": "Gifts",
         "toomany": "<emoji document_id=5019523782004441717>❌</emoji> Too many arguments",
         "notexist": "<emoji document_id=5019523782004441717>❌</emoji> User does not exist",
-        "firstline": "<emoji document_id=5875180111744995604>🎁</emoji> <b>Gifts({}) of {}</b>",
+        # .gifts command
+        "firstline": "<emoji document_id=5875180111744995604>🎁</emoji> <b>Gifts({}/{}) of {}</b>",
         "exp": "<blockquote expandable>{}</blockquote>",
         "nfts": """\n{} <a href='https://t.me/nft/{}'>{} #{}</a>
   {}
   <emoji document_id=5776219138917668486>📈</emoji> <b>Availability:</b> <code>{}</code>
-  <emoji document_id=5776213190387961618>🕓</emoji> <b>Can transfer after</b> <code>{}</code>\n""",
+  <emoji document_id=5776213190387961618>🕓</emoji> <b>Can transfer after</b> <code>{}</code>
+  More details: .gift {}\n""",
         "p": "Pinned",
         "up": "Unpinned",
         "giftline": "\n<emoji document_id=6032644646587338669>🎁</emoji> <b>Gifts:</b>\n",
         "gift": "[x{}] {} — {} <emoji document_id=5951810621887484519>⭐️</emoji>\n\n",
         "doesnthave": "<emoji document_id=5325773049201434770>😭</emoji> <b>User {} doesn't have any public gifts</b>",
-        "not_available": "<b>Not available</b>",
+        # / .gifts command
+        "not_available": "<i>Not available</i>",
         "docerror": "I can't show it (Invalid document ID).\nReport it to @gitneko",
     }
     strings_ru = {
@@ -81,23 +84,21 @@ class Gifts(loader.Module):
         "up": "Не закреплено",
         "giftline": "\n<emoji document_id=6032644646587338669>🎁</emoji> <b>Подарки:</b>\n",
         "doesnthave": "<emoji document_id=5325773049201434770>😭</emoji> <b>Пользователь {} не имеет публичных подарков</b>",
-        "not_available": "<b>Не доступно</b>"
+        "not_available": "<i>Не доступно</i>"
         #"docerror": "nahhhhh I can't show it",
     }
 
     @loader.command(ru_doc="""[юзернейм/ответ/'me'] посмотреть подарки пользователя
-    
     Команда имеет несколько флагов для фильтрации вывода:
         -n(ft) — исключить NFT
         -g(ifts) — исключить обычные подарки(розы, мишки и т.п.)
         -l(imited) — исключить редкие подарки""")
     async def gifts(self, message):
         """[username/reply/'me'] view user's gifts
-        
-        Command have some flags to filter output:
-            -n(ft) — excludes nft gifts
-            -g(ifts) — excludes regular gifts (not rare)
-            -l(imited) — excludes limited gifts"""
+        Module have some flags to filter output:
+        -n(ft) — excludes nft gifts
+        -g(ifts) — excludes regular gifts (not rare)
+        -l(imited) — excludes limited gifts"""
         params = {} # < - excluding args
         args = utils.get_args_raw(message)
         if "-nft" in args or "-n" in args:
@@ -131,7 +132,7 @@ class Gifts(loader.Module):
             return
         name = (await self.client.get_entity(id)).first_name
         if user_gifts[0]["nfts"] or user_gifts[0]["gifts"]:
-            text = self.strings["firstline"].format(user_gifts[1], name)
+            text = self.strings["firstline"].format(user_gifts[2], user_gifts[1], name)
             if user_gifts[0]["nfts"]:
                 text += "\n<emoji document_id=5807868868886009920>👑</emoji> <b>NFTs</b>\n"
                 nfts = ""
@@ -159,6 +160,7 @@ class Gifts(loader.Module):
             "gifts": [],
         }]
         zzz = 0
+        shown = 0
         try:
             gifts_info = await self.client(GetSavedStarGiftsRequest(peer=username, offset='', limit=int(self.config["gift_limit"]), **parameters))
             gifts.append(gifts_info.count)
@@ -166,6 +168,7 @@ class Gifts(loader.Module):
             raise
         for gift in gifts_info.gifts:
             if isinstance(gift, SavedStarGift):
+                shown += 1
                 if isinstance(gift.gift, StarGiftUnique):
                     gifts[0]["nfts"].append({
                         "emoji": "<emoji document_id={}>{}</emoji>".format(gift.gift.attributes[0].document.id, gift.gift.attributes[0].document.attributes[1].alt), 
@@ -195,6 +198,7 @@ class Gifts(loader.Module):
                         "sum": gift.gift.stars,
                         "count": 1,
                     })
+        gifts.append(shown)
         return gifts
         
 __version__ = v
