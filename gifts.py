@@ -64,10 +64,10 @@ class Gifts(loader.Module):
         "p": "Pinned",
         "up": "Unpinned",
         "giftline": "\n<emoji document_id=6032644646587338669>🎁</emoji> <b>Gifts:</b>\n",
-        "gift": "[{}] {} — {} (sum - {} <emoji document_id=5951810621887484519>⭐️</emoji>)\n\n",
+        "gift": "[x{}] {} — {} <emoji document_id=5951810621887484519>⭐️</emoji>\n\n",
         "doesnthave": "<emoji document_id=5325773049201434770>😭</emoji> <b>User {} doesn't have any public gifts</b>",
         "not_available": "<b>Not available</b>",
-        "docerror": "nahhhhh I can't show it",
+        "docerror": "I can't show it (Invalid document ID).\nReport it to @gitneko",
     }
     strings_ru = {
         "toomany": "Слишком много аргументов",
@@ -80,25 +80,32 @@ class Gifts(loader.Module):
         "p": "Закреплено",
         "up": "Не закреплено",
         "giftline": "\n<emoji document_id=6032644646587338669>🎁</emoji> <b>Подарки:</b>\n",
-        "gift": "[{}] {} — {} (всего - {} <emoji document_id=5951810621887484519>⭐️</emoji>)\n\n",
         "doesnthave": "<emoji document_id=5325773049201434770>😭</emoji> <b>Пользователь {} не имеет публичных подарков</b>",
         "not_available": "<b>Не доступно</b>"
         #"docerror": "nahhhhh I can't show it",
     }
 
-    @loader.command(ru_doc="[юзернейм/ответ/'me'] посмотреть подарки пользователя")
+    @loader.command(ru_doc="""[юзернейм/ответ/'me'] посмотреть подарки пользователя
+    Команда имеет несколько флагов для фильтрации вывода:
+        -n(ft) — исключить NFT
+        -g(ifts) — исключить обычные подарки(розы, мишки и т.п.)
+        -l(imited) — исключить редкие подарки""")
     async def gifts(self, message):
-        """[username/reply/'me'] view user's gifts"""
+        """[username/reply/'me'] view user's gifts
+        Module have some flags to filter output:
+        -n(ft) — excludes nft gifts
+        -g(ifts) — excludes regular gifts (not rare)
+        -l(imited) — excludes limited gifts"""
         params = {} # < - excluding args
         args = utils.get_args_raw(message)
-        if "-nft" in args:
-            args = args.replace("-nft", "")
+        if "-nft" in args or "-n" in args:
+            args = args.replace("-nft", "").replace("-n", "")
             params["exclude_unique"] = True
-        if "-gifts" in args:
-            args = args.replace("-gifts", "")
+        if "-gifts" in args or "-g" in args:
+            args = args.replace("-gifts", "").replace("-g", "")
             params["exclude_unlimited"] = True
-        if "-limited" in args:
-            args = args.replace("-limited", "")
+        if "-limited" in args or "-l" in args:
+            args = args.replace("-limited", "").replace("-l", "")
             params["exclude_limited"] = True
             
         args = args.strip().split()
@@ -135,7 +142,7 @@ class Gifts(loader.Module):
                 text += self.strings["giftline"]
                 gifts = ""
                 for gift in user_gifts[0]["gifts"]:
-                    gifts += self.strings["gift"].format(gift["count"], gift["emoji"], gift["stars"], gift["sum"])
+                    gifts += self.strings["gift"].format(gift["count"], gift["emoji"], gift["sum"])
                 text += self.strings["exp"].format(gifts)
             try:
                 await utils.answer(message, text)
@@ -155,7 +162,6 @@ class Gifts(loader.Module):
             gifts.append(gifts_info.count)
         except:
             raise
-            return None
         for gift in gifts_info.gifts:
             if isinstance(gift, SavedStarGift):
                 if isinstance(gift.gift, StarGiftUnique):
@@ -172,7 +178,7 @@ class Gifts(loader.Module):
                             self.strings["not_available"])
                     })
                 elif isinstance(gift.gift, StarGift):
-                    st_id = str(gift.gift.sticker.id).replace("5231003994519794860", "5231134789158856498") # < - jst dumpfix to avoid DocumentInvalidError
+                    st_id = str(gift.gift.sticker.id).replace("5231003994519794860", "5253982443215547954").replace("5465502401358226185", "5298801741209299033") # < - jst dumpfix to avoid DocumentInvalidError
                     zzz = False
                     for gft in gifts[0]["gifts"]:
                         if st_id in gft["emoji"]:
