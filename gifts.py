@@ -62,28 +62,31 @@ class Gifts(loader.Module):
   {}
   <emoji document_id=5776219138917668486>📈</emoji> <b>Availability:</b> <code>{}</code>
   <emoji document_id=5776213190387961618>🕓</emoji> <b>Can transfer after</b> <code>{}</code>
-  More details: .gift {}\n""",
+  More details: <code>.gift {}</code>\n""",
         "p": "Pinned",
         "up": "Unpinned",
-        "giftline": "\n<emoji document_id=6032644646587338669>🎁</emoji> <b>Gifts:</b>\n",
+        "giftline": "\n<emoji document_id=6032644646587338669>🎁</emoji> <b>Gifts ({}):</b>\n",
         "gift": "[x{}] {} — {} <emoji document_id=5951810621887484519>⭐️</emoji>\n\n",
         "doesnthave": "<emoji document_id=5325773049201434770>😭</emoji> <b>User {} doesn't have any public gifts</b>",
         # / .gifts command
         "not_available": "<i>Not available</i>",
-        "docerror": "I can't show it (Invalid document ID).\nReport it to @gitneko",
+        "docerror": "I can't show it (Invalid document ID).\nReport this to @gitneko",
     }
     strings_ru = {
         "toomany": "Слишком много аргументов",
         "notexist": "<emoji document_id=5019523782004441717>❌</emoji> Такого пользователя не существует",
-        "firstline": "<emoji document_id=5875180111744995604>🎁</emoji> <b>Подарки({}) у {}</b>",
+        # .gifts command
+        "firstline": "<emoji document_id=5875180111744995604>🎁</emoji> <b>Подарки({}/{}) у {}</b>",
         "nfts": """\n{} <a href='https://t.me/nft/{}'>{} #{}</a>
   {}
   <emoji document_id=5776219138917668486>📈</emoji> <b>Всего подарков:</b> <code>{}</code>
-  <emoji document_id=5776213190387961618>🕓</emoji> <b>Возможно передать после</b> <code>{}</code>\n""",
+  <emoji document_id=5776213190387961618>🕓</emoji> <b>Возможно передать после</b> <code>{}</code>
+  Подробнее о подарке: <code>.gift {}</code>\n""",
         "p": "Закреплено",
         "up": "Не закреплено",
-        "giftline": "\n<emoji document_id=6032644646587338669>🎁</emoji> <b>Подарки:</b>\n",
+        "giftline": "\n<emoji document_id=6032644646587338669>🎁</emoji> <b>Подарки ({}):</b>\n",
         "doesnthave": "<emoji document_id=5325773049201434770>😭</emoji> <b>Пользователь {} не имеет публичных подарков</b>",
+        # / .gifts command
         "not_available": "<i>Не доступно</i>"
         #"docerror": "nahhhhh I can't show it",
     }
@@ -98,15 +101,17 @@ class Gifts(loader.Module):
         Module have some flags to filter output:
         -n(ft) — excludes nft gifts
         -g(ifts) — excludes regular gifts (not rare)
-        -l(imited) — excludes limited gifts"""
+        -l(imited) — excludes limited(rare) gifts"""
         params = {} # < - excluding args
         args = utils.get_args_raw(message)
         if "-nft" in args or "-n" in args:
             args = args.replace("-nft", "").replace("-n", "")
             params["exclude_unique"] = True
+
         if "-gifts" in args or "-g" in args:
             args = args.replace("-gifts", "").replace("-g", "")
             params["exclude_unlimited"] = True
+
         if "-limited" in args or "-l" in args:
             args = args.replace("-limited", "").replace("-l", "")
             params["exclude_limited"] = True
@@ -134,12 +139,12 @@ class Gifts(loader.Module):
         if user_gifts[0]["nfts"] or user_gifts[0]["gifts"]:
             text = self.strings["firstline"].format(user_gifts[2], user_gifts[1], name)
             if user_gifts[0]["nfts"]:
-                text += "\n<emoji document_id=5807868868886009920>👑</emoji> <b>NFTs</b>\n"
+                text += "\n<emoji document_id=5807868868886009920>👑</emoji> <b>NFTs {}:</b>\n".format()
                 nfts = ""
                 for nft in user_gifts[0]["nfts"]:
                     nfts += self.strings["nfts"].format(nft["emoji"], nft["slug"], nft["name"],
                                                         nft["num"], nft["pinned_to_top"],
-                                                        nft["availability_total"], nft["can_transfer_at"])
+                                                        nft["availability_total"], nft["can_transfer_at"], nft["slug"])
                 text += self.strings["exp"].format(nfts)
             if user_gifts[0]["gifts"]:
                 text += self.strings["giftline"]
@@ -160,15 +165,14 @@ class Gifts(loader.Module):
             "gifts": [],
         }]
         zzz = 0
-        shown = 0
         try:
             gifts_info = await self.client(GetSavedStarGiftsRequest(peer=username, offset='', limit=int(self.config["gift_limit"]), **parameters))
             gifts.append(gifts_info.count)
         except:
             raise
+        shown = len(gifts_info.gifts)
         for gift in gifts_info.gifts:
             if isinstance(gift, SavedStarGift):
-                shown += 1
                 if isinstance(gift.gift, StarGiftUnique):
                     gifts[0]["nfts"].append({
                         "emoji": "<emoji document_id={}>{}</emoji>".format(gift.gift.attributes[0].document.id, gift.gift.attributes[0].document.attributes[1].alt), 
