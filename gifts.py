@@ -4,7 +4,7 @@
 #░░░█░░░█░░░░█░░█░█░█░█
 #░░░███░███░░█░░███░███
 #H:Mods Team [💎]
-v = (" доступно"," после"," релиза Heroku")
+v = ("okak")
 # meta developer: @nullmod
 # scope: heroku_min 1.7.0
 # scope: hikka_min 1.7.0
@@ -139,7 +139,7 @@ class Gifts(loader.Module):
         if user_gifts[0]["nfts"] or user_gifts[0]["gifts"]:
             text = self.strings["firstline"].format(user_gifts[2], user_gifts[1], name)
             if user_gifts[0]["nfts"]:
-                text += "\n<emoji document_id=5807868868886009920>👑</emoji> <b>NFTs {}:</b>\n".format()
+                text += "\n<emoji document_id=5807868868886009920>👑</emoji> <b>NFTs ({}):</b>\n".format(user_gifts[3][0])
                 nfts = ""
                 for nft in user_gifts[0]["nfts"]:
                     nfts += self.strings["nfts"].format(nft["emoji"], nft["slug"], nft["name"],
@@ -147,7 +147,7 @@ class Gifts(loader.Module):
                                                         nft["availability_total"], nft["can_transfer_at"], nft["slug"])
                 text += self.strings["exp"].format(nfts)
             if user_gifts[0]["gifts"]:
-                text += self.strings["giftline"]
+                text += self.strings["giftline"].format(user_gifts[3][1])
                 gifts = ""
                 for gift in user_gifts[0]["gifts"]:
                     gifts += self.strings["gift"].format(gift["count"], gift["emoji"], gift["sum"])
@@ -165,6 +165,8 @@ class Gifts(loader.Module):
             "gifts": [],
         }]
         zzz = 0
+        nft_count = 0
+        gifts_count = 0
         try:
             gifts_info = await self.client(GetSavedStarGiftsRequest(peer=username, offset='', limit=int(self.config["gift_limit"]), **parameters))
             gifts.append(gifts_info.count)
@@ -174,6 +176,7 @@ class Gifts(loader.Module):
         for gift in gifts_info.gifts:
             if isinstance(gift, SavedStarGift):
                 if isinstance(gift.gift, StarGiftUnique):
+                    nft_count += 1
                     gifts[0]["nfts"].append({
                         "emoji": "<emoji document_id={}>{}</emoji>".format(gift.gift.attributes[0].document.id, gift.gift.attributes[0].document.attributes[1].alt), 
                         "name": gift.gift.title,
@@ -187,6 +190,7 @@ class Gifts(loader.Module):
                             self.strings["not_available"])
                     })
                 elif isinstance(gift.gift, StarGift):
+                    gifts_count += 1
                     st_id = str(gift.gift.sticker.id).replace("5231003994519794860", "5253982443215547954").replace("5465502401358226185", "5298801741209299033") # < - jst dumpfix to avoid DocumentInvalidError
                     zzz = False
                     for gft in gifts[0]["gifts"]:
@@ -203,6 +207,7 @@ class Gifts(loader.Module):
                         "count": 1,
                     })
         gifts.append(shown)
+        gifts.append([nft_count, gifts_count])
         return gifts
         
 __version__ = v
