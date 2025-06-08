@@ -9,17 +9,25 @@ __version__ = ("updated", 0, 0)
 # meta developer: @nullmod
 # requires: python-chess
 
-from .. import loader, utils
+# meta developer: @nullmod
 
-import asyncio, time, hashlib
+# -      main      - #
+from .. import loader, utils
+# -      func      - #
+import asyncio
+import time
+import random as r
+# -      types     - #
 from telethon.tl.types import PeerUser
+# -      end       - #
+
 
 class Timer:
     def __init__(self, scnds):#start
         self.timers = {"white": scnds, "black": scnds}
         self.running = {"white": False, "black": False}
         self.started = {"white": False, "black": False}
-        self.last_time = time.monotonic()#Monotonic clock, cannot go backward
+        self.last_time = time.monotonic()
         self.t = None
     async def _count(self):#func
         while True:
@@ -83,28 +91,54 @@ class Chess(loader.Module):
         "noargs": "<emoji document_id=5370724846936267183>🤔</emoji> You did not specify who to play with",
         "whosthat": "<emoji document_id=5019523782004441717>❌</emoji> I cannot find such a user",
         "playing_with_yourself?": "<emoji document_id=5384398004172102616>😈</emoji> Playing with yourself? Sorry, you can't",
-        "test1": "<emoji document_id=5978568938156461643>🔄</emoji> Game {} created",
-        "test2": "White: {} ({})",
-        "test3": "Black: {} ({})",
-        "test4": "Timer: {}",
-        "": "",
+        "invite": "{} you have invited to play chess! Do you accept?",
+        "yes": "✅ Yes",
+        "no": "❌ No",
+        "declined": "❌ Invitation declined",
+        "settings": "⚙️ Settings",
+        "not_your_game": "This is not your game!",
         }
     strings_ru = {
         "noargs": "<emoji document_id=5370724846936267183>🤔</emoji> Вы не указали с кем играть",
         "whosthat": "<emoji document_id=5019523782004441717>❌</emoji> Я не нахожу такого пользователя",
         "playing_with_yourself?": "<emoji document_id=5384398004172102616>😈</emoji> Одиночные шахматы? Простите, нет",
-        "test1": "<emoji document_id=5978568938156461643>🔄</emoji> Игра {} создана",
-        "test2": "Белые: {} ({})",
-        "test3": "Чёрные: {} ({})",
-        "test4": "Таймер: {}",
+        "invite": "{}, вас пригласили сыграть партию шахмат! Примите?\n\n",
+        "yes": "✅ Да",
+        "no": "❌ Нет",
+        "declined": "❌ Приглашение отклонено",
+        "settings": "⚙️ Настройки",
+        "not_your_game": "Это не ваша игра!",
     }
     
     async def client_ready(self):
+        self.styles = {
+            "figures-with-circles": {
+            "r": "♖⚫", "n": "♘⚫", "b": "♗⚫", "q": "♕⚫", "k": "♔⚫", "p": "♙⚫",
+            "R": "♖⚪", "N": "♘⚪", "B": "♗⚪", "Q": "♕⚪", "K": "♔⚪", "P": "♙⚪",
+            },
+            "figures": {
+            "r": "♜", "n": "♞", "b": "♝", "q": "𝗾", "k": "♚", "p": "♟",
+            "R": "♖", "N": "♘", "B": "♗", "Q": "𝗤", "K": "♔", "P": "♙",
+            },
+            "letters": {
+            "r": "𝗿", "n": "𝗻", "b": "𝗯", "q": "𝗾", "k": "𝗸", "p": "𝗽",
+            "R": "𝗥", "N": "𝗡", "B": "𝗕", "Q": "𝗤", "K": "𝗞", "P": "𝗣",
+            }
+        }
         self.games = {"filler": {
             "game_id": 0,
             }
         }
+        self.gsettings = {
+            "style": self.styles["figures-with-circles"], # "figures", "letters"
+        }
 
+    async def _check_player(self, call):
+        if call.from_user.id not in (self.games[call.data[0]]["sender"]["id"], self.games[call.data[0]]["opponent"]["id"]):
+            await call.answer(self.strings["not_your_game"])
+            return False
+        return True
+    
     async def get_players(self, message):
         sender = {
             "id": message.from_id.user_id if isinstance(message.peer_id, PeerUser) else message.sender.id,
@@ -139,6 +173,53 @@ class Chess(loader.Module):
         }
         return (sender, opponent)
 
+    async def _invite(self, call, game_id):
+        if not await self._check_player(call): return
+        await utils.answer(
+            call,
+            self.strings["invite"].format(self.games[game_id]["opponent"]["name"]),
+            reply_markup=[
+                [
+                    {
+                        "text": self.strings["yes"],
+                        "callback": self._init_game,
+                        "args": (game_id, "")
+                    },
+                    {
+                        "text": self.strings["no"],
+                        "callback": self._init_game, #lambda call: utils.answer(call, self.strings["declined"])
+                        "args": (game_id,)
+                    }
+                ],
+                [
+                    {
+                        "text": self.strings["settings"],
+                        "callback": self._settings,
+                        "args": (game_id)
+                    }
+                ]
+            ]
+        )
+
+    async def _settings(self, call, game_id):
+        if not await self._check_player(call):
+            return
+        game = self.games[game_id]
+        await utils.answer(
+            call,
+            f"<b>Game ID:</b> {game_id}\n"
+            f"<b>Host:</b> {game['sender']['name']} ({game['sender']['id']})\n"
+            f"<b>Opponent:</b> {game['opponent']['name']} ({game['opponent']['id']})\n"
+            f"<b>Style:</b> {game['style']}\n"
+            f"<b>Timer:</b> {'Enabled' if game['Timer'] else 'Disabled'}\n"
+            f"<b>Host plays:</b> {game['host_plays']}\n",
+            reply_markup={
+                "text": "⤴️ Back",
+                "callback": self._invite,
+                "args": (game_id)
+            }
+        )
+
     @loader.command(ru_doc="[reply/username/id] - предложить человеку сыграть партию в чате")
     async def chess(self, message):
         """[reply/username/id] - propose a person to play a game in the chat"""
@@ -153,9 +234,18 @@ class Chess(loader.Module):
             "sender": sender,
             "opponent": opponent,
             "Timer": True if isinstance(message.peer_id, PeerUser) else False,
-            "time": int(time.time())
+            "time": int(time.time()),
+            "host_plays": "r", # r(andom), w(hite), b(lack)
+            "style": self.gsettings["style"],
         }
-        await utils.answer(message, f"{self.strings['test1'].format(game_id)}\n"
-                                    f"{self.strings['test2'].format(sender['name'], sender['id'])}\n"
-                                    f"{self.strings['test3'].format(opponent['name'], opponent['id'])}\n"
-                                    f"{self.strings['test4'].format('Enabled' if self.games[game_id]['Timer'] else 'Disabled')}")
+        await self._invite(message, game_id)
+
+    async def _init_game(self, call, data):
+        if not await self._check_player(call): return
+        if len(data) == 1:
+            self.games.pop(data[0], None)
+            await utils.answer(call, self.strings["declined"])
+            return
+        game_id = data[0]
+        if (turn := self.games[game_id].pop("host_plays")) == "r":
+            turn = "w" if r.choice([0, 1]) == 0 else "b"
