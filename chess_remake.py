@@ -98,6 +98,7 @@ class Chess(loader.Module):
         "declined": "❌ Invitation declined",
         "settings": "⚙️ Settings",
         "not_your_game": "This is not your game!",
+        "not_you": "You cannot click here",
         }
     strings_ru = {
         "noargs": "<emoji document_id=5370724846936267183>🤔</emoji> Вы не указали с кем играть",
@@ -109,6 +110,7 @@ class Chess(loader.Module):
         "declined": "❌ Приглашение отклонено",
         "settings": "⚙️ Настройки",
         "not_your_game": "Это не ваша игра!",
+        "not_you": "Вы не можете нажать сюда!",
     }
     
     async def client_ready(self):
@@ -134,10 +136,14 @@ class Chess(loader.Module):
             "style": self.styles["figures-with-circles"], # "figures", "letters"
         }
 
-    async def _check_player(self, call):
+    async def _check_player(self, call, game_id, only_opponent=False):
         if isinstance(call, (BotInlineCall, InlineCall, InlineMessage)): 
-            if call.from_user.id not in (self.games[call.data[0]]["sender"]["id"], self.games[call.data[0]]["opponent"]["id"]):
-                await call.answer(self.strings["not_your_game"])
+            if call.from_user.id != self.games[game_id]["sender"]["id"]:
+                if call.from_user.id != self.games[game_id]["opponent"]["id"]:
+                    await call.answer(self.strings["not_your_game"])
+                    return False
+            elif call.from_user.id == self.games[game_id]["sender"]["id"] and only_opponent:
+                await call.answer(self.strings["not_you"])
                 return False
         return True
     
@@ -176,7 +182,7 @@ class Chess(loader.Module):
         return (sender, opponent)
 
     async def _invite(self, call, game_id):
-        if not await self._check_player(call): return
+        if not await self._check_player(call, game_id): return
         await utils.answer(
             call,
             self.strings["invite"].format(self.games[game_id]["opponent"]["name"]),
@@ -197,16 +203,17 @@ class Chess(loader.Module):
                     {
                         "text": self.strings["settings"],
                         "callback": self._settings,
-                        "args": (game_id)
+                        "args": (game_id,)
                     }
                 ]
-            ]
+            ],
+            disable_security=True
         )
 
     async def _settings(self, call, game_id):
-        if not await self._check_player(call):
-            return
+        if not await self._check_player(call, game_id): return
         game = self.games[game_id]
+        self.gsettings["style"] = r.choice(list(self.styles.values()))
         await utils.answer(
             call,
             f"<b>Game ID:</b> {game_id}\n"
@@ -243,7 +250,7 @@ class Chess(loader.Module):
         await self._invite(message, game_id)
 
     async def _init_game(self, call, data):
-        if not await self._check_player(call): return
+        if not await self._check_player(call, game_id=data[0], only_opponent=True): return
         if len(data) == 1:
             self.games.pop(data[0], None)
             await utils.answer(call, self.strings["declined"])
@@ -251,3 +258,5 @@ class Chess(loader.Module):
         game_id = data[0]
         if (turn := self.games[game_id].pop("host_plays")) == "r":
             turn = "w" if r.choice([0, 1]) == 0 else "b"
+        self.games[game_id]["turn"] = turn
+        await utils.answer(call, f"filler\n{self.games[game_id]}")
