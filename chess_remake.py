@@ -15,10 +15,11 @@ __version__ = ("updated", 0, 0)
 from .. import loader, utils
 # -      func      - #
 import asyncio
-import time
 import random as r
+import time
 # -      types     - #
 from telethon.tl.types import PeerUser
+from ..inline.types import BotInlineCall, InlineCall, InlineMessage
 # -      end       - #
 
 
@@ -134,9 +135,10 @@ class Chess(loader.Module):
         }
 
     async def _check_player(self, call):
-        if call.from_user.id not in (self.games[call.data[0]]["sender"]["id"], self.games[call.data[0]]["opponent"]["id"]):
-            await call.answer(self.strings["not_your_game"])
-            return False
+        if isinstance(call, (BotInlineCall, InlineCall, InlineMessage)): 
+            if call.from_user.id not in (self.games[call.data[0]]["sender"]["id"], self.games[call.data[0]]["opponent"]["id"]):
+                await call.answer(self.strings["not_your_game"])
+                return False
         return True
     
     async def get_players(self, message):
