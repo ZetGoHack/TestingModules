@@ -92,6 +92,7 @@ class HaremManager(loader.Module):
             "waifu": "@garem_chatbot",
             "gif": "@GIFgarem_bot"
         }
+        self.ab_ids = []
         self.cather_ids = []
         self.blockBot = False
 
