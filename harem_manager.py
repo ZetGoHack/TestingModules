@@ -230,7 +230,7 @@ class HaremManager(loader.Module):
             bot = data[0]
             await utils.answer(call, f"Меню <code>{self.harems[bot]}</code>", reply_markup=self._menu_markup(bot))
 
-    async def _autobonus(self, id):
+    async def _autobonus(self, id): ############ TODO: Переработать автобонус(айди конфига и дб тут указываются как ab-@bot, а не ab-bot)
         wait_boost = False
         async with self._client.conversation(id) as conv:
             try:
@@ -424,7 +424,6 @@ class HaremManager(loader.Module):
                 return #*смачный пинок кодеру под зад.*
             for i in range(len(clicks)):
                 if clicks[i] == 1:
-                    r = await self.client.get_messages(r.chat_id,ids=r.id)
                     await r.click(i)
             await utils.answer(message, "<emoji document_id=5395592707580127159>😎</emoji> Готово.")
         else:
