@@ -90,7 +90,12 @@ class HaremManager(loader.Module):
                 "Автоловля вайфу",
                 validator=loader.validators.Boolean(),
             ),
-
+            loader.ConfigValue(
+                "out-gif",
+                False,
+                "Выводить вайфу?",
+                validator=loader.validators.Boolean(),
+            )
         )
     
     async def client_ready(self):
@@ -116,6 +121,7 @@ class HaremManager(loader.Module):
     async def watcher(self, message):
         """Watcher"""
         for bot in self.harems:
+            if bot == "waifu": continue
             if message.sender_id == self.harems_ids[bot] and self.config[f"catch-{bot}"]:
                 if (not self.get(f"catcher_time-{bot}") or int(time.time()) - int(self.get(f"catcher_time-{bot}")) > 14400):
                     if "заблудилась" in message.text.lower():
@@ -215,17 +221,14 @@ class HaremManager(loader.Module):
         elif data.startswith("ab-"):
             bot = data.split("-")[-1]
             self.config[f"ab-{bot}"] = not self.config[f"ab-{bot}"]
-            await utils.answer(call, f"Меню <code>{self.harems['bot']}</code>", reply_markup=self._menu_markup(bot))
+            await utils.answer(call, f"Меню <code>{self.harems[bot]}</code>", reply_markup=self._menu_markup(bot))
         elif data.startswith("catch-"):
             bot = data.split("-")[-1]
             self.config[f"catch-{bot}"] = not self.config[f"catch-{bot}"]
-            if self.config[f"catch-{bot}"]:
-                if bot not in self.cather_ids:
-                    self.cather_ids.append(bot)
-            else:
-                if bot in self.cather_ids:
-                    self.cather_ids.remove(bot)
-            await utils.answer(call, f"Меню <code>{self.harems['bot']}</code>", reply_markup=self._menu_markup(bot))
+            await utils.answer(call, f"Меню <code>{self.harems[bot]}</code>", reply_markup=self._menu_markup(bot))
+        else:
+            bot = data[0]
+            await utils.answer(call, f"Меню <code>{self.harems[bot]}</code>", reply_markup=self._menu_markup(bot))
 
     async def _autobonus(self, id):
         wait_boost = False
@@ -273,7 +276,7 @@ class HaremManager(loader.Module):
                                                 chats_in_folders.append(peers) # для выхода
                                                 for update in a.updates:
                                                     if isinstance(update, UpdateDialogFilter):
-                                                        folder.append(InputChatlistDialogFilter(filter_id=update.id)) # для удаления папки
+                                                        folders.append(InputChatlistDialogFilter(filter_id=update.id)) # для удаления папки
                                             except: pass
                                         continue
                                     if "t.me/boost" in button.url: # бустить не обязательно
