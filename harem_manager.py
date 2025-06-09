@@ -159,8 +159,8 @@ class HaremManager(loader.Module):
 
     async def _set_menu(self, message):
         await utils.answer(
-            message=message,
-            text="❤️ Выберите бота для управления\n\n<i>*✅ Означает, что автобонус включён</i>",
+            message,
+            "❤️ Выберите бота для управления\n\n<i>*✅ Означает, что автобонус включён</i>",
             reply_markup=self._main_markup()
         )
 
@@ -328,7 +328,7 @@ class HaremManager(loader.Module):
         """Открыть меню управления"""
         await self._set_menu(message)
         await utils.answer(
-            message=message,
-            text="Выберите гарем для управления",
+            message,
+            "Выберите гарем для управления",
             reply_markup=self._main_markup()
         )
