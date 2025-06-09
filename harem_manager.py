@@ -31,7 +31,7 @@ class HaremManager(loader.Module):
     """Module for harem bots: Gif Harem, Waifu Harem, Horny Harem"""
 
     strings = {
-        "name": "WaifuHarem"
+        "name": "HaremManager"
     }
 
     def __init__(self):
@@ -52,6 +52,12 @@ class HaremManager(loader.Module):
                 "catch-horny",
                 False,
                 "Автоловля вайфу",
+                validator=loader.validators.Boolean(),
+            ),
+            loader.ConfigValue(
+                "out-horny",
+                False,
+                "Выводить вайфу?",
                 validator=loader.validators.Boolean(),
             ),
             loader.ConfigValue(
@@ -84,17 +90,50 @@ class HaremManager(loader.Module):
                 "Автоловля вайфу",
                 validator=loader.validators.Boolean(),
             ),
+
         )
     
     async def client_ready(self):
         self.harems = {
             "horny": "@Horny_GaremBot",
             "waifu": "@garem_chatbot",
-            "gif": "@GIFgarem_bot"
+            "gif": "@GIFgarem_bot",
         }
-        self.ab_ids = []
-        self.cather_ids = []
-        self.blockBot = False
+        self.harems_ids = {
+            "horny": 7896566560,
+            "waifu": 6704842953,
+            "gif": 7084965046,
+        }
+
+    @loader.loop(interval=1, autostart=True)
+    async def loop(self):
+        for bot in self.harems:
+            if self.config[f"ab-{bot}"]:
+                if (not self.get(f"ab-{bot}") or (time.time() - self.get(f"ab-{bot}")) >= int(3600*self.config[f"interval-{bot}"])):
+                    await self._autobonus(self.harems[bot])
+
+    @loader.watcher("only_messages")
+    async def watcher(self, message):
+        """Watcher"""
+        for bot in self.harems:
+            if message.sender_id == self.harems_ids[bot] and self.config[f"catch-{bot}"]:
+                if (not self.get(f"catcher_time-{bot}") or int(time.time()) - int(self.get(f"catcher_time-{bot}")) > 14400):
+                    if "заблудилась" in message.text.lower():
+                        try:
+                            await message.click()
+                            await asyncio.sleep(5)
+                            msgs = await message.client.get_messages(message.chat_id, limit=10)
+                            for msg in msgs:
+                                if msg.mentioned and "забрали" in msg.text and msg.sender_id == self.harems_ids[bot]:
+                                    if self.config[f"out-{bot}"]:
+                                        match = re.search(r", Вы забрали (.+?)\. Вайфу", msg.text)
+                                        waifu = match.group(1)
+                                        caption = f"{waifu} в вашем гареме! <emoji document_id=5395592707580127159>😎</emoji>"
+                                        await self.client.send_file(self.id, caption=caption, file=message.media)
+                                    self.set(f"catcher_time-{bot}", int(time.time()))
+                        except Exception as e:
+                            logger.error(f"Ошибка при ловле вайфу для {bot}(не критично): {e}")
+
 
     def _main_markup(self):
         return [
@@ -170,18 +209,13 @@ class HaremManager(loader.Module):
             return
         elif data.startswith("restart-"):
             bot = data.split("-")[-1]
-            self._autobonus(self.harems[bot])
+            await call.answer(f"Перезапуск бонуса для {self.harems[bot]}...")
+            await self._autobonus(self.harems[bot])
             return
         elif data.startswith("ab-"):
             bot = data.split("-")[-1]
             self.config[f"ab-{bot}"] = not self.config[f"ab-{bot}"]
-            if self.config[f"ab-bot"]:
-                if bot not in self.ab_ids:
-                    self.ab_ids.append(bot)
-            else:
-                if bot in self.ab_ids:
-                    self.ab_ids.remove(bot)
-            await call.edit(reply_markup=self._menu_markup(bot))
+            await utils.answer(call, f"Меню <code>{self.harems['bot']}</code>", reply_markup=self._menu_markup(bot))
         elif data.startswith("catch-"):
             bot = data.split("-")[-1]
             self.config[f"catch-{bot}"] = not self.config[f"catch-{bot}"]
@@ -191,7 +225,7 @@ class HaremManager(loader.Module):
             else:
                 if bot in self.cather_ids:
                     self.cather_ids.remove(bot)
-            await call.edit(reply_markup=self._menu_markup(bot))
+            await utils.answer(call, f"Меню <code>{self.harems['bot']}</code>", reply_markup=self._menu_markup(bot))
 
     async def _autobonus(self, id):
         wait_boost = False
@@ -216,7 +250,7 @@ class HaremManager(loader.Module):
                     logger.warning("Ответ от бота не получен. Вероятно, он снова лёг\n\nПерезапустите автобонус, когда бот очнётся")
                     self.config[f"ab-{id}"] = False
                     return
-            self.set("ABonus_time", int(time.time()))
+            self.set(f"ab-{id}", int(time.time()))
             if "Доступен бонус за подписки" in r.text:
                 await conv.send_message("/start flyer_bonus")
                 r = await conv.get_response()
@@ -254,7 +288,6 @@ class HaremManager(loader.Module):
                                                 pass
                                             else:
                                                 url = button.url.split("?")[0] if "?" in button.url else button.url
-                                                self.blockBot = True ######
                                                 try:
                                                     await self.client(ImportChatInviteRequest(button.url.split("+")[-1]))
                                                 except InviteRequestSentError: pass
@@ -266,11 +299,9 @@ class HaremManager(loader.Module):
                                                         await asyncio.sleep(15)
                                                         entity = await self.client.get_entity(url)
                                                     except: 
-                                                        self.blockBot = False
                                                         continue
                                                 except:
                                                     pass
-                                                self.blockBot = False
                                                 alr = True
                                         except: continue
                                     url = button.url.split("?")[0] if "?" in button.url else button.url
@@ -310,21 +341,57 @@ class HaremManager(loader.Module):
                             except Exception as e:
                                 pass
                 count = 0
-                if not self.get("last_lout") or int(time.time()) - self.get("last_lout") > 43200:
-                    while count <= 2:
+                if not self.get(f"last_lout-{id}") or int(time.time()) - self.get(f"last_lout-{id}") > 43200:
+                    while count <= 3: # на всякий случай 4 попытки. Бот может забагаться и не выдать завершающий ответ
                         await conv.send_message("/lout")
                         r = await conv.get_response()
                         if r.reply_markup:
-                            m = await r.respond(".")
-                            await self.lightsoutW(m,r)
-                            await m.delete()
-                            self.set("last_lout", int(time.time()))
+                            pattern = self._parse(r)
+                            clicks = self._solution(pattern)
+                            for i in range(len(clicks)):
+                                if clicks[i] == 1:
+                                    await r.click(i)
+                            self.set(f"last_lout-{id}", int(time.time()))
                             count += 1
                         else:
                             break
+    
+    def _parse(self, r):
+        a = r.buttons
+        pattern = []
+        for i in a:
+            for m in i:
+                t = m.text
+                if t == "🌚":
+                    pattern.append(0)
+                elif t == "🌞":
+                    pattern.append(1)
+                else:
+                    pass
+        return pattern
+    
+    def _solution(self, pole):
+        n = len(pole)
+        for num in range(2**n):
+            binary_string = bin(num)[2:].zfill(n)
+            presses = [int(char) for char in binary_string]
+            temp = pole[:]
+        
+            for i in range(n):
+                if presses[i]:
+                    temp[i] ^= 1
+                    if i % 3 > 0: temp[i - 1] ^= 1
+                    if i % 3 < 2: temp[i + 1] ^= 1
+                    if i >= 3: temp[i - 3] ^= 1
+                    if i < 6: temp[i + 3] ^= 1
+        
+            if sum(temp) == 0:
+                return presses
+
+        return None
 
     @loader.command()
-    async def HaremManager(self, message):
+    async def Harems(self, message):
         """Открыть меню управления"""
         await self._set_menu(message)
         await utils.answer(
@@ -332,3 +399,31 @@ class HaremManager(loader.Module):
             "Выберите гарем для управления",
             reply_markup=self._main_markup()
         )
+
+    @loader.command()
+    async def lightsout(self, message):
+        if message.is_reply:
+            r = await message.get_reply_message()
+            if r.reply_markup:
+                pattern = self._parse(r)
+            else:
+                await utils.answer(message, "<emoji document_id=5299030091735525430>❗️</emoji> Не вижу поля игры. Это точно то сообщение?")
+                return
+             
+        else:
+            await utils.answer(message, "<emoji document_id=5299030091735525430>❗️</emoji> Пропиши команду в ответ на игру.")
+            return
+        if pattern:
+            await utils.answer(message, "<emoji document_id=5472146462362048818>💡</emoji>")
+            clicks = self._solution(pattern)
+            if not clicks:
+                await utils.answer(message, "Иди код трейси гений.")
+                return #*смачный пинок кодеру под зад.*
+            for i in range(len(clicks)):
+                if clicks[i] == 1:
+                    r = await self.client.get_messages(r.chat_id,ids=r.id)
+                    await r.click(i)
+            await utils.answer(message, "<emoji document_id=5395592707580127159>😎</emoji> Готово.")
+        else:
+            await utils.answer(message, "<emoji document_id=5299030091735525430>❗️</emoji> Ты ответил не на поле игры.")
+            return
