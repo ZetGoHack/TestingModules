@@ -757,7 +757,7 @@ loader:
     <emoji document_id=4916086774649848789>🔗</emoji> <code>{prefix}dwm {url}</code>
     
 
-    {nyot_exact}'
+    {not_exact}'
   load_failed: <emoji document_id=5210952531676504517>🚫</emoji> <b>Woading faiwed.
     See wogs fow detaiws</b>
   loaded: <emoji document_id=5134452506935427991>🪐</emoji> <b>Moduwe</b> <code>{}</code>{}
