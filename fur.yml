@@ -727,14 +727,14 @@ loader:
     <emoji document_id=5287454910059654880>🫶</emoji> <b>Devewopew:</b> {}'
   ffmpeg_required: <emoji document_id=5454225457916420314>😖</emoji> <b>This moduwe
     wequiwes FFMPEG, which is nyot instawwed</b>
-  file: '<emoji document_id=5256113064821926998>📁</emoji> <b>Fiwe of</b> {cwass_nyame}
+  file: '<emoji document_id=5256113064821926998>📁</emoji> <b>Fiwe of</b> {class_name}
 
 
     <emoji document_id=5134452506935427991>🪐</emoji> <b>{prefix}wm in wepwy two dis
     message two instaww</b>
 
 
-    {nyot_exact}'
+    {not_exact}'
   finding_module_in_repos: <emoji document_id=5873204392429096339>🔄</emoji> Wooking
     fow moduwes in wepositowies.
   ihandler: '
@@ -743,19 +743,19 @@ loader:
   inline_init_failed: '<emoji document_id=5454225457916420314>😖</emoji> <b>This moduwe
     wequiwes Hewoku inwinye featuwe and inyitiawization of InwinyeManyagew faiwed</b>
 
-    <i>Pwease, wemove onye of uw owd bots fwom @BotFadew and westawt usewbot two woad
+    <i>Pwease, wemove onye of uw owd bots fwom @BotFather and westawt usewbot two woad
     dis moduwe</i>'
   installing: <emoji document_id=5325792861885570739>🕔</emoji> <b>Instawwing moduwe</b>
     <code>{}</code><b>...</b>
-  link: '<emoji document_id=5256113064821926998>📁</emoji> <b>Fiwe of</b> {cwass_nyame}
+  link: '<emoji document_id=5256113064821926998>📁</emoji> <b>Fiwe of</b> {class_name}
 
 
     <emoji document_id=5134452506935427991>🪐</emoji> <b>{prefix}wm in wepwy two dis
     message two instaww</b>
 
 
-    <emoji document_id=4916086774649848789>🔗</emoji> <code>{prefix}dwm {uww}</code>
-
+    <emoji document_id=4916086774649848789>🔗</emoji> <code>{prefix}dwm {url}</code>
+    
 
     {nyot_exact}'
   load_failed: <emoji document_id=5210952531676504517>🚫</emoji> <b>Woading faiwed.
