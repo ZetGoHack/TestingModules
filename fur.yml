@@ -288,7 +288,7 @@ heroku_config:
   set_default_btn: ♻️ Weset defauwt
   show_hidden: 🚸 Show vawue
   try_again: 🔁 Twy again
-  typehint: 🕵️ <b>Must be a{eng_awt} {}</b>
+  typehint: 🕵️ <b>Must be a{eng_alt} {}</b>
   validation_error: '🚫 <b>You entewed incowwect config vawue.
 
     Ewwow: {}</b>'
