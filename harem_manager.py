@@ -95,6 +95,22 @@ class HaremManager(loader.Module):
                 False,
                 "Выводить вайфу?",
                 validator=loader.validators.Boolean(),
+            ),
+            loader.ConfigValue(
+                "ignore-chats",
+                [],
+                "Список чатов, где модуль не будет ловить вайфу. Указывайте ID чатов вида 123456789",
+                validator=loader.validators.Series(
+                    validator=loader.validators.Integer(),
+                )
+            ),
+            loader.ConfigValue(
+                "whitelist-chats",
+                [],
+                "Список чатов, где модуль будет ловить вайфу. Указывайте ID чатов вида 123456789. Если указано, то модуль будет ловить вайфу только в этих чатах",
+                validator=loader.validators.Series(
+                    validator=loader.validators.Integer(),
+                )
             )
         )
     
@@ -123,6 +139,11 @@ class HaremManager(loader.Module):
         for bot in self.harems:
             if bot == "waifu": continue
             if message.sender_id == self.harems_ids[bot] and self.config[f"catch-{bot}"]:
+                if self.config["whitelist-chats"]:
+                    if message.chat_id not in self.config["whitelist-chats"]:
+                        return
+                elif message.chat_id in self.config["ignore-chats"]:
+                    return
                 if (not self.get(f"catcher_time-{bot}") or int(time.time()) - int(self.get(f"catcher_time-{bot}")) > 14400):
                     if "заблудилась" in message.text.lower():
                         try:
@@ -217,7 +238,7 @@ class HaremManager(loader.Module):
         elif data.startswith("restart-"):
             bot = data.split("-")[-1]
             await call.answer(f"Перезапуск бонуса для {self.harems[bot]}...")
-            await self._autobonus(self.harems[bot])
+            await self._autobonus(self.harems[bot], bot)
             return
         elif data.startswith("ab-"):
             bot = data.split("-")[-1]
