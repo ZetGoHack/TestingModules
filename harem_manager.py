@@ -227,7 +227,7 @@ class HaremManager(loader.Module):
             self.config[f"catch-{bot}"] = not self.config[f"catch-{bot}"]
             await utils.answer(call, f"Меню <code>{self.harems[bot]}</code>", reply_markup=self._menu_markup(bot))
         else:
-            bot = data[0]
+            bot = data
             await utils.answer(call, f"Меню <code>{self.harems[bot]}</code>", reply_markup=self._menu_markup(bot))
 
     async def _autobonus(self, id, bot): ############ TODO: Переработать автобонус(айди конфига и дб тут указываются как ab-@bot, а не ab-bot)
@@ -397,11 +397,6 @@ class HaremManager(loader.Module):
     async def Harems(self, message):
         """Открыть меню управления"""
         await self._set_menu(message)
-        await utils.answer(
-            message,
-            "Выберите гарем для управления",
-            reply_markup=self._main_markup()
-        )
 
     @loader.command()
     async def lightsout(self, message):
