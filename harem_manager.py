@@ -39,7 +39,7 @@ class HaremManager(loader.Module):
             loader.ConfigValue(
                 "ignore-chats",
                 [],
-                "Список чатов, где модуль не будет ловить вайфу. Указывайте ID чатов вида 123456789",
+                "Список чатов, где модуль НЕ будет ловить вайфу. Указывайте ID чатов в виде 123456789",
                 validator=loader.validators.Series(
                     validator=loader.validators.Integer(),
                 )
@@ -47,7 +47,7 @@ class HaremManager(loader.Module):
             loader.ConfigValue(
                 "whitelist-chats",
                 [],
-                "Список чатов, где модуль будет ловить вайфу. Указывайте ID чатов вида 123456789. Если указано, то модуль будет ловить вайфу только в этих чатах",
+                "Список чатов, где модуль будет ловить вайфу. Указывайте ID чатов в виде 123456789. Если что-то указано, то модуль будет ловить вайфу только в этих чатах",
                 validator=loader.validators.Series(
                     validator=loader.validators.Integer(),
                 )
@@ -422,6 +422,7 @@ class HaremManager(loader.Module):
 
     @loader.command()
     async def lightsout(self, message):
+        """[ответ на соо с полем] Автоматически решает Lights Out"""
         if message.is_reply:
             r = await message.get_reply_message()
             if r.reply_markup:
