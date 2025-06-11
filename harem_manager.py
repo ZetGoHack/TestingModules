@@ -227,7 +227,8 @@ class HaremManager(loader.Module):
     async def _set_menu(self, message):
         await utils.answer(
             message,
-            "❤️ Выберите бота для управления\n\n<i>*✅ Означает, что автобонус включён</i>",
+            "❤️ Выберите бота для управления\n\n✅ <i>- означает, что автобонус включён</i>\
+\nБольше настроек в конфиге модуля(<code>.config HaremManager</code>)",
             reply_markup=self._main_markup()
         )
 
