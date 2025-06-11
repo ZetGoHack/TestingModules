@@ -201,6 +201,7 @@ class HaremManager(loader.Module):
                         "args": ("back",)
                     }
                 ])
+        return markup
 
     async def _set_menu(self, message):
         await utils.answer(
