@@ -115,7 +115,7 @@ class HaremManager(loader.Module):
         for bot in self.harems:
             if self.config[f"ab-{bot}"]:
                 if (not self.get(f"ab-{bot}") or (time.time() - self.get(f"ab-{bot}")) >= int(3600*self.config[f"interval-{bot}"])):
-                    await self._autobonus(self.harems[bot])
+                    await self._autobonus(self.harems[bot], bot)
 
     @loader.watcher("only_messages")
     async def watcher(self, message):
@@ -135,7 +135,7 @@ class HaremManager(loader.Module):
                                         match = re.search(r", Вы забрали (.+?)\. Вайфу", msg.text)
                                         waifu = match.group(1)
                                         caption = f"{waifu} в вашем гареме! <emoji document_id=5395592707580127159>😎</emoji>"
-                                        await self.client.send_file(self.id, caption=caption, file=message.media)
+                                        await self.client.send_file(self.harems[bot], caption=caption, file=message.media)
                                     self.set(f"catcher_time-{bot}", int(time.time()))
                         except Exception as e:
                             logger.error(f"Ошибка при ловле вайфу для {bot}(не критично): {e}")
@@ -230,7 +230,7 @@ class HaremManager(loader.Module):
             bot = data[0]
             await utils.answer(call, f"Меню <code>{self.harems[bot]}</code>", reply_markup=self._menu_markup(bot))
 
-    async def _autobonus(self, id): ############ TODO: Переработать автобонус(айди конфига и дб тут указываются как ab-@bot, а не ab-bot)
+    async def _autobonus(self, id, bot): ############ TODO: Переработать автобонус(айди конфига и дб тут указываются как ab-@bot, а не ab-bot)
         wait_boost = False
         async with self._client.conversation(id) as conv:
             try:
@@ -251,9 +251,9 @@ class HaremManager(loader.Module):
                         pass
                 if r is None:
                     logger.warning("Ответ от бота не получен. Вероятно, он снова лёг\n\nПерезапустите автобонус, когда бот очнётся")
-                    self.config[f"ab-{id}"] = False
+                    self.config[f"ab-{bot}"] = False
                     return
-            self.set(f"ab-{id}", int(time.time()))
+            self.set(f"ab-{bot}", int(time.time()))
             if "Доступен бонус за подписки" in r.text:
                 await conv.send_message("/start flyer_bonus")
                 r = await conv.get_response()
@@ -344,7 +344,7 @@ class HaremManager(loader.Module):
                             except Exception as e:
                                 pass
                 count = 0
-                if not self.get(f"last_lout-{id}") or int(time.time()) - self.get(f"last_lout-{id}") > 43200:
+                if not self.get(f"last_lout-{bot}") or int(time.time()) - self.get(f"last_lout-{bot}") > 43200:
                     while count <= 3: # на всякий случай 4 попытки. Бот может забагаться и не выдать завершающий ответ
                         await conv.send_message("/lout")
                         r = await conv.get_response()
@@ -354,7 +354,7 @@ class HaremManager(loader.Module):
                             for i in range(len(clicks)):
                                 if clicks[i] == 1:
                                     await r.click(i)
-                            self.set(f"last_lout-{id}", int(time.time()))
+                            self.set(f"last_lout-{bot}", int(time.time()))
                             count += 1
                         else:
                             break
