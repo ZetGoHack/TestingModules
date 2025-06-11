@@ -37,6 +37,22 @@ class HaremManager(loader.Module):
     def __init__(self):
         self.config = loader.ModuleConfig(
             loader.ConfigValue(
+                "ignore-chats",
+                [],
+                "Список чатов, где модуль не будет ловить вайфу. Указывайте ID чатов вида 123456789",
+                validator=loader.validators.Series(
+                    validator=loader.validators.Integer(),
+                )
+            ),
+            loader.ConfigValue(
+                "whitelist-chats",
+                [],
+                "Список чатов, где модуль будет ловить вайфу. Указывайте ID чатов вида 123456789. Если указано, то модуль будет ловить вайфу только в этих чатах",
+                validator=loader.validators.Series(
+                    validator=loader.validators.Integer(),
+                )
+            ),
+            loader.ConfigValue(
                 "ab-horny",
                 False,
                 "Автобонус(/bonus, бонус за подписки, 'lights out')",
@@ -96,22 +112,6 @@ class HaremManager(loader.Module):
                 "Выводить вайфу?",
                 validator=loader.validators.Boolean(),
             ),
-            loader.ConfigValue(
-                "ignore-chats",
-                [],
-                "Список чатов, где модуль не будет ловить вайфу. Указывайте ID чатов вида 123456789",
-                validator=loader.validators.Series(
-                    validator=loader.validators.Integer(),
-                )
-            ),
-            loader.ConfigValue(
-                "whitelist-chats",
-                [],
-                "Список чатов, где модуль будет ловить вайфу. Указывайте ID чатов вида 123456789. Если указано, то модуль будет ловить вайфу только в этих чатах",
-                validator=loader.validators.Series(
-                    validator=loader.validators.Integer(),
-                )
-            )
         )
     
     async def client_ready(self):
