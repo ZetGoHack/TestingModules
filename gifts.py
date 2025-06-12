@@ -11,9 +11,11 @@ v = ("o", "ka", "k")
 
 # -      main      - #
 import herokutl
+import herokutl.client
 from .. import loader, utils
 # -      func      - #
 import time
+from herokutl.client.messageparse import _parse_message_text
 from herokutl.tl.functions.messages import EditMessageRequest, SendMessageRequest
 from herokutl.tl.functions.payments import GetSavedStarGiftsRequest, GetUniqueStarGiftRequest
 # -      types     - #
@@ -232,7 +234,7 @@ class Gifts(loader.Module):
                 await utils.answer(message, self.strings["gifterr"])
                 return
         text = f"<a href='t.me/nft/{args[0]}'>\u200f</a>Окак"
-        await self.local_answer(message, text, invert_media=True)
+        await utils.answer(message, text)#, invert_media=True)
     
     async def local_answer(self, message, response, **kwargs):
         if not (edit := (message.out and not message.via_bot_id and not message.fwd_from)):
@@ -245,9 +247,11 @@ class Gifts(loader.Module):
             )
         text, entities = parse_mode.parse(response)
         
+        message, formatting_entities = await _parse_message_text(message, parse_mode)
+        
         req = (EditMessageRequest if edit else SendMessageRequest)(
             text,
-            parse_mode=lambda t: (t, entities),
+            formatting_entities=lambda t: (t, entities),
             **kwargs,
         )
         result = await self.client(req)
