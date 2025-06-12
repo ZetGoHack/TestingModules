@@ -196,7 +196,7 @@ class Chess(loader.Module):
                     {
                         "text": self.strings["no"],
                         "callback": self._init_game, #lambda call: utils.answer(call, self.strings["declined"])
-                        "args": (game_id,)
+                        "args": [game_id,]
                     }
                 ],
                 [
@@ -225,7 +225,7 @@ class Chess(loader.Module):
             reply_markup={
                 "text": "⤴️ Back",
                 "callback": self._invite,
-                "args": (game_id)
+                "args": (game_id,)
             }
         )
 
