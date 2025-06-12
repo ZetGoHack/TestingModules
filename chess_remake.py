@@ -191,12 +191,12 @@ class Chess(loader.Module):
                     {
                         "text": self.strings["yes"],
                         "callback": self._init_game,
-                        "args": (game_id, "")
+                        "args": (game_id,)
                     },
                     {
                         "text": self.strings["no"],
-                        "callback": self._init_game, #lambda call: utils.answer(call, self.strings["declined"])
-                        "args": [game_id,]
+                        "callback": self._init_game,
+                        "args": (game_id, "no")
                     }
                 ],
                 [
@@ -237,9 +237,9 @@ class Chess(loader.Module):
         if sender['id'] == opponent['id']:
             await utils.answer(message, self.strings["playing_with_yourself?"])
             return
-        game_id = f"[#{next(reversed(self.games.values()))['game_id'] + 1}]"
+        game_id = next(reversed(self.games.values()))['game_id'] + 1
         self.games[game_id] = {
-            "game_id": next(reversed(self.games.values()))["game_id"] + 1,
+            "game_id": game_id,
             "sender": sender,
             "opponent": opponent,
             "Timer": True if isinstance(message.peer_id, PeerUser) else False,
@@ -249,13 +249,12 @@ class Chess(loader.Module):
         }
         await self._invite(message, game_id)
 
-    async def _init_game(self, call, data):
-        if not await self._check_player(call, game_id=data[0], only_opponent=True): return
-        if len(data) == 1:
-            self.games.pop(data[0], None)
+    async def _init_game(self, call, game_id, ans="yes"):
+        if not await self._check_player(call, game_id=game_id, only_opponent=True): return
+        if ans == "no":
+            self.games.pop(game_id, None)
             await utils.answer(call, self.strings["declined"])
             return
-        game_id = data[0]
         if (turn := self.games[game_id].pop("host_plays")) == "r":
             turn = "w" if r.choice([0, 1]) == 0 else "b"
         self.games[game_id]["turn"] = turn
