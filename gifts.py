@@ -15,6 +15,7 @@ import herokutl.client
 from .. import loader, utils
 # -      func      - #
 import time
+
 from herokutl.client.messageparse import MessageParseMethods as prs
 from herokutl.tl.functions.messages import EditMessageRequest, SendMessageRequest
 from herokutl.tl.functions.payments import GetSavedStarGiftsRequest, GetUniqueStarGiftRequest
