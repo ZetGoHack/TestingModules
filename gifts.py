@@ -15,7 +15,7 @@ import herokutl.client
 from .. import loader, utils
 # -      func      - #
 import time
-from herokutl.client.messageparse import _parse_message_text
+from herokutl.client.messageparse import MessageParseMethods as prs
 from herokutl.tl.functions.messages import EditMessageRequest, SendMessageRequest
 from herokutl.tl.functions.payments import GetSavedStarGiftsRequest, GetUniqueStarGiftRequest
 # -      types     - #
@@ -23,6 +23,8 @@ from herokutl.tl.types import SavedStarGift, StarGift, StarGiftUnique
 # -      error       - #
 from herokutl.errors.rpcerrorlist import DocumentInvalidError
 # -      end       - #
+
+from herokutl.client.telegramclient import TelegramClient
 
 @loader.tds
 class Gifts(loader.Module):
@@ -247,11 +249,11 @@ class Gifts(loader.Module):
             )
         text, entities = parse_mode.parse(response)
         
-        message, formatting_entities = await _parse_message_text(message, parse_mode)
+        message, formatting_entities = await prs._parse_message_text(message, parse_mode)
         
         req = (EditMessageRequest if edit else SendMessageRequest)(
             text,
-            formatting_entities=lambda t: (t, entities),
+            entities=lambda t: (t, entities),
             **kwargs,
         )
         result = await self.client(req)
