@@ -129,6 +129,7 @@ class Chess(loader.Module):
             }
         }
         self.games = {"filler": {
+            "game": "filler",
             "game_id": 0,
             }
         }
@@ -237,6 +238,9 @@ class Chess(loader.Module):
         if sender['id'] == opponent['id']:
             await utils.answer(message, self.strings["playing_with_yourself?"])
             return
+        past_game =  next(reversed(self.games.values()))
+        if not getattr(past_game, "game", None):
+            self.games.pop(past_game["game_id"], None)
         game_id = next(reversed(self.games.values()))['game_id'] + 1
         self.games[game_id] = {
             "game_id": game_id,
