@@ -1,4 +1,4 @@
-__version__ = (1,0,0)
+__version__ = (1,1,0)
 #░░░███░███░███░███░███
 #░░░░░█░█░░░░█░░█░░░█░█
 #░░░░█░░███░░█░░█░█░█░█
@@ -142,19 +142,19 @@ class HaremManager(loader.Module):
         return [
                 [
                     {
-                        "text": "[✔️] Horny Harem" if self.config["ab-horny"] else "[❌] Horny Harem",
+                        "text": "[✔️] Horny Harem" if self.get("ab-horny") else "[❌] Horny Harem",
                         "callback": self.callback_handler,
                         "args": ("horny",)
                     },
                     {
-                        "text": "[✔️] Waifu Harem" if self.config["ab-waifu"] else "[❌] Waifu Harem",
+                        "text": "[✔️] Waifu Harem" if self.get("ab-waifu") else "[❌] Waifu Harem",
                         "callback": self.callback_handler,
                         "args": ("waifu",)
                     },
                    ],
                    [
                     {
-                        "text": "[✔️] Gif Harem" if self.config["ab-gif"] else "[❌] Gif Harem",
+                        "text": "[✔️] Gif Harem" if self.get("ab-gif") else "[❌] Gif Harem",
                         "callback": self.callback_handler,
                         "args": ("gif",)
                     }
