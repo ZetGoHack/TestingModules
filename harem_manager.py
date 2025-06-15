@@ -1,10 +1,11 @@
-__version__ = (1,0,0)
+__version__ = (1,1,0)
 #░░░███░███░███░███░███
 #░░░░░█░█░░░░█░░█░░░█░█
 #░░░░█░░███░░█░░█░█░█░█
 #░░░█░░░█░░░░█░░█░█░█░█
 #░░░███░███░░█░░███░███
 # H:Mods Team [💎]
+# meta developer: @nullmod
 
 # -      main      - #
 from .. import loader, utils
@@ -53,34 +54,10 @@ class HaremManager(loader.Module):
                 )
             ),
             loader.ConfigValue(
-                "ab-horny",
-                False,
-                "Автобонус(/bonus, бонус за подписки, 'lights out')",
-                validator=loader.validators.Boolean(),
-            ),
-            loader.ConfigValue(
                 "interval-horny",
                 4,
                 "Интервал между автобонусом",
                 validator=loader.validators.Float(2.0)
-            ),
-            loader.ConfigValue(
-                "catch-horny",
-                False,
-                "Автоловля вайфу",
-                validator=loader.validators.Boolean(),
-            ),
-            loader.ConfigValue(
-                "out-horny",
-                False,
-                "Выводить вайфу?",
-                validator=loader.validators.Boolean(),
-            ),
-            loader.ConfigValue(
-                "ab-waifu",
-                False,
-                "Автобонус(/bonus, бонус за подписки, 'lights out')",
-                validator=loader.validators.Boolean(),
             ),
             loader.ConfigValue(
                 "interval-waifu",
@@ -89,31 +66,13 @@ class HaremManager(loader.Module):
                 validator=loader.validators.Float(2.0)
             ),
             loader.ConfigValue(
-                "ab-gif",
-                False,
-                "Автобонус(/bonus, бонус за подписки, 'lights out')",
-                validator=loader.validators.Boolean(),
-            ),
-            loader.ConfigValue(
                 "interval-gif",
                 4,
                 "Интервал между автобонусом",
                 validator=loader.validators.Float(2.0)
             ),
-            loader.ConfigValue(
-                "catch-gif",
-                False,
-                "Автоловля вайфу",
-                validator=loader.validators.Boolean(),
-            ),
-            loader.ConfigValue(
-                "out-gif",
-                False,
-                "Выводить вайфу?",
-                validator=loader.validators.Boolean(),
-            ),
         )
-    
+
     async def client_ready(self):
         self.harems = {
             "horny": "@Horny_GaremBot",
@@ -126,33 +85,50 @@ class HaremManager(loader.Module):
             "gif": 7084965046,
         }
 
+        temp_values = [
+            "config",
+            "ab-horny",
+            "catch-horny",
+            "out-horny",
+            "ab-waifu",
+            "catch-waifu",
+            "out-waifu",
+            "ab-gif",
+            "catch-gif",
+            "out-gif"
+        ]
+        if not self.get("config", None):
+            for value in temp_values:
+                self.set(value, False if value not in "config" else True)
+
     @loader.loop(interval=1, autostart=True)
     async def loop(self):
         for bot in self.harems:
-            if self.config[f"ab-{bot}"]:
-                if (not self.get(f"ab-{bot}") or (time.time() - self.get(f"ab-{bot}")) >= int(3600*self.config[f"interval-{bot}"])):
+            if self.get(f"ab-{bot}", None):
+                if (not self.get(f"ab-t-{bot}") or (time.time() - self.get(f"ab-t-{bot}")) >= int(3600*self.config[f"interval-{bot}"])):
                     await self._autobonus(self.harems[bot], bot)
 
     @loader.watcher("only_messages")
     async def watcher(self, message):
         """Watcher"""
+        chatid = int(str(message.chat_id).replace("-100", ""))
         for bot in self.harems:
             if bot == "waifu": continue
-            if message.sender_id == self.harems_ids[bot] and self.config[f"catch-{bot}"]:
+            if message.sender_id == self.harems_ids[bot] and self.get(f"catch-{bot}", None):
                 if self.config["whitelist-chats"]:
-                    if message.chat_id not in self.config["whitelist-chats"]:
+                    if chatid not in self.config["whitelist-chats"]:
                         return
-                elif message.chat_id in self.config["ignore-chats"]:
+                elif chatid in self.config["ignore-chats"]:
                     return
                 if (not self.get(f"catcher_time-{bot}") or int(time.time()) - int(self.get(f"catcher_time-{bot}")) > 14400):
                     if "заблудилась" in message.text.lower():
                         try:
                             await message.click()
                             await asyncio.sleep(5)
-                            msgs = await message.client.get_messages(message.chat_id, limit=10)
+                            msgs = await message.client.get_messages(chatid, limit=10)
                             for msg in msgs:
                                 if msg.mentioned and "забрали" in msg.text and msg.sender_id == self.harems_ids[bot]:
-                                    if self.config[f"out-{bot}"]:
+                                    if self.get(f"catch-{bot}", None):
                                         match = re.search(r", Вы забрали (.+?)\. Вайфу", msg.text)
                                         waifu = match.group(1)
                                         caption = f"{waifu} в вашем гареме! <emoji document_id=5395592707580127159>😎</emoji>"
@@ -190,21 +166,26 @@ class HaremManager(loader.Module):
                     }
                    ]
                ]
-        
+
     def _menu_markup(self, bot):
-        markup = []
+        markup = [[],[]]
         markup.append([
                         {
-                            "text": "[✔️] Автобонус" if self.config[f"ab-{bot}"] else "[❌] Автобонус", 
+                            "text": "[✔️] Автобонус" if self.get(f"ab-{bot}", None) else "[❌] Автобонус", 
                             "callback": self.callback_handler,
                             "args": (f"ab-{bot}",)
                         }
                     ])
         if "waifu" not in bot:
             markup[0].append({
-                                "text":"[✔️] Автоловля" if self.config[f"catch-{bot}"] else "[❌] Автоловля",
-                                "callback":self.callback_handler,
+                                "text": "[✔️] Автоловля" if self.get(f"catch-{bot}", None) else "[❌] Автоловля",
+                                "callback": self.callback_handler,
                                 "args": (f"catch-{bot}",)
+                            })
+            markup[1].append({
+                                "text": "[✔️] Вывод от ловца" if self.get(f"out-{bot}", None) else "[❌] Вывод от ловца",
+                                "callback": self.callback_handler,
+                                "args": (f"out-{bot}",)
                             })
         markup.append(
                 [
@@ -243,11 +224,15 @@ class HaremManager(loader.Module):
             return
         elif data.startswith("ab-"):
             bot = data.split("-")[-1]
-            self.config[f"ab-{bot}"] = not self.config[f"ab-{bot}"]
+            self.set(data, not self.get(data, None))
             await utils.answer(call, f"Меню <code>{self.harems[bot]}</code>", reply_markup=self._menu_markup(bot))
         elif data.startswith("catch-"):
             bot = data.split("-")[-1]
-            self.config[f"catch-{bot}"] = not self.config[f"catch-{bot}"]
+            self.set(data, not self.get(data, None))
+            await utils.answer(call, f"Меню <code>{self.harems[bot]}</code>", reply_markup=self._menu_markup(bot))
+        elif data.startswith("out-"):
+            bot = data.split("-")[-1]
+            self.set(data, not self.get(data, None))
             await utils.answer(call, f"Меню <code>{self.harems[bot]}</code>", reply_markup=self._menu_markup(bot))
         else:
             bot = data
@@ -274,9 +259,9 @@ class HaremManager(loader.Module):
                         pass
                 if r is None:
                     logger.warning("Ответ от бота не получен. Вероятно, он снова лёг\n\nПерезапустите автобонус, когда бот очнётся")
-                    self.config[f"ab-{bot}"] = False
+                    self.set(f"ab-{bot}", False)
                     return
-            self.set(f"ab-{bot}", int(time.time()))
+            self.get(f"ab-t-{bot}", int(time.time()))
             if "Доступен бонус за подписки" in r.text:
                 await conv.send_message("/start flyer_bonus")
                 r = await conv.get_response()
@@ -381,7 +366,7 @@ class HaremManager(loader.Module):
                             count += 1
                         else:
                             break
-    
+
     def _parse(self, r):
         a = r.buttons
         pattern = []
@@ -395,14 +380,14 @@ class HaremManager(loader.Module):
                 else:
                     pass
         return pattern
-    
+
     def _solution(self, pole):
         n = len(pole)
         for num in range(2**n):
             binary_string = bin(num)[2:].zfill(n)
             presses = [int(char) for char in binary_string]
             temp = pole[:]
-        
+
             for i in range(n):
                 if presses[i]:
                     temp[i] ^= 1
@@ -410,7 +395,7 @@ class HaremManager(loader.Module):
                     if i % 3 < 2: temp[i + 1] ^= 1
                     if i >= 3: temp[i - 3] ^= 1
                     if i < 6: temp[i + 3] ^= 1
-        
+
             if sum(temp) == 0:
                 return presses
 
@@ -431,8 +416,9 @@ class HaremManager(loader.Module):
             else:
                 await utils.answer(message, "<emoji document_id=5299030091735525430>❗️</emoji> Не вижу поля игры. Это точно то сообщение?")
                 return
-             
+
         else:
+            
             await utils.answer(message, "<emoji document_id=5299030091735525430>❗️</emoji> Пропиши команду в ответ на игру.")
             return
         if pattern:
