@@ -1,4 +1,4 @@
-__version__ = (1,1,0)
+__version__ = (1,0,0)
 #░░░███░███░███░███░███
 #░░░░░█░█░░░░█░░█░░░█░█
 #░░░░█░░███░░█░░█░█░█░█
@@ -169,13 +169,11 @@ class HaremManager(loader.Module):
 
     def _menu_markup(self, bot):
         markup = [[],[]]
-        markup.append([
-                        {
+        markup[0].append({
                             "text": "[✔️] Автобонус" if self.get(f"ab-{bot}", None) else "[❌] Автобонус", 
                             "callback": self.callback_handler,
                             "args": (f"ab-{bot}",)
-                        }
-                    ])
+                        })
         if "waifu" not in bot:
             markup[0].append({
                                 "text": "[✔️] Автоловля" if self.get(f"catch-{bot}", None) else "[❌] Автоловля",
@@ -187,15 +185,13 @@ class HaremManager(loader.Module):
                                 "callback": self.callback_handler,
                                 "args": (f"out-{bot}",)
                             })
-        markup.append(
-                [
+        markup.append([
                     {
                         "text":"🔁 Перезапустить автобонус",
                         "callback": self.callback_handler,
                         "args": (f"restart-{bot}",)
                     },
-                ],
-            )
+                ])
         markup.append([
                     {
                         "text":"↩️ Назад", 
@@ -261,7 +257,7 @@ class HaremManager(loader.Module):
                     logger.warning("Ответ от бота не получен. Вероятно, он снова лёг\n\nПерезапустите автобонус, когда бот очнётся")
                     self.set(f"ab-{bot}", False)
                     return
-            self.get(f"ab-t-{bot}", int(time.time()))
+            self.set(f"ab-t-{bot}", int(time.time()))
             if "Доступен бонус за подписки" in r.text:
                 await conv.send_message("/start flyer_bonus")
                 r = await conv.get_response()
