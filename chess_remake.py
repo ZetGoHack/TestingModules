@@ -93,24 +93,30 @@ class Chess(loader.Module):
         "whosthat": "<emoji document_id=5019523782004441717>❌</emoji> I cannot find such a user",
         "playing_with_yourself?": "<emoji document_id=5384398004172102616>😈</emoji> Playing with yourself? Sorry, you can't",
         "invite": "{} you have invited to play chess! Do you accept?",
-        "yes": "✅ Yes",
+        "yes": "✅ Accept",
         "no": "❌ No",
         "declined": "❌ Invitation declined",
         "settings": "⚙️ Settings",
         "not_your_game": "This is not your game!",
         "not_you": "You cannot click here",
+        "random": "🎲 Random",
+        "white": "⚪ White",
+        "black": "⚫ Black",
         }
     strings_ru = {
         "noargs": "<emoji document_id=5370724846936267183>🤔</emoji> Вы не указали с кем играть",
         "whosthat": "<emoji document_id=5019523782004441717>❌</emoji> Я не нахожу такого пользователя",
         "playing_with_yourself?": "<emoji document_id=5384398004172102616>😈</emoji> Одиночные шахматы? Простите, нет",
         "invite": "{}, вас пригласили сыграть партию шахмат! Примите?\n\n",
-        "yes": "✅ Да",
+        "yes": "✅ Принимаю",
         "no": "❌ Нет",
         "declined": "❌ Приглашение отклонено",
         "settings": "⚙️ Настройки",
         "not_your_game": "Это не ваша игра!",
         "not_you": "Вы не можете нажать сюда!",
+        "random": "🎲 Рандом",
+        "white": "⚪ Белые",
+        "black": "⚫ Чёрные",
     }
     
     async def client_ready(self):
@@ -135,6 +141,15 @@ class Chess(loader.Module):
         }
         self.gsettings = {
             "style": self.styles["figures-with-circles"], # "figures", "letters"
+        }
+        self.pgn = {
+            'event': '[Event "Chess Play With Module"]',
+            'site': '[Site "https://t.me/nullmod/"]',
+            'date': '[Date "{}"]',
+            '': '',
+            '': '',
+            '': '',
+            '': '',
         }
 
     async def _check_player(self, call, game_id, only_opponent=False):
@@ -214,20 +229,15 @@ class Chess(loader.Module):
     async def _settings(self, call, game_id):
         if not await self._check_player(call, game_id): return
         game = self.games[game_id]
-        self.gsettings["style"] = r.choice(list(self.styles.values()))
+        reply_markup = []
         await utils.answer(
             call,
-            f"<b>Game ID:</b> {game_id}\n"
             f"<b>Host:</b> {game['sender']['name']} ({game['sender']['id']})\n"
             f"<b>Opponent:</b> {game['opponent']['name']} ({game['opponent']['id']})\n"
             f"<b>Style:</b> {game['style']}\n"
             f"<b>Timer:</b> {'Enabled' if game['Timer'] else 'Disabled'}\n"
-            f"<b>Host plays:</b> {game['host_plays']}\n",
-            reply_markup={
-                "text": "⤴️ Back",
-                "callback": self._invite,
-                "args": (game_id,)
-            }
+            f"<b>Host plays:</b> {self.strings['random'] if game['host_plays'] == 'r' else self.strings['white'] if game['host_plays'] == 'w' else self.strings['black']}\n",
+            reply_markup=reply_markup
         )
 
     @loader.command(ru_doc="[reply/username/id] - предложить человеку сыграть партию в чате")
@@ -252,6 +262,8 @@ class Chess(loader.Module):
             "style": self.gsettings["style"],
         }
         await self._invite(message, game_id)
+
+    ############## Starting game... ############## 
 
     async def _init_game(self, call, game_id, ans="yes"):
         if not await self._check_player(call, game_id=game_id, only_opponent=True): return
