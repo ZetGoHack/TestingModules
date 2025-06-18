@@ -92,12 +92,15 @@ class Chess(loader.Module):
         "noargs": "<emoji document_id=5370724846936267183>🤔</emoji> You did not specify who to play with",
         "whosthat": "<emoji document_id=5019523782004441717>❌</emoji> I cannot find such a user",
         "playing_with_yourself?": "<emoji document_id=5384398004172102616>😈</emoji> Playing with yourself? Sorry, you can't",
-        "invite": "{} you have invited to play chess! Do you accept?",
+        "invite": "{opponent} you have invited to play chess! Do you accept?\n\n",
+        "settings_text": "⚙️ Current settings: \n🎛️ <b>Style:</b> {style}\n⏲️ <b>Timer:</b> {timer}\n<b>Host plays:</b> {color}",
         "yes": "✅ Accept",
         "no": "❌ No",
         "declined": "❌ Invitation declined",
         "settings": "⚙️ Settings",
-        "not_your_game": "This is not your game!",
+        "back": "↩️ Back",
+        "available": "Available",
+        "not_available": "Not available",
         "not_you": "You cannot click here",
         "random": "🎲 Random",
         "white": "⚪ White",
@@ -107,12 +110,15 @@ class Chess(loader.Module):
         "noargs": "<emoji document_id=5370724846936267183>🤔</emoji> Вы не указали с кем играть",
         "whosthat": "<emoji document_id=5019523782004441717>❌</emoji> Я не нахожу такого пользователя",
         "playing_with_yourself?": "<emoji document_id=5384398004172102616>😈</emoji> Одиночные шахматы? Простите, нет",
-        "invite": "{}, вас пригласили сыграть партию шахмат! Примите?\n\n",
+        "invite": "{opponent}, вас пригласили сыграть партию шахмат! Примите?\n\n",
+        "settings_text": "⚙️ Текущие настройки: \n🎛️ <b>Стиль доски:</b> <code>{style}</code>\n⏲️ <b>Таймер:</b> {timer}\n<b>Хост играет за:</b> {color}",
         "yes": "✅ Принимаю",
         "no": "❌ Нет",
         "declined": "❌ Приглашение отклонено",
         "settings": "⚙️ Настройки",
-        "not_your_game": "Это не ваша игра!",
+        "back": "↩️ Назад",
+        "available": "Доступно",
+        "not_available": "Недоступно",
         "not_you": "Вы не можете нажать сюда!",
         "random": "🎲 Рандом",
         "white": "⚪ Белые",
@@ -140,23 +146,23 @@ class Chess(loader.Module):
             }
         }
         self.gsettings = {
-            "style": self.styles["figures-with-circles"], # "figures", "letters"
+            "style": "figures-with-circles", # "figures", "letters"
         }
         self.pgn = {
             'event': '[Event "Chess Play With Module"]',
             'site': '[Site "https://t.me/nullmod/"]',
-            'date': '[Date "{}"]',
-            '': '',
-            '': '',
-            '': '',
-            '': '',
+            'date': '[Date "{date}"]',
+            'round': '[Round "{game_id}"]',
+            'white': '[White "{player}"]',
+            'black': '[Black "{player}"]',
+            'result': '[Result "{result}"]',
         }
 
     async def _check_player(self, call, game_id, only_opponent=False):
         if isinstance(call, (BotInlineCall, InlineCall, InlineMessage)): 
             if call.from_user.id != self.games[game_id]["sender"]["id"]:
                 if call.from_user.id != self.games[game_id]["opponent"]["id"]:
-                    await call.answer(self.strings["not_your_game"])
+                    await call.answer(self.strings["not_available"])
                     return False
             elif call.from_user.id == self.games[game_id]["sender"]["id"] and only_opponent:
                 await call.answer(self.strings["not_you"])
@@ -199,9 +205,20 @@ class Chess(loader.Module):
 
     async def _invite(self, call, game_id):
         if not await self._check_player(call, game_id): return
+        game = self.games[game_id]
         await utils.answer(
             call,
-            self.strings["invite"].format(self.games[game_id]["opponent"]["name"]),
+            self.strings["invite"].format(opponent=self.games[game_id]["opponent"]["name"]) + self.strings['settings_text'].format(
+                game['style'],
+
+                self.strings['available'] if isinstance(game['Timer'], bool) and game['Timer']
+                else game['Timer'] if game["Timer"]
+                else self.strings['not_available'],
+
+                self.strings['random'] if game['host_plays'] == 'r' 
+                else self.strings['white'] if game['host_plays'] == 'w'
+                else self.strings['black']
+            ),
             reply_markup=[
                 [
                     {
@@ -229,14 +246,26 @@ class Chess(loader.Module):
     async def _settings(self, call, game_id):
         if not await self._check_player(call, game_id): return
         game = self.games[game_id]
-        reply_markup = []
+        reply_markup = [
+            {
+                "text": self.strings["back"],
+                "callback": self._invite,
+                "args": (game_id,)
+            }
+        ]
         await utils.answer(
             call,
-            f"<b>Host:</b> {game['sender']['name']} ({game['sender']['id']})\n"
-            f"<b>Opponent:</b> {game['opponent']['name']} ({game['opponent']['id']})\n"
-            f"<b>Style:</b> {game['style']}\n"
-            f"<b>Timer:</b> {'Enabled' if game['Timer'] else 'Disabled'}\n"
-            f"<b>Host plays:</b> {self.strings['random'] if game['host_plays'] == 'r' else self.strings['white'] if game['host_plays'] == 'w' else self.strings['black']}\n",
+            self.strings['settings_text'].format(
+                game['style'],
+
+                self.strings['available'] if isinstance(game['Timer'], bool) and game['Timer']
+                else game['Timer'] if game["Timer"]
+                else self.strings['not_available'],
+
+                self.strings['random'] if game['host_plays'] == 'r' 
+                else self.strings['white'] if game['host_plays'] == 'w'
+                else self.strings['black']
+            ),
             reply_markup=reply_markup
         )
 
@@ -275,3 +304,5 @@ class Chess(loader.Module):
             turn = "w" if r.choice([0, 1]) == 0 else "b"
         self.games[game_id]["turn"] = turn
         await utils.answer(call, f"filler\n{self.games[game_id]}")
+
+# TODO доделать настройки, кнопки
