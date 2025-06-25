@@ -25,11 +25,16 @@ from ..inline.types import BotInlineCall, InlineCall, InlineMessage
 
 class Timer:
     def __init__(self, scnds):#start
+        self.starttime = scnds
         self.timers = {"white": scnds, "black": scnds}
         self.running = {"white": False, "black": False}
         self.started = {"white": False, "black": False}
         self.last_time = time.monotonic()
         self.t = None
+    
+    def minutes(self) -> int:
+        return self.starttime // 60
+
     async def _count(self):#func
         while True:
             await asyncio.sleep(0.1)
@@ -45,16 +50,16 @@ class Timer:
         self.t = asyncio.create_task(self._count())
 
     async def white(self): ##to use
-        await self.turn("white")
+        await self._turn("white")
         self.started["white"] = True
         self.started["black"] = False
 
     async def black(self): ##to use
-        await self.turn("black")
+        await self._turn("black")
         self.started["white"] = False
         self.started["black"] = True
 
-    async def turn(self, color):#func
+    async def _turn(self, color):#func
         now = time.monotonic()
         e = now - self.last_time
         self.last_time = now
@@ -105,13 +110,14 @@ class Chess(loader.Module):
         "random": "🎲 Random",
         "white": "⚪ White",
         "black": "⚫ Black",
+        "timer": "{} min.",
         }
     strings_ru = {
         "noargs": "<emoji document_id=5370724846936267183>🤔</emoji> Вы не указали с кем играть",
         "whosthat": "<emoji document_id=5019523782004441717>❌</emoji> Я не нахожу такого пользователя",
         "playing_with_yourself?": "<emoji document_id=5384398004172102616>😈</emoji> Одиночные шахматы? Простите, нет",
         "invite": "{opponent}, вас пригласили сыграть партию шахмат! Примите?\n\n",
-        "settings_text": "⚙️ Текущие настройки: \n🎛️ <b>Стиль доски:</b> <code>{style}</code>\n⏲️ <b>Таймер:</b> {timer}\n<b>Хост играет за:</b> {color}",
+        "settings_text": "⚙️ Текущие настройки: \n🎛️ <b>Стиль доски:</b> <code>{style}</code>\n⏱️ <b>Таймер:</b> {timer}\n<b>Хост играет за:</b> {color}",
         "yes": "✅ Принимаю",
         "no": "❌ Нет",
         "declined": "❌ Приглашение отклонено",
@@ -123,6 +129,7 @@ class Chess(loader.Module):
         "random": "🎲 Рандом",
         "white": "⚪ Белые",
         "black": "⚫ Чёрные",
+        "timer": "{} мин.",
     }
     
     async def client_ready(self):
@@ -205,14 +212,15 @@ class Chess(loader.Module):
 
     async def _invite(self, call, game_id):
         if not await self._check_player(call, game_id): return
-        game = self.games[game_id]
+        game: dict[str, Timer]  = self.games[game_id]
+        game["Timer"]
         await utils.answer(
             call,
             self.strings["invite"].format(opponent=self.games[game_id]["opponent"]["name"]) + self.strings['settings_text'].format(
                 game['style'],
 
                 self.strings['available'] if isinstance(game['Timer'], bool) and game['Timer']
-                else game['Timer'] if game["Timer"]
+                else self.strings['timer'].format(game['Timer'].minutes()) if game["Timer"]
                 else self.strings['not_available'],
 
                 self.strings['random'] if game['host_plays'] == 'r' 
@@ -257,9 +265,8 @@ class Chess(loader.Module):
             call,
             self.strings['settings_text'].format(
                 game['style'],
-
                 self.strings['available'] if isinstance(game['Timer'], bool) and game['Timer']
-                else game['Timer'] if game["Timer"]
+                else game['Timer'].minutes() if game["Timer"]
                 else self.strings['not_available'],
 
                 self.strings['random'] if game['host_plays'] == 'r' 
@@ -269,9 +276,9 @@ class Chess(loader.Module):
             reply_markup=reply_markup
         )
 
-    @loader.command(ru_doc="[reply/username/id] - предложить человеку сыграть партию в чате")
+    @loader.command(ru_doc="[reply/username/id] - предложить человеку сыграть партию")
     async def chess(self, message):
-        """[reply/username/id] - propose a person to play a game in the chat"""
+        """[reply/username/id] - propose a person to play a game"""
         sender, opponent = await self.get_players(message)
         if not sender or not opponent: return
         if sender['id'] == opponent['id']:
