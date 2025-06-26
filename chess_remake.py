@@ -99,6 +99,7 @@ class Chess(loader.Module):
         "playing_with_yourself?": "<emoji document_id=5384398004172102616>😈</emoji> Playing with yourself? Sorry, you can't",
         "invite": "{opponent} you have invited to play chess! Do you accept?\n\n",
         "settings_text": "⚙️ Current settings: \n🎛️ <b>Style:</b> {style}\n⏲️ <b>Timer:</b> {timer}\n<b>Host plays:</b> {color}",
+        "updated": "✅ Updated!",
         "yes": "✅ Accept",
         "no": "❌ No",
         "declined": "❌ Invitation declined",
@@ -111,6 +112,11 @@ class Chess(loader.Module):
         "white": "⚪ White",
         "black": "⚫ Black",
         "timer": "{} min.",
+        "blitz_text": "⚡ Blitz",
+        "blitz_message": "Blitz-Blitz – speed without limits",
+        "rapid_text": "⏱️ Rapid",
+        "rapid_message": "Ponder your defeat",
+        "no_clock_text": "❌ No clock",
         }
     strings_ru = {
         "noargs": "<emoji document_id=5370724846936267183>🤔</emoji> Вы не указали с кем играть",
@@ -118,6 +124,7 @@ class Chess(loader.Module):
         "playing_with_yourself?": "<emoji document_id=5384398004172102616>😈</emoji> Одиночные шахматы? Простите, нет",
         "invite": "{opponent}, вас пригласили сыграть партию шахмат! Примите?\n\n",
         "settings_text": "⚙️ Текущие настройки: \n🎛️ <b>Стиль доски:</b> <code>{style}</code>\n⏱️ <b>Таймер:</b> {timer}\n<b>Хост играет за:</b> {color}",
+        "updated": "✅ Обновлено!",
         "yes": "✅ Принимаю",
         "no": "❌ Нет",
         "declined": "❌ Приглашение отклонено",
@@ -130,6 +137,11 @@ class Chess(loader.Module):
         "white": "⚪ Белые",
         "black": "⚫ Чёрные",
         "timer": "{} мин.",
+        "blitz_text": "⚡ Блиц",
+        "blitz_message": "Блиц-Блиц - скорость без границ",
+        "rapid_text": "⏱️ Рапид",
+        "rapid_message": "Обдумай своё поражение",
+        "no_clock_text": "❌ Нет часов",
     }
     
     async def client_ready(self):
@@ -147,11 +159,15 @@ class Chess(loader.Module):
             "R": "𝗥", "N": "𝗡", "B": "𝗕", "Q": "𝗤", "K": "𝗞", "P": "𝗣",
             }
         }
-        self.games = {"filler": {
-            "game": "filler",
-            "game_id": 0,
+        games = self.get("games", {})
+        if not games:
+            self.games = {0: {
+                "game": "filler",
+                "game_id": 0,
+                }
             }
-        }
+            self.set("games", self.games)
+        else: self.games = games
         self.gsettings = {
             "style": "figures-with-circles", # "figures", "letters"
         }
@@ -164,7 +180,7 @@ class Chess(loader.Module):
             'black': '[Black "{player}"]',
             'result': '[Result "{result}"]',
         }
-
+        
     async def _check_player(self, call, game_id, only_opponent=False):
         if isinstance(call, (BotInlineCall, InlineCall, InlineMessage)): 
             if call.from_user.id != self.games[game_id]["sender"]["id"]:
@@ -216,13 +232,13 @@ class Chess(loader.Module):
         await utils.answer(
             call,
             self.strings["invite"].format(opponent=self.games[game_id]["opponent"]["name"]) + self.strings['settings_text'].format(
-                game['style'],
+                style=game['style'],
 
-                self.strings['available'] if isinstance(game['Timer'], bool) and game['Timer']
+                timer=self.strings['available'] if isinstance(game['Timer'], bool) and game['Timer']
                 else self.strings['timer'].format(game['Timer'].minutes()) if game["Timer"]
                 else self.strings['not_available'],
 
-                self.strings['random'] if game['host_plays'] == 'r' 
+                color=self.strings['random'] if game['host_plays'] == 'r' 
                 else self.strings['white'] if game['host_plays'] == 'w'
                 else self.strings['black']
             ),
@@ -242,7 +258,7 @@ class Chess(loader.Module):
                 [
                     {
                         "text": self.strings["settings"],
-                        "callback": self._settings,
+                        "callback": self.settings,
                         "args": (game_id,)
                     }
                 ]
@@ -250,23 +266,25 @@ class Chess(loader.Module):
             disable_security=True
         )
 
-    async def _settings(self, call, game_id):
+    async def settings(self, call, game_id):
         if not await self._check_player(call, game_id): return
         game = self.games[game_id]
-        reply_markup = [
-            # [
-            #     {"text":f"⏱️ Время", "callback":self.time, "args": (nT, )} if not nT else {"text":f"❌ Время: ...", "action": "answer", "show_alert":True, "message": "Приглашение находится в чате.\n\nИз-за ограничений для ботов, партии на время могут проводиться только в лс"}
-            # ],
-            # [
-            #     {"text":f"♟️ Цвет (хоста)", "callback":self.color, "args": (nT, )}
-            # ],
-            # [
-            #     {"text":f"🎛️ Стиль доски", "callback":self._style, "args": (nT, )}
-            # ],
+        reply_markup = []
+        if game["Timer"]:
+            reply_markup.append([
+                {"text":f"⏱️ Время", "callback":self._settings, "args": ("t", )}
+            ])
+
+        reply_markup.append(
             [
-                {"text": self.strings["back"], "callback": self._invite, "args": (game_id,)}
-            ]
-        ]
+                {"text":f"♟️ Цвет (хоста)", "callback":self._settings, "args": ("c", )}
+            ],
+            [
+                {"text":f"🎛️ Стиль доски", "callback":self._settings, "args": ("s", )}
+            ],
+            [
+                {"text": self.strings['back'], "callback": self._invite, "args": (game_id,)}
+            ])
         await utils.answer(
             call,
             self.strings['settings_text'].format(
@@ -282,6 +300,70 @@ class Chess(loader.Module):
             ),
             reply_markup=reply_markup
         )
+    async def _settings(self, call, game_id, ruleset: str | list):
+        game = self.games[game_id]
+        reply_markup = []
+        text = "🍓"
+        if isinstance(ruleset, str):
+            if ruleset == "t":
+                text = "⏳"
+                reply_markup.append(
+                    [
+                        {"text": self.strings['blitz_text'], "action": "answer", "message": self.strings['blitz_message']}
+                    ],
+                    [
+                        {"text": self.strings['timer'].format(3), "callback":self._settings, "args": ([game_id, 'Timer', 3])},
+                        {"text": self.strings['timer'].format(5), "callback":self._settings, "args": ([game_id, 'Timer', 5])},
+                    ],
+                    [
+                        {"text": self.strings['rapid_text'], "action": "answer", "message": self.strings['rapid_message']}
+                    ],
+                    [
+                        {"text": self.strings['timer'].format(10), "callback":self._settings, "args": ([game_id, 'Timer', 10])},
+                        {"text": self.strings['timer'].format(15), "callback":self._settings, "args": ([game_id, 'Timer', 15])},
+                        {"text": self.strings['timer'].format(30), "callback":self._settings, "args": ([game_id, 'Timer', 30])},
+                        {"text": self.strings['timer'].format(60), "callback":self._settings, "args": ([game_id, 'Timer', 60])}
+                    ],
+                    [
+                        {"text": self.strings['no_clock_text'], "callback":self._settings, "args": (game_id, 'Timer', True)}
+                    ]
+                )
+            elif ruleset == "c":
+                text = "♟️"
+                reply_markup.append(
+                    [
+                        {"text": self.strings['white'], "callback":self._settings, "args": ([game_id, 'host_plays', 'w'])},
+                        {"text": self.strings['black'], "callback":self._settings, "args": ([game_id, 'host_plays', 'b'] )}
+                    ],
+                    [
+                        {"text": self.strings['random'], "callback":self._settings, "args": ([game_id, 'host_plays', 'r'])}
+                    ]
+                )
+            elif ruleset == "s":
+                text = "✏️"
+                reply_markup.append(
+                    [{"text": "[♔⚪] Figures with circles", "callback":self._settings, "args": (game_id, 'style', 'figures-with-circles')}],
+                    [{"text": "[♔] Figures", "callback":self._settings, "args": (game_id, 'style', 'figures')}],
+                    [{"text": "[𝗞] Letters", "callback":self._settings, "args": (game_id, 'style', 'letters')}]
+                )
+
+            reply_markup.append(
+                [
+                    {"text": self.strings['back'], "callback": self.settings, "args": (game_id,)}
+                ]
+            )
+
+            await utils.answer(call, text, reply_markup=reply_markup)
+        else:
+            await call.answer("✅")
+            if ruleset[1] == "style":
+                self.set('style', ruleset[2])
+            if ruleset[1] == "Timer" and isinstance(ruleset[2], int):
+                self.games[ruleset[0]][ruleset[1]] = Timer(ruleset[2]*60)
+            else:
+                self.games[ruleset[0]][ruleset[1]] = ruleset[2]
+            await self.settings(call, game_id)
+            
 
     @loader.command(ru_doc="[reply/username/id] - предложить человеку сыграть партию")
     async def chess(self, message):
@@ -293,7 +375,7 @@ class Chess(loader.Module):
             return
         past_game =  next(reversed(self.games.values()))
         if not getattr(past_game, "game", None):
-            self.games.pop(past_game["game_id"], None)
+            self.games.pop(past_game['game_id'], None)
         game_id = next(reversed(self.games.values()))['game_id'] + 1
         self.games[game_id] = {
             "game_id": game_id,
@@ -302,7 +384,7 @@ class Chess(loader.Module):
             "Timer": True if isinstance(message.peer_id, PeerUser) else False,
             "time": int(time.time()),
             "host_plays": "r", # r(andom), w(hite), b(lack)
-            "style": self.gsettings["style"],
+            "style": self.gsettings['style'],
         }
         await self._invite(message, game_id)
 
