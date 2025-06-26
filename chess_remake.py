@@ -1,4 +1,4 @@
-__version__ = ("updated", 0, 2) #########
+__version__ = ("updated", 0, 3)
 #░░░███░███░███░███░███
 #░░░░░█░█░░░░█░░█░░░█░█
 #░░░░█░░███░░█░░█░█░█░█
@@ -368,9 +368,10 @@ class Chess(loader.Module):
         if sender['id'] == opponent['id']:
             await utils.answer(message, self.strings["playing_with_yourself?"])
             return
-        past_game =  next(reversed(self.games.values()))
-        if not getattr(past_game, "game", None):
-            self.games.pop(past_game['game_id'], None)
+        if self.games:
+            past_game =  next(reversed(self.games.values()))
+            if not getattr(past_game, "game", None):
+                self.games.pop(past_game['game_id'], None)
         if not self.games:
             game_id = 1
         else:
