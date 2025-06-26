@@ -1,4 +1,4 @@
-__version__ = ("updated", 0, 4)
+__version__ = ("updated", 0, 5)
 #░░░███░███░███░███░███
 #░░░░░█░█░░░░█░░█░░░█░█
 #░░░░█░░███░░█░░█░█░█░█
@@ -98,7 +98,7 @@ class Chess(loader.Module):
         "whosthat": "<emoji document_id=5019523782004441717>❌</emoji> I cannot find such a user",
         "playing_with_yourself?": "<emoji document_id=5384398004172102616>😈</emoji> Playing with yourself? Sorry, you can't",
         "invite": "{opponent} you have invited to play chess! Do you accept?\n\n",
-        "settings_text": "⚙️ Current settings: \n🎛️ <b>Style:</b> {style}\n⏲️ <b>Timer:</b> {timer}\n<b>Host plays:</b> {color}",
+        "settings_text": "⚙️ Current settings: \n\n🎛️ <b>Style:</b> {style}\n⏲️ <b>Timer:</b> {timer}\n♟️ <b>Host plays:</b> {color}",
         "updated": "✅ Updated!",
         "yes": "✅ Accept",
         "no": "❌ No",
@@ -126,7 +126,7 @@ class Chess(loader.Module):
         "whosthat": "<emoji document_id=5019523782004441717>❌</emoji> Я не нахожу такого пользователя",
         "playing_with_yourself?": "<emoji document_id=5384398004172102616>😈</emoji> Одиночные шахматы? Простите, нет",
         "invite": "{opponent}, вас пригласили сыграть партию шахмат! Примите?\n\n",
-        "settings_text": "⚙️ Текущие настройки: \n🎛️ <b>Стиль доски:</b> <code>{style}</code>\n⏱️ <b>Таймер:</b> {timer}\n<b>Хост играет за:</b> {color}",
+        "settings_text": "⚙️ Текущие настройки: \n\n🎛️ <b>Стиль доски:</b> <code>{style}</code>\n⏱️ <b>Таймер:</b> {timer}\n♟️ <b>Хост играет за:</b> {color}",
         "updated": "✅ Обновлено!",
         "yes": "✅ Принимаю",
         "no": "❌ Нет",
@@ -303,7 +303,6 @@ class Chess(loader.Module):
             reply_markup=reply_markup
         )
     async def _settings(self, call, game_id, ruleset: str | list):
-        game = self.games[game_id]
         reply_markup = []
         text = "🍓"
         if isinstance(ruleset, str):
@@ -314,39 +313,39 @@ class Chess(loader.Module):
                         {"text": self.strings['blitz_text'], "action": "answer", "message": self.strings['blitz_message']}
                     ],
                     [
-                        {"text": self.strings['timer'].format(3), "callback":self._settings, "args": ([game_id, 'Timer', 3])},
-                        {"text": self.strings['timer'].format(5), "callback":self._settings, "args": ([game_id, 'Timer', 5])},
+                        {"text": self.strings['timer'].format(3), "callback":self._settings, "args": (game_id, ['Timer', 3])},
+                        {"text": self.strings['timer'].format(5), "callback":self._settings, "args": (game_id, ['Timer', 5])},
                     ],
                     [
                         {"text": self.strings['rapid_text'], "action": "answer", "message": self.strings['rapid_message']}
                     ],
                     [
-                        {"text": self.strings['timer'].format(10), "callback":self._settings, "args": ([game_id, 'Timer', 10])},
-                        {"text": self.strings['timer'].format(15), "callback":self._settings, "args": ([game_id, 'Timer', 15])},
-                        {"text": self.strings['timer'].format(30), "callback":self._settings, "args": ([game_id, 'Timer', 30])},
-                        {"text": self.strings['timer'].format(60), "callback":self._settings, "args": ([game_id, 'Timer', 60])}
+                        {"text": self.strings['timer'].format(10), "callback":self._settings, "args": (game_id, ['Timer', 10])},
+                        {"text": self.strings['timer'].format(15), "callback":self._settings, "args": (game_id, ['Timer', 15])},
+                        {"text": self.strings['timer'].format(30), "callback":self._settings, "args": (game_id, ['Timer', 30])},
+                        {"text": self.strings['timer'].format(60), "callback":self._settings, "args": (game_id, ['Timer', 60])}
                     ],
                     [
-                        {"text": self.strings['no_clock_text'], "callback":self._settings, "args": (game_id, 'Timer', True)}
+                        {"text": self.strings['no_clock_text'], "callback":self._settings, "args": (game_id, ['Timer', True])}
                     ]
                 ])
             elif ruleset == "c":
                 text = "♟️"
                 reply_markup.extend([
                     [
-                        {"text": self.strings['white'], "callback":self._settings, "args": ([game_id, 'host_plays', 'w'])},
-                        {"text": self.strings['black'], "callback":self._settings, "args": ([game_id, 'host_plays', 'b'] )}
+                        {"text": self.strings['white'], "callback":self._settings, "args": (game_id, ['host_plays', 'w'])},
+                        {"text": self.strings['black'], "callback":self._settings, "args": (game_id, ['host_plays', 'b'] )}
                     ],
                     [
-                        {"text": self.strings['random'], "callback":self._settings, "args": ([game_id, 'host_plays', 'r'])}
+                        {"text": self.strings['random'], "callback":self._settings, "args": (game_id, ['host_plays', 'r'])}
                     ]
                 ])
             elif ruleset == "s":
                 text = "✏️"
                 reply_markup.extend([
-                    [{"text": "[♔⚪] Figures with circles", "callback":self._settings, "args": (game_id, 'style', 'figures-with-circles')}],
-                    [{"text": "[♔] Figures", "callback":self._settings, "args": (game_id, 'style', 'figures')}],
-                    [{"text": "[𝗞] Letters", "callback":self._settings, "args": (game_id, 'style', 'letters')}]
+                    [{"text": "[♔⚪] Figures with circles", "callback":self._settings, "args": (game_id, ['style', 'figures-with-circles'])}],
+                    [{"text": "[♔] Figures", "callback":self._settings, "args": (game_id, ['style', 'figures'])}],
+                    [{"text": "[𝗞] Letters", "callback":self._settings, "args": (game_id, ['style', 'letters'])}]
                 ])
 
             reply_markup.append(
@@ -361,9 +360,9 @@ class Chess(loader.Module):
             if ruleset[1] == "style":
                 self.set('style', ruleset[2])
             if ruleset[1] == "Timer" and isinstance(ruleset[2], int):
-                self.games[ruleset[0]][ruleset[1]] = Timer(ruleset[2]*60)
+                self.games[game_id][ruleset[1]] = Timer(ruleset[2]*60)
             else:
-                self.games[ruleset[0]][ruleset[1]] = ruleset[2]
+                self.games[game_id][ruleset[1]] = ruleset[2]
             await self.settings(call, game_id)
             
 
