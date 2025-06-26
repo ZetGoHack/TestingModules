@@ -1,4 +1,4 @@
-__version__ = ("updated", 0, 5)
+__version__ = ("updated", 0, 6)
 #░░░███░███░███░███░███
 #░░░░░█░█░░░░█░░█░░░█░█
 #░░░░█░░███░░█░░█░█░█░█
@@ -357,12 +357,12 @@ class Chess(loader.Module):
             await utils.answer(call, text, reply_markup=reply_markup)
         else:
             await call.answer("✅")
-            if ruleset[1] == "style":
-                self.set('style', ruleset[2])
-            if ruleset[1] == "Timer" and isinstance(ruleset[2], int):
-                self.games[game_id][ruleset[1]] = Timer(ruleset[2]*60)
+            if ruleset[0] == "style":
+                self.set('style', ruleset[1])
+            if ruleset[0] == "Timer" and isinstance(ruleset[1], int):
+                self.games[game_id][ruleset[0]] = Timer(ruleset[1]*60)
             else:
-                self.games[game_id][ruleset[1]] = ruleset[2]
+                self.games[game_id][ruleset[0]] = ruleset[1]
             await self.settings(call, game_id)
             
 
