@@ -1,4 +1,4 @@
-__version__ = ("updated", 0, 0)
+__version__ = ("updated", 0, 1)
 #░░░███░███░███░███░███
 #░░░░░█░█░░░░█░░█░░░█░█
 #░░░░█░░███░░█░░█░█░█░█
@@ -160,14 +160,8 @@ class Chess(loader.Module):
             }
         }
         games = self.get("games", {})
-        if not games:
-            self.games = {0: {
-                "game": "filler",
-                "game_id": 0,
-                }
-            }
-            self.set("games", self.games)
-        else: self.games = games
+        if games:
+            self.games = games
         self.gsettings = {
             "style": "figures-with-circles", # "figures", "letters"
         }
@@ -376,7 +370,10 @@ class Chess(loader.Module):
         past_game =  next(reversed(self.games.values()))
         if not getattr(past_game, "game", None):
             self.games.pop(past_game['game_id'], None)
-        game_id = next(reversed(self.games.values()))['game_id'] + 1
+        if not self.games:
+            game_id = 1
+        else:
+            game_id = max(self.games.keys()) + 1
         self.games[game_id] = {
             "game_id": game_id,
             "sender": sender,
