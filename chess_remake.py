@@ -213,7 +213,6 @@ class Chess(loader.Module):
     async def _invite(self, call, game_id):
         if not await self._check_player(call, game_id): return
         game: dict[str, Timer]  = self.games[game_id]
-        game["Timer"]
         await utils.answer(
             call,
             self.strings["invite"].format(opponent=self.games[game_id]["opponent"]["name"]) + self.strings['settings_text'].format(
@@ -255,21 +254,29 @@ class Chess(loader.Module):
         if not await self._check_player(call, game_id): return
         game = self.games[game_id]
         reply_markup = [
-            {
-                "text": self.strings["back"],
-                "callback": self._invite,
-                "args": (game_id,)
-            }
+            # [
+            #     {"text":f"⏱️ Время", "callback":self.time, "args": (nT, )} if not nT else {"text":f"❌ Время: ...", "action": "answer", "show_alert":True, "message": "Приглашение находится в чате.\n\nИз-за ограничений для ботов, партии на время могут проводиться только в лс"}
+            # ],
+            # [
+            #     {"text":f"♟️ Цвет (хоста)", "callback":self.color, "args": (nT, )}
+            # ],
+            # [
+            #     {"text":f"🎛️ Стиль доски", "callback":self._style, "args": (nT, )}
+            # ],
+            [
+                {"text": self.strings["back"], "callback": self._invite, "args": (game_id,)}
+            ]
         ]
         await utils.answer(
             call,
             self.strings['settings_text'].format(
-                game['style'],
-                self.strings['available'] if isinstance(game['Timer'], bool) and game['Timer']
+                style=game['style'],
+
+                timer=self.strings['available'] if isinstance(game['Timer'], bool) and game['Timer']
                 else game['Timer'].minutes() if game["Timer"]
                 else self.strings['not_available'],
 
-                self.strings['random'] if game['host_plays'] == 'r' 
+                color=self.strings['random'] if game['host_plays'] == 'r' 
                 else self.strings['white'] if game['host_plays'] == 'w'
                 else self.strings['black']
             ),
