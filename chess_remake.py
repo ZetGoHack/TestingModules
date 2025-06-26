@@ -1,4 +1,4 @@
-__version__ = ("updated", 0, 3)
+__version__ = ("updated", 0, 4)
 #░░░███░███░███░███░███
 #░░░░░█░█░░░░█░░█░░░█░█
 #░░░░█░░███░░█░░█░█░█░█
@@ -270,7 +270,7 @@ class Chess(loader.Module):
                 {"text":f"⏱️ Время", "callback":self._settings, "args": ("t", )}
             ])
 
-        reply_markup.append(
+        reply_markup.extend([
             [
                 {"text":f"♟️ Цвет (хоста)", "callback":self._settings, "args": ("c", )}
             ],
@@ -279,7 +279,7 @@ class Chess(loader.Module):
             ],
             [
                 {"text": self.strings['back'], "callback": self._invite, "args": (game_id,)}
-            ])
+            ]])
         await utils.answer(
             call,
             self.strings['settings_text'].format(
@@ -302,7 +302,7 @@ class Chess(loader.Module):
         if isinstance(ruleset, str):
             if ruleset == "t":
                 text = "⏳"
-                reply_markup.append(
+                reply_markup.extend([
                     [
                         {"text": self.strings['blitz_text'], "action": "answer", "message": self.strings['blitz_message']}
                     ],
@@ -322,10 +322,10 @@ class Chess(loader.Module):
                     [
                         {"text": self.strings['no_clock_text'], "callback":self._settings, "args": (game_id, 'Timer', True)}
                     ]
-                )
+                ])
             elif ruleset == "c":
                 text = "♟️"
-                reply_markup.append(
+                reply_markup.extend([
                     [
                         {"text": self.strings['white'], "callback":self._settings, "args": ([game_id, 'host_plays', 'w'])},
                         {"text": self.strings['black'], "callback":self._settings, "args": ([game_id, 'host_plays', 'b'] )}
@@ -333,14 +333,14 @@ class Chess(loader.Module):
                     [
                         {"text": self.strings['random'], "callback":self._settings, "args": ([game_id, 'host_plays', 'r'])}
                     ]
-                )
+                ])
             elif ruleset == "s":
                 text = "✏️"
-                reply_markup.append(
+                reply_markup.extend([
                     [{"text": "[♔⚪] Figures with circles", "callback":self._settings, "args": (game_id, 'style', 'figures-with-circles')}],
                     [{"text": "[♔] Figures", "callback":self._settings, "args": (game_id, 'style', 'figures')}],
                     [{"text": "[𝗞] Letters", "callback":self._settings, "args": (game_id, 'style', 'letters')}]
-                )
+                ])
 
             reply_markup.append(
                 [
