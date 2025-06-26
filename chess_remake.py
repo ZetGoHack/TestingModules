@@ -1,4 +1,4 @@
-__version__ = ("updated", 0, 1)
+__version__ = ("updated", 0, 2)
 #░░░███░███░███░███░███
 #░░░░░█░█░░░░█░░█░░░█░█
 #░░░░█░░███░░█░░█░█░█░█
@@ -162,6 +162,7 @@ class Chess(loader.Module):
         games = self.get("games", {})
         if games:
             self.games = games
+        else: self.games = {}
         self.gsettings = {
             "style": "figures-with-circles", # "figures", "letters"
         }
