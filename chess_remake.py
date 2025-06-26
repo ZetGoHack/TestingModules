@@ -104,6 +104,9 @@ class Chess(loader.Module):
         "no": "❌ No",
         "declined": "❌ Invitation declined",
         "settings": "⚙️ Settings",
+        "time_btn": "⏱️ Time",
+        "color_btn": "♟️ Host color",
+        "style_btn": "🎛️ Board style",
         "back": "↩️ Back",
         "available": "Available",
         "not_available": "Not available",
@@ -129,6 +132,9 @@ class Chess(loader.Module):
         "no": "❌ Нет",
         "declined": "❌ Приглашение отклонено",
         "settings": "⚙️ Настройки",
+        "time_btn": "⏱️ Время",
+        "color_btn": "♟️ Цвет (хоста)",
+        "style_btn": "🎛️ Стиль доски",
         "back": "↩️ Назад",
         "available": "Доступно",
         "not_available": "Недоступно",
@@ -267,19 +273,20 @@ class Chess(loader.Module):
         reply_markup = []
         if game["Timer"]:
             reply_markup.append([
-                {"text":f"⏱️ Время", "callback":self._settings, "args": ("t", )}
+                {"text": self.strings["time_btn"], "callback": self._settings, "args": (game_id, "t", )}
             ])
 
         reply_markup.extend([
             [
-                {"text":f"♟️ Цвет (хоста)", "callback":self._settings, "args": ("c", )}
+                {"text": self.strings["color_btn"], "callback": self._settings, "args": (game_id, "c", )}
             ],
             [
-                {"text":f"🎛️ Стиль доски", "callback":self._settings, "args": ("s", )}
+                {"text": self.strings["style_btn"], "callback": self._settings, "args": (game_id, "s", )}
             ],
             [
                 {"text": self.strings['back'], "callback": self._invite, "args": (game_id,)}
-            ]])
+            ]
+        ])
         await utils.answer(
             call,
             self.strings['settings_text'].format(
