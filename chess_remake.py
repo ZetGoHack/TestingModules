@@ -1,4 +1,4 @@
-__version__ = ("updated", 0, 6) #######################
+__version__ = ("updated", 0, 7) #######################
 #░░░███░███░███░███░███
 #░░░░░█░█░░░░█░░█░░░█░█
 #░░░░█░░███░░█░░█░█░█░█
@@ -98,7 +98,7 @@ class Chess(loader.Module):
         "whosthat": "<emoji document_id=5019523782004441717>❌</emoji> I cannot find such a user",
         "playing_with_yourself?": "<emoji document_id=5384398004172102616>😈</emoji> Playing with yourself? Sorry, you can't",
         "invite": "{opponent} you have invited to play chess! Do you accept?\n\n",
-        "settings_text": "⚙️ Current settings: \n\n🎛️ <b>Style:</b> {style}\n⏲️ <b>Timer:</b> {timer}\n♟️ <b>Host plays:</b> {color}",
+        "settings_text": "⚙️ Current settings: \n\n    🎛️ <b>Style:</b> {style}\n    ⏲️ <b>Timer:</b> {timer}\n    ♟️ <b>Host plays:</b> {color}",
         "updated": "✅ Updated!",
         "yes": "✅ Accept",
         "no": "❌ No",
@@ -120,13 +120,19 @@ class Chess(loader.Module):
         "rapid_text": "⏱️ Rapid",
         "rapid_message": "Ponder your defeat",
         "no_clock_text": "❌ No clock",
+        "step1": "🔁 [0%] Initialization... Creating board..",
+        "step2": "🔁 [25%] Initialization... Setting style..",
+        "step3": "🔁 [50%] Initialization... Choosing colors..",
+        "step4": "🔁 [75%] Initialization... Almost there...",
+        "step4.T": "🔁 [88%] Initialization... Connecting timer..",
+        "step5": "✅ [100%] Done!",
         }
     strings_ru = {
         "noargs": "<emoji document_id=5370724846936267183>🤔</emoji> Вы не указали с кем играть",
         "whosthat": "<emoji document_id=5019523782004441717>❌</emoji> Я не нахожу такого пользователя",
         "playing_with_yourself?": "<emoji document_id=5384398004172102616>😈</emoji> Одиночные шахматы? Простите, нет",
         "invite": "{opponent}, вас пригласили сыграть партию шахмат! Примите?\n\n",
-        "settings_text": "⚙️ Текущие настройки: \n\n🎛️ <b>Стиль доски:</b> <code>{style}</code>\n⏱️ <b>Таймер:</b> {timer}\n♟️ <b>Хост играет за:</b> {color}",
+        "settings_text": "⚙️ Текущие настройки: \n\n    🎛️ <b>Стиль доски:</b> <code>{style}</code>\n    ⏱️ <b>Таймер:</b> {timer}\n    ♟️ <b>Хост играет за:</b> {color}",
         "updated": "✅ Обновлено!",
         "yes": "✅ Принимаю",
         "no": "❌ Нет",
@@ -148,6 +154,12 @@ class Chess(loader.Module):
         "rapid_text": "⏱️ Рапид",
         "rapid_message": "Обдумай своё поражение",
         "no_clock_text": "❌ Нет часов",
+        "step1": "🔁 [0%] Инициализация... Создание доски..",
+        "step2": "🔁 [25%] Инициализация... Ставлю стиль..",
+        "step3": "🔁 [50%] Инициализация... Выбираю цвета",
+        "step4": "🔁 [75%] Инициализация... Почти...",
+        "step4.T": "🔁 [88%] Инициализация... Подключаю таймер..",
+        "step5": "✅ [100%] Готово!",
     }
     
     async def client_ready(self):
@@ -300,7 +312,8 @@ class Chess(loader.Module):
                 else self.strings['white'] if game['host_plays'] == 'w'
                 else self.strings['black']
             ),
-            reply_markup=reply_markup
+            reply_markup=reply_markup,
+            disable_security=True
         )
     async def _settings(self, call, game_id, ruleset: str | list):
         reply_markup = []
@@ -354,7 +367,7 @@ class Chess(loader.Module):
                 ]
             )
 
-            await utils.answer(call, text, reply_markup=reply_markup)
+            await utils.answer(call, text, reply_markup=reply_markup, disable_security=True)
         else:
             await call.answer("✅")
             if ruleset[0] == "style":
@@ -404,6 +417,21 @@ class Chess(loader.Module):
         if (turn := self.games[game_id].pop("host_plays")) == "r":
             turn = "w" if r.choice([0, 1]) == 0 else "b"
         self.games[game_id]["turn"] = turn
-        await utils.answer(call, f"filler\n{self.games[game_id]}")
+        await utils.answer(call, self.strings["step1"])
+        await asyncio.sleep(0.5)
+        await utils.answer(call, self.strings["step2"])
+        await asyncio.sleep(0.5)
+        await utils.answer(call, self.strings["step3"])
+        await asyncio.sleep(0.5)
+        await utils.answer(call, self.strings["step4"])
+        await asyncio.sleep(0.5)
+        if isinstance(self.games[game_id]["Timer"], Timer):
+            await utils.answer(call, self.strings["step4.T"])
+            await self._set_timer(self.games[game_id])
+            await asyncio.sleep(0.5)
+        await utils.answer(call, f"filler\n{self.games[game_id]}", disable_security=True)
 
-# TODO доделать настройки, кнопки
+    async def _set_timer(self, game):
+        pass
+
+# TODO начало игры | реально выполнение шагов в ините)
