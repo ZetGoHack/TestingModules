@@ -13,6 +13,7 @@ __version__ = ("updated", 0, 7) #######################
 
 # -      main      - #
 from .. import loader, utils
+import chess
 # -      func      - #
 import asyncio
 import random as r
@@ -107,6 +108,9 @@ class Chess(loader.Module):
         "time_btn": "⏱️ Time",
         "color_btn": "♟️ Host color",
         "style_btn": "🎛️ Board style",
+        "fwc": "Figures + colors",
+        "f": "Figures",
+        "l": "Letters",
         "back": "↩️ Back",
         "available": "Available",
         "not_available": "Not available",
@@ -126,6 +130,8 @@ class Chess(loader.Module):
         "step4": "🔁 [75%] Initialization... Almost there...",
         "step4.T": "🔁 [88%] Initialization... Connecting timer..",
         "step5": "✅ [100%] Done!",
+        "timer_text": "♔ White: {}\n♚ Black: {}\n\n{}",
+        "reason": "",
         }
     strings_ru = {
         "noargs": "<emoji document_id=5370724846936267183>🤔</emoji> Вы не указали с кем играть",
@@ -141,6 +147,9 @@ class Chess(loader.Module):
         "time_btn": "⏱️ Время",
         "color_btn": "♟️ Цвет (хоста)",
         "style_btn": "🎛️ Стиль доски",
+        "fwc": "Фигуры + цвета",
+        "f": "Фигуры",
+        "l": "Буквы",
         "back": "↩️ Назад",
         "available": "Доступно",
         "not_available": "Недоступно",
@@ -160,6 +169,8 @@ class Chess(loader.Module):
         "step4": "🔁 [75%] Инициализация... Почти...",
         "step4.T": "🔁 [88%] Инициализация... Подключаю таймер..",
         "step5": "✅ [100%] Готово!",
+        "timer_text": "♔ Белые: {}\n♚ Чёрные: {}\n\n{}",
+        "reason": "",
     }
     
     async def client_ready(self):
@@ -283,7 +294,7 @@ class Chess(loader.Module):
         if not await self._check_player(call, game_id): return
         game = self.games[game_id]
         reply_markup = []
-        if game["Timer"]:
+        if game["Timer"]["available"]:
             reply_markup.append([
                 {"text": self.strings["time_btn"], "callback": self._settings, "args": (game_id, "t", )}
             ])
@@ -304,8 +315,8 @@ class Chess(loader.Module):
             self.strings['settings_text'].format(
                 style=game['style'],
 
-                timer=self.strings['available'] if isinstance(game['Timer'], bool) and game['Timer']
-                else game['Timer'].minutes() if game["Timer"]
+                timer=self.strings['available'] if game['Timer']['available']
+                else self.strings['timer'].format(game['Timer']['class'].minutes()) if game['Timer']['class']
                 else self.strings['not_available'],
 
                 color=self.strings['random'] if game['host_plays'] == 'r' 
@@ -356,9 +367,9 @@ class Chess(loader.Module):
             elif ruleset == "s":
                 text = "✏️"
                 reply_markup.extend([
-                    [{"text": "[♔⚪] Figures with circles", "callback":self._settings, "args": (game_id, ['style', 'figures-with-circles'])}],
-                    [{"text": "[♔] Figures", "callback":self._settings, "args": (game_id, ['style', 'figures'])}],
-                    [{"text": "[𝗞] Letters", "callback":self._settings, "args": (game_id, ['style', 'letters'])}]
+                    [{"text": "[♔⚪] " + self.strings["fwc"], "callback":self._settings, "args": (game_id, ['style', 'figures-with-circles'])}],
+                    [{"text": "[♔] " + self.strings["f"], "callback":self._settings, "args": (game_id, ['style', 'figures'])}],
+                    [{"text": "[𝗞] " + self.strings["l"], "callback":self._settings, "args": (game_id, ['style', 'letters'])}]
                 ])
 
             reply_markup.append(
@@ -373,7 +384,7 @@ class Chess(loader.Module):
             if ruleset[0] == "style":
                 self.set('style', ruleset[1])
             if ruleset[0] == "Timer" and isinstance(ruleset[1], int):
-                self.games[game_id][ruleset[0]] = Timer(ruleset[1]*60)
+                self.games[game_id]['Timer']['class'] = Timer(ruleset[1]*60)
             else:
                 self.games[game_id][ruleset[0]] = ruleset[1]
             await self.settings(call, game_id)
@@ -399,7 +410,7 @@ class Chess(loader.Module):
             "game_id": game_id,
             "sender": sender,
             "opponent": opponent,
-            "Timer": True if isinstance(message.peer_id, PeerUser) else False,
+            "Timer": {"available": True if isinstance(message.peer_id, PeerUser) else False},
             "time": int(time.time()),
             "host_plays": "r", # r(andom), w(hite), b(lack)
             "style": self.gsettings['style'],
@@ -414,24 +425,38 @@ class Chess(loader.Module):
             self.games.pop(game_id, None)
             await utils.answer(call, self.strings["declined"])
             return
-        if (turn := self.games[game_id].pop("host_plays")) == "r":
+        game = self.games[game_id]
+        await utils.answer(call, self.strings["step1"]) # Создание доски..
+        game["game"] = chess.Board()
+        await asyncio.sleep(0.8)
+        await utils.answer(call, self.strings["step2"])  # Ставлю стиль..
+        game["style"] = self.styles[game["style"]]
+        await asyncio.sleep(0.8)
+        await utils.answer(call, self.strings["step3"]) # Выбираю цвета..
+        if (turn := game.pop("host_plays")) == "r":
             turn = "w" if r.choice([0, 1]) == 0 else "b"
-        self.games[game_id]["turn"] = turn
-        await utils.answer(call, self.strings["step1"])
-        await asyncio.sleep(0.5)
-        await utils.answer(call, self.strings["step2"])
-        await asyncio.sleep(0.5)
-        await utils.answer(call, self.strings["step3"])
-        await asyncio.sleep(0.5)
-        await utils.answer(call, self.strings["step4"])
-        await asyncio.sleep(0.5)
-        if isinstance(self.games[game_id]["Timer"], Timer):
-            await utils.answer(call, self.strings["step4.T"])
-            await self._set_timer(self.games[game_id])
-            await asyncio.sleep(0.5)
+        game["turn"] = turn
+        await asyncio.sleep(0.8)
+        await utils.answer(call, self.strings["step4"]) # Убираем лишние ключи
+        game.pop("host_plays", None)
+        await asyncio.sleep(0.8)
+        if isinstance(self.games[game_id]["Timer"]["class"], Timer):
+            await utils.answer(call, self.strings["step4.T"]) # Подключаю таймер..
+            await self._set_timer(game_id, call._units[call.unit_id]['chat'])
+            await asyncio.sleep(0.8)
         await utils.answer(call, f"filler\n{self.games[game_id]}", disable_security=True)
 
-    async def _set_timer(self, game):
-        pass
+    async def _set_timer(self, game_id, chat_id):
+        timer = self.games[game_id]["Timer"]["class"]
+        self.games[game_id]["Timer"]["message"] = (
+            await self.inline.form(self.strings["timer_text"].format(
+                int(await timer.white_time()), 
+                int(await timer.black_time()), 
+                ""
+                ), 
+                chat_id,
+                #reply_markup=[]
+            )
+        )
 
-# TODO начало игры | реально выполнение шагов в ините)
+# TODO начало игры
