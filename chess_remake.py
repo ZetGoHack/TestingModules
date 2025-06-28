@@ -1,4 +1,4 @@
-__version__ = ("updated", 1, 0) #######################
+__version__ = ("updated", 1, 1) #######################
 #░░░███░███░███░███░███
 #░░░░░█░█░░░░█░░█░░░█░█
 #░░░░█░░███░░█░░█░█░█░█
@@ -13,9 +13,10 @@ __version__ = ("updated", 1, 0) #######################
 
 # -      main      - #
 from .. import loader, utils
-import chess
 # -      func      - #
 import asyncio
+import chess
+import html
 import random as r
 import time
 # -      types     - #
@@ -254,8 +255,8 @@ class Chess(loader.Module):
         if not await self._check_player(call, game_id): return
         game: dict[str, Timer]  = self.games[game_id]
         await utils.answer(
-            call,
-            self.strings["invite"].format(opponent=self.games[game_id]["opponent"]["name"]) + self.strings['settings_text'].format(
+            call, 
+            self.strings["invite"].format(opponent=html.escape(self.games[game_id]["opponent"]["name"])) + self.strings['settings_text'].format(
                 style=game['style'],
 
                 timer=self.strings['available'] if game['Timer']['available'] and not game['Timer']['class']
@@ -444,7 +445,7 @@ class Chess(loader.Module):
             await utils.answer(call, self.strings["step4.T"]) # Подключаю таймер..
             await self._set_timer(game_id, call._units[call.unit_id]['chat'])
             await asyncio.sleep(0.8)
-        await utils.answer(call, f"filler\n{self.games[game_id]}", disable_security=True)
+        await utils.answer(call, f"filler\n{html.escape(str(self.games[game_id]))}", disable_security=True)
 
     async def _set_timer(self, game_id, chat_id):
         timer = self.games[game_id]["Timer"]["class"]
