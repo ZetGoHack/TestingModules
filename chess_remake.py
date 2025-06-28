@@ -1,4 +1,4 @@
-__version__ = ("updated", 0, 8) #######################
+__version__ = ("updated", 0, 9) #######################
 #░░░███░███░███░███░███
 #░░░░░█░█░░░░█░░█░░░█░█
 #░░░░█░░███░░█░░█░█░█░█
@@ -410,7 +410,7 @@ class Chess(loader.Module):
             "game_id": game_id,
             "sender": sender,
             "opponent": opponent,
-            "Timer": {"available": True if isinstance(message.peer_id, PeerUser) else False},
+            "Timer": {"available": True if isinstance(message.peer_id, PeerUser) else False, "class": None},
             "time": int(time.time()),
             "host_plays": "r", # r(andom), w(hite), b(lack)
             "style": self.gsettings['style'],
