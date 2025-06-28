@@ -1,4 +1,4 @@
-__version__ = ("updated", 0, 7) #######################
+__version__ = ("updated", 0, 8) #######################
 #░░░███░███░███░███░███
 #░░░░░█░█░░░░█░░█░░░█░█
 #░░░░█░░███░░█░░█░█░█░█
@@ -258,10 +258,10 @@ class Chess(loader.Module):
             self.strings["invite"].format(opponent=self.games[game_id]["opponent"]["name"]) + self.strings['settings_text'].format(
                 style=game['style'],
 
-                timer=self.strings['available'] if isinstance(game['Timer'], bool) and game['Timer']
-                else self.strings['timer'].format(game['Timer'].minutes()) if game["Timer"]
+                timer=self.strings['available'] if game['Timer']['available']
+                else self.strings['timer'].format(game['Timer']['class'].minutes()) if game['Timer']['class']
                 else self.strings['not_available'],
-
+                
                 color=self.strings['random'] if game['host_plays'] == 'r' 
                 else self.strings['white'] if game['host_plays'] == 'w'
                 else self.strings['black']
