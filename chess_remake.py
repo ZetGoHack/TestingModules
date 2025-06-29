@@ -16,7 +16,6 @@ from .. import loader, utils
 # -      func      - #
 import asyncio
 import chess
-import html
 import random as r
 import time
 # -      types     - #
@@ -133,6 +132,8 @@ class Chess(loader.Module):
         "step5": "✅ [100%] Done!",
         "timer_text": "♔ White: {}\n♚ Black: {}\n\n{}",
         "reason": "",
+        "start_timer": "⏱️ Start",
+        "waiting_for_start": "🔁 Waiting for timer to start...",
         }
     strings_ru = {
         "noargs": "<emoji document_id=5370724846936267183>🤔</emoji> Вы не указали с кем играть",
@@ -172,6 +173,8 @@ class Chess(loader.Module):
         "step5": "✅ [100%] Готово!",
         "timer_text": "♔ Белые: {}\n♚ Чёрные: {}\n\n{}",
         "reason": "",
+        "start_timer": "⏱️ Начать",
+        "waiting_for_start": "🔁 Ожидаю включения таймера...",
     }
     
     async def client_ready(self):
@@ -256,7 +259,7 @@ class Chess(loader.Module):
         game: dict[str, Timer]  = self.games[game_id]
         await utils.answer(
             call, 
-            self.strings["invite"].format(opponent=html.escape(self.games[game_id]["opponent"]["name"])) + self.strings['settings_text'].format(
+            self.strings["invite"].format(opponent=utils.escape_html(self.games[game_id]["opponent"]["name"])) + self.strings['settings_text'].format(
                 style=game['style'],
 
                 timer=self.strings['available'] if game['Timer']['available'] and not game['Timer']['class']
@@ -411,7 +414,7 @@ class Chess(loader.Module):
             "game_id": game_id,
             "sender": sender,
             "opponent": opponent,
-            "Timer": {"available": True if isinstance(message.peer_id, PeerUser) else False, "class": None},
+            "Timer": {"available": True if isinstance(message.peer_id, PeerUser) else False, "class": None, "timer_loop": False},
             "time": int(time.time()),
             "host_plays": "r", # r(andom), w(hite), b(lack)
             "style": self.gsettings['style'],
@@ -428,7 +431,7 @@ class Chess(loader.Module):
             return
         game = self.games[game_id]
         await utils.answer(call, self.strings["step1"]) # Создание доски..
-        game["game"] = chess.Board()
+        game["board"] = chess.Board()
         await asyncio.sleep(0.8)
         await utils.answer(call, self.strings["step2"])  # Ставлю стиль..
         game["style"] = self.styles[game["style"]]
@@ -440,14 +443,16 @@ class Chess(loader.Module):
         await asyncio.sleep(0.8)
         await utils.answer(call, self.strings["step4"]) # Убираем лишние ключи
         game.pop("host_plays", None)
+        game["Timer"].pop("available", None)
         await asyncio.sleep(0.8)
         if isinstance(self.games[game_id]["Timer"]["class"], Timer):
             await utils.answer(call, self.strings["step4.T"]) # Подключаю таймер..
-            await self._set_timer(game_id, call._units[call.unit_id]['chat'])
+            await self._set_timer(call, game_id, call._units[call.unit_id]['chat'])
             await asyncio.sleep(0.8)
-        await utils.answer(call, f"filler\n{html.escape(str(self.games[game_id]))}", disable_security=True)
+            return await utils.answer(call, self.strings["waiting_for_start"])
+        await self._start_game(call, game_id)
 
-    async def _set_timer(self, game_id, chat_id):
+    async def _set_timer(self, board_call, game_id, chat_id):
         timer = self.games[game_id]["Timer"]["class"]
         self.games[game_id]["Timer"]["message"] = (
             await self.inline.form(self.strings["timer_text"].format(
@@ -456,8 +461,25 @@ class Chess(loader.Module):
                 ""
                 ), 
                 chat_id,
-                #reply_markup=[]
+                reply_markup={"text": self.strings["start_timer"], "callback": self._start_timer, "args": (board_call, game_id,)},
+                disable_security=True,
             )
         )
+    
+    async def _start_timer(self, call, board_call, game_id):
+        if not await self._check_player(call, game_id): return
+        timer = self.games[game_id]["Timer"]
+        timer["timer_loop"] = True
+        # excepting that loop will edit timer message and remove button from it
+        await self._start_game(board_call, game_id)
 
-# TODO начало игры
+    async def _start_game(self, call, game_id):
+        if not await self._check_player(call, game_id): return
+        game = self.games[game_id]
+        game["game"] = {
+            "board": game.pop("board"),
+            "nowevent": "nothing", # check, checkmate, stalemate, draw, resign, timeout
+        }
+        await utils.answer(call, f"filler\n{utils.escape_html(str(self.games[game_id]))}", disable_security=True)
+
+# TODO таймер | начало игры | хранение состояния игры в self.games[game_id][game]
