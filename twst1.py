@@ -1,9 +1,9 @@
-__version__ = (5,2,5)
+__version__ = (5,2,1)
 from .. import loader
 @loader.tds
 class impossible(loader.Module): 
  """Test"""
  strings={"name":"impossible"}
  async def asderfrtgcmd(self,m):
-  """command"""
-  pass
+  """"""
+  pass#234567
