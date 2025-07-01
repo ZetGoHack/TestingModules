@@ -1,4 +1,4 @@
-__version__ = (1,0,0)
+__version__ = (5,2,5)
 from .. import loader
 @loader.tds
 class impossible(loader.Module): 
