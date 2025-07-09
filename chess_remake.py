@@ -132,6 +132,7 @@ class Chess(loader.Module):
         "step5": "✅ [100%] Done!",
         "timer_text": "♔ White: {}\n♚ Black: {}\n\n{}",
         "reason": "",
+        "reason_timer": "Time is out!",
         "start_timer": "⏱️ Start",
         "waiting_for_start": "🔁 Waiting for timer to start...",
         }
@@ -173,6 +174,7 @@ class Chess(loader.Module):
         "step5": "✅ [100%] Готово!",
         "timer_text": "♔ Белые: {}\n♚ Чёрные: {}\n\n{}",
         "reason": "",
+        "reason_timer": "Время вышло!",
         "start_timer": "⏱️ Начать",
         "waiting_for_start": "🔁 Ожидаю включения таймера...",
     }
@@ -421,7 +423,7 @@ class Chess(loader.Module):
         }
         await self._invite(message, game_id)
 
-    ############## Starting game... ############## 
+    ############## Preparing all for game start... ##############
 
     async def _init_game(self, call, game_id, ans="yes"):
         if not await self._check_player(call, game_id=game_id, only_opponent=True): return
@@ -461,11 +463,34 @@ class Chess(loader.Module):
                 ""
                 ), 
                 chat_id,
-                reply_markup={"text": self.strings["start_timer"], "callback": self._start_timer, "args": (board_call, game_id,)},
-                disable_security=True,
+                reply_markup = {"text": self.strings["start_timer"], "callback": self._start_timer, "args": (board_call, game_id,)},
+                disable_security = True,
             )
         )
-    
+
+    @loader.loop(interval=1, autostart=True)
+    async def main_loop(self):
+        for game_id in self.games:
+            if self.games[game_id]["Timer"]["timer_loop"]:
+
+                async def timer_loop(game_id):
+                    timer: Timer = self.games[game_id]["Timer"]["class"]
+                    timer.start()
+                    while self.games[game_id]["Timer"]["timer_loop"]:
+                        if not any(timer.white_time(), timer.black_time()):
+                            self.games[game_id]["Timer"]["timer_loop"] = False
+                            self.games[game_id]["game"]["reason"] = "reason_timer"
+                        await self.games[game_id]["Timer"]["message"].edit(self.strings["timer_message"].format(
+                            int(await timer.white_time()), 
+                            int(await timer.black_time()), 
+                            "" if self.games[game_id]["game"]["board"] else "⏹️ " + self.strings[self.games[game_id]["game"]["reason"]]
+                            )
+                        )
+                        await asyncio.sleep(1)
+                asyncio.create_task(timer_loop(game_id))
+
+    ############## Starting game... ############## 
+
     async def _start_timer(self, call, board_call, game_id):
         if not await self._check_player(call, game_id): return
         timer = self.games[game_id]["Timer"]
@@ -478,8 +503,8 @@ class Chess(loader.Module):
         game = self.games[game_id]
         game["game"] = {
             "board": game.pop("board"),
-            "nowevent": "nothing", # check, checkmate, stalemate, draw, resign, timeout
+            "pgn": self.pgn.copy(),
         }
-        await utils.answer(call, f"filler\n{utils.escape_html(str(self.games[game_id]))}", disable_security=True)
+        await utils.answer(call, f"filler\n{utils.escape_html(str(self.games[game_id]))}", reply_markup={"text":"stop", "callback": lambda c, id: self.games[id]['Timer'].update({'timer_loop': not self.games[id]['Timer']['timer_loop']})}, disable_security=True)
 
-# TODO таймер | начало игры | хранение состояния игры в self.games[game_id][game]
+# TODO таймер | начало игры | хранение состояния игры в self.games[game_id][game] | закончить таймер
