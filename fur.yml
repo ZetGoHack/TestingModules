@@ -1047,7 +1047,7 @@ settings:
   prefix_set: '{} <b>Command prefix updated. Use de fowwowing command two change it
     back:</b>
 
-    <pre><code class="language-hewoku">{nyewprefix}setprefix {owdprefix}</code></pre>'
+    <pre><code class="language-hewoku">{newprefix}setprefix {oldprefix}</code></pre>'
   railway: 🚂 WaiwWay
   termux: 🕶 Tewmux
   termux_install: "\U0001FA90 <b>Instawwation on \U0001F576 Tewmux:</b>\n\n⬜️ <b>Downwoad\
