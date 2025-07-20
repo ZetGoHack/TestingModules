@@ -1,4 +1,4 @@
-__version__ = (1,1,3)
+__version__ = (1,2,0)
 #░░░███░███░███░███░███
 #░░░░░█░█░░░░█░░█░░░█░█
 #░░░░█░░███░░█░░█░█░█░█
@@ -6,14 +6,21 @@ __version__ = (1,1,3)
 #░░░███░███░░█░░███░███
 # H:Mods Team [💎]
 # meta developer: @nullmod
+# requires: gdown pillow
+
 
 # -      main      - #
 from .. import loader, utils
 # -      func      - #
 import asyncio
+import gdown
 import logging
+import os
+import sqlite3
 import time
 import re
+from io import BytesIO
+from PIL import Image
 # -    func(tl)    - #
 from telethon.tl.functions.chatlists import CheckChatlistInviteRequest, JoinChatlistInviteRequest, LeaveChatlistRequest
 from telethon.tl.functions.messages import ImportChatInviteRequest, CheckChatInviteRequest
@@ -86,7 +93,7 @@ class HaremManager(loader.Module):
         }
 
         temp_values = [ # эта заметка будущему мне, ибо впервые увидев это чудо после месяца афк я успел многое наговорить на того человека, что написал сий гениальный код
-            "config",
+            "config", # "это замена конфига, пушто ты не хочешь, чтобы в реальном конфиге было много кнопочек, но одновременно и хочешь, чтобы настройки сохранялись даже после перезагрузки"
             "ab-horny",
             "catch-horny",
             "out-horny",
@@ -101,6 +108,16 @@ class HaremManager(loader.Module):
             for value in temp_values:
                 self.set(value, False if value not in "config" else True)
 
+        if not os.path.isfile("hashes.db"):
+            logger.info("Базы данных нету! Скачиваю...")
+            try:
+                url = "https://drive.google.com/uc?id=1MamiOEusJI_rSAjYaoeuKIsbZyRa8-WQ"
+                gdown.download(url, quiet=True)
+            except Exception as e: 
+                logger.error(f"Ошибка при скачивании базы данных ({e})")
+            else:
+                await logger.info("База данных успешно скачалось")
+
     @loader.loop(interval=1, autostart=True)
     async def loop(self):
         for bot in self.harems:
@@ -113,7 +130,9 @@ class HaremManager(loader.Module):
         """Watcher"""
         chatid = int(str(message.chat_id).replace("-100", ""))
         for bot in self.harems:
-            if bot == "waifu": continue
+            parse_waifu = False
+            if bot == "waifu":
+                parse_waifu = True
             if message.sender_id == self.harems_ids[bot] and self.get(f"catch-{bot}", None):
                 if self.config["whitelist-chats"]:
                     if chatid not in self.config["whitelist-chats"]:
@@ -123,8 +142,24 @@ class HaremManager(loader.Module):
                 if (not self.get(f"catcher_time-{bot}") or int(time.time()) - int(self.get(f"catcher_time-{bot}")) > 14400):
                     if "заблудилась" in message.text.lower():
                         try:
-                            await message.click()
-                            await asyncio.sleep(5)
+
+                            if not parse_waifu:
+                                await message.click()
+                                await asyncio.sleep(5)
+                            else:
+
+                                ### КОД ВЗЯТ И ОТРЕДАКТИРОВАН ИЗ МОДУЛЯ ОТ @qwertys50! СПАСИБО! ### open
+                                photo_bytes = await message.download_media(bytes)
+                                if not photo_bytes:
+                                    logger.error("Не удалось скачать фото")
+                                    return
+                                ahash = self._calculate_image_hash(photo_bytes)
+                                name_image = self._find_image_by_hash('hashes.db', ahash)
+                                if name_image:
+                                    await message.reply(f"/claim {name_image}")
+                                else: return
+                                ### КОД ВЗЯТ И ОТРЕДАКТИРОВАН ИЗ МОДУЛЯ ОТ @qwertys50! СПАСИБО! ### close
+
                             msgs = await message.client.get_messages(chatid, limit=10)
                             for msg in msgs:
                                 if msg.mentioned and "забрали" in msg.text and msg.sender_id == self.harems_ids[bot]:
@@ -407,6 +442,53 @@ class HaremManager(loader.Module):
                 return presses
 
         return None
+
+    ### КОД ВЗЯТ ИЗ МОДУЛЯ ОТ @qwertys50! СПАСИБО! ### open
+    def _calculate_image_hash(self, image_bytes, hash_size=8):
+
+        try:
+            
+            image = Image.open(
+                BytesIO(image_bytes)
+            ).convert('L').resize(
+                (hash_size, hash_size), Image.LANCZOS
+            )
+
+            pixels = list(image.getdata())
+
+            avg = sum(pixels) / len(pixels)
+
+            bits = ''.join(['1' if pixel > avg else '0' 
+                for pixel in pixels]
+            )
+            return '{:0{}x}'.format(int(bits, 2), 16)
+        
+        except Exception: return None
+    
+    def _find_image_by_hash(self, db_path, target_hash):
+
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        
+        try:
+            cursor.execute("SELECT image_url FROM hashs WHERE hash = ?", (target_hash,))
+            result = cursor.fetchone()
+            
+            if result:
+                return self._extract_name(result[0])
+            else:
+                return None
+                
+        except sqlite3.Error: return None
+        finally: conn.close()
+
+    def _extract_name(self, path):
+
+        match = re.search(r"\\([^\\]+)_", path)
+        if match: return match.group(1)
+
+        return None
+    ### КОД ВЗЯТ ИЗ МОДУЛЯ ОТ @qwertys50! СПАСИБО! ### close
 
     @loader.command()
     async def Harems(self, message):
