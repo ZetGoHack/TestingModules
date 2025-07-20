@@ -1,4 +1,4 @@
-__version__ = (1,2,0)
+__version__ = (1,2,1)
 #░░░███░███░███░███░███
 #░░░░░█░█░░░░█░░█░░░█░█
 #░░░░█░░███░░█░░█░█░█░█
@@ -209,17 +209,16 @@ class HaremManager(loader.Module):
                             "callback": self.callback_handler,
                             "args": (f"ab-{bot}",)
                         })
-        if "waifu" not in bot:
-            markup[0].append({
-                                "text": "[✔️] Автоловля" if self.get(f"catch-{bot}", None) else "[❌] Автоловля",
-                                "callback": self.callback_handler,
-                                "args": (f"catch-{bot}",)
-                            })
-            markup[1].append({
-                                "text": "[✔️] Вывод от ловца" if self.get(f"out-{bot}", None) else "[❌] Вывод от ловца",
-                                "callback": self.callback_handler,
-                                "args": (f"out-{bot}",)
-                            })
+        markup[0].append({
+                            "text": "[✔️] Автоловля" if self.get(f"catch-{bot}", None) else "[❌] Автоловля",
+                            "callback": self.callback_handler,
+                            "args": (f"catch-{bot}",)
+                        })
+        markup[1].append({
+                            "text": "[✔️] Вывод от ловца" if self.get(f"out-{bot}", None) else "[❌] Вывод от ловца",
+                            "callback": self.callback_handler,
+                            "args": (f"out-{bot}",)
+                        })
         markup.append([
                     {
                         "text":"🔁 Перезапустить автобонус",
