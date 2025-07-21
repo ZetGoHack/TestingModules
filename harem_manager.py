@@ -46,7 +46,7 @@ class HaremManager(loader.Module):
         self.config = loader.ModuleConfig(
             loader.ConfigValue(
                 "ignore-chats",
-                [],
+                [2240686681],
                 "Список чатов, где модуль НЕ будет ловить вайфу. Указывайте ID чатов в виде 123456789",
                 validator=loader.validators.Series(
                     validator=loader.validators.Integer(),
@@ -139,10 +139,11 @@ class HaremManager(loader.Module):
                         return
                 elif chatid in self.config["ignore-chats"]:
                     return
+                logger.info(f"Сообщение от бота {bot}\n\nchat={chatid}, bot={bot}, parse={parse_waifu}, sender_id={message.sender_id}")
                 if (not self.get(f"catcher_time-{bot}") or int(time.time()) - int(self.get(f"catcher_time-{bot}")) > 14400):
                     if "заблудилась" in message.text.lower():
                         try:
-
+                            logger.info(f"Это соо с вайфу и я могу её словить\n\nchat={chatid}, bot={bot}, parse={parse_waifu}, sender_id={message.sender_id}")
                             if not parse_waifu:
                                 await message.click()
                                 await asyncio.sleep(5)
