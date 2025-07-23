@@ -1,4 +1,4 @@
-__version__ = ("updated", 1, 2) #######################
+__version__ = ("updated", 1, 3) #######################
 #░░░███░███░███░███░███
 #░░░░░█░█░░░░█░░█░░░█░█
 #░░░░█░░███░░█░░█░█░█░█
@@ -477,7 +477,7 @@ class Chess(loader.Module):
                     timer: Timer = self.games[game_id]["Timer"]["class"]
                     timer.start()
                     while self.games[game_id]["Timer"]["timer_loop"]:
-                        if not any(timer.white_time(), timer.black_time()):
+                        if not any([await timer.white_time(), await timer.black_time()]):
                             self.games[game_id]["Timer"]["timer_loop"] = False
                             self.games[game_id]["game"]["reason"] = "reason_timer"
                         await self.games[game_id]["Timer"]["message"].edit(self.strings["timer_message"].format(
