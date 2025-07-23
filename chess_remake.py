@@ -1,4 +1,4 @@
-__version__ = ("updated", 1, 4) #######################
+__version__ = ("updated", 1, 5) #######################
 #░░░███░███░███░███░███
 #░░░░░█░█░░░░█░░█░░░█░█
 #░░░░█░░███░░█░░█░█░█░█
@@ -487,7 +487,7 @@ class Chess(loader.Module):
                             "" if self.games[game_id]["game"]["board"] else "⏹️ " + self.strings[self.games[game_id]["game"]["reason"]]
                             )
                         )
-                        await asyncio.sleep(1)
+                        await asyncio.sleep(1.1)
                     await timer.stop()
                 asyncio.create_task(timer_loop(game_id))
 
