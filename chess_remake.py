@@ -475,18 +475,19 @@ class Chess(loader.Module):
 
                 async def timer_loop(game_id):
                     timer: Timer = self.games[game_id]["Timer"]["class"]
-                    timer.start()
+                    await timer.start()
                     while self.games[game_id]["Timer"]["timer_loop"]:
                         if not any([await timer.white_time(), await timer.black_time()]):
                             self.games[game_id]["Timer"]["timer_loop"] = False
                             self.games[game_id]["game"]["reason"] = "reason_timer"
-                        await self.games[game_id]["Timer"]["message"].edit(self.strings["timer_message"].format(
+                        await self.games[game_id]["Timer"]["message"].edit(self.strings["timer_text"].format(
                             int(await timer.white_time()), 
                             int(await timer.black_time()), 
                             "" if self.games[game_id]["game"]["board"] else "⏹️ " + self.strings[self.games[game_id]["game"]["reason"]]
                             )
                         )
                         await asyncio.sleep(1)
+                    await timer.stop()
                 asyncio.create_task(timer_loop(game_id))
 
     ############## Starting game... ############## 
