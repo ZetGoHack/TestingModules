@@ -1,4 +1,4 @@
-__version__ = ("updated", 1, 3) #######################
+__version__ = ("updated", 1, 4) #######################
 #░░░███░███░███░███░███
 #░░░░░█░█░░░░█░░█░░░█░█
 #░░░░█░░███░░█░░█░█░█░█
@@ -476,6 +476,7 @@ class Chess(loader.Module):
                 async def timer_loop(game_id):
                     timer: Timer = self.games[game_id]["Timer"]["class"]
                     await timer.start()
+                    await timer.white()
                     while self.games[game_id]["Timer"]["timer_loop"]:
                         if not any([await timer.white_time(), await timer.black_time()]):
                             self.games[game_id]["Timer"]["timer_loop"] = False
@@ -506,6 +507,6 @@ class Chess(loader.Module):
             "board": game.pop("board"),
             "pgn": self.pgn.copy(),
         }
-        await utils.answer(call, f"filler\n{utils.escape_html(str(self.games[game_id]))}", reply_markup={"text":"stop", "callback": lambda c, id: self.games[id]['Timer'].update({'timer_loop': not self.games[id]['Timer']['timer_loop']})}, disable_security=True)
+        await utils.answer(call, f"filler\n{utils.escape_html(str(self.games[game_id]))}", reply_markup={"text":"stop", "callback": lambda c, id: self.games[id]['Timer'].update({'timer_loop': not self.games[id]['Timer']['timer_loop']}), "args": (game_id,)}, disable_security=True)
 
 # TODO таймер | начало игры | хранение состояния игры в self.games[game_id][game] | закончить таймер
