@@ -139,11 +139,9 @@ class HaremManager(loader.Module):
                         return
                 elif chatid in self.config["ignore-chats"]:
                     return
-                logger.info(f"Сообщение от бота {bot}\n\nchat={chatid}, bot={bot}, parse={parse_waifu}, sender_id={message.sender_id}")
                 if (not self.get(f"catcher_time-{bot}") or int(time.time()) - int(self.get(f"catcher_time-{bot}")) > 14400):
                     if "заблудилась" in message.text.lower():
                         try:
-                            logger.info(f"Это соо с вайфу и я могу её словить\n\nchat={chatid}, bot={bot}, parse={parse_waifu}, sender_id={message.sender_id}")
                             if not parse_waifu:
                                 await message.click()
                                 await asyncio.sleep(5)
@@ -170,8 +168,7 @@ class HaremManager(loader.Module):
                                         caption = f"{waifu} в вашем гареме! <emoji document_id=5395592707580127159>😎</emoji>"
                                         await self.client.send_file(self.harems[bot], caption=caption, file=message.media)
                                     self.set(f"catcher_time-{bot}", int(time.time()))
-                        except Exception as e:
-                            logger.error(f"Ошибка при ловле вайфу для {bot}(не критично): {e}")
+                        except: pass
 
 
     def _main_markup(self):
