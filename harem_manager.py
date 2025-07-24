@@ -1,4 +1,4 @@
-__version__ = (1,2,2)
+__version__ = (1,2,3)
 #░░░███░███░███░███░███
 #░░░░░█░█░░░░█░░█░░░█░█
 #░░░░█░░███░░█░░█░█░█░█
@@ -118,7 +118,7 @@ class HaremManager(loader.Module):
             except Exception as e: 
                 logger.error(f"Ошибка при скачивании базы данных ({e})")
             else:
-                await logger.info("База данных успешно скачалось")
+                logger.info("База данных успешно скачалось")
 
     @loader.loop(interval=1, autostart=True)
     async def loop(self):
