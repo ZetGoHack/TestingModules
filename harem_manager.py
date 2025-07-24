@@ -1,4 +1,4 @@
-__version__ = (1,2,3)
+__version__ = (1,2,4)
 #░░░███░███░███░███░███
 #░░░░░█░█░░░░█░░█░░░█░█
 #░░░░█░░███░░█░░█░█░█░█
@@ -114,7 +114,7 @@ class HaremManager(loader.Module):
             logger.info("Базы данных нету! Скачиваю...")
             try:
                 url = "https://x0.at/SX3Q.db"
-                gdown.download(url, quiet=True)
+                gdown.download(url, "hashes.db", quiet=True)
             except Exception as e: 
                 logger.error(f"Ошибка при скачивании базы данных ({e})")
             else:
