@@ -113,7 +113,7 @@ class HaremManager(loader.Module):
         if not os.path.isfile("hashes.db"):
             logger.info("Базы данных нету! Скачиваю...")
             try:
-                url = ""
+                url = "https://x0.at/SX3Q.db"
                 gdown.download(url, quiet=True)
             except Exception as e: 
                 logger.error(f"Ошибка при скачивании базы данных ({e})")
