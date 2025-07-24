@@ -1,4 +1,4 @@
-__version__ = ("updated", 1, 5) #######################
+__version__ = ("updated", 2, 0) #######################
 #░░░███░███░███░███░███
 #░░░░░█░█░░░░█░░█░░░█░█
 #░░░░█░░███░░█░░█░█░█░█
@@ -25,18 +25,17 @@ from ..inline.types import BotInlineCall, InlineCall, InlineMessage
 
 
 class Timer:
-    def __init__(self, scnds):#start
+    def __init__(self, scnds):
         self.starttime = scnds
         self.timers = {"white": scnds, "black": scnds}
         self.running = {"white": False, "black": False}
-        self.started = {"white": False, "black": False}
         self.last_time = time.monotonic()
         self.t = None
     
     def minutes(self) -> int:
         return self.starttime // 60
 
-    async def _count(self):#func
+    async def _count(self):
         while True:
             await asyncio.sleep(0.1)
             now = time.monotonic()
@@ -46,21 +45,16 @@ class Timer:
                 if self.running[color]:
                     self.timers[color] = max(0, self.timers[color] - elapsed)
 
-    async def start(self): ##to use
+    async def start(self, from_color: str = "white"):
         self.last_time = time.monotonic()
+        await self._turn(from_color)
         self.t = asyncio.create_task(self._count())
 
-    async def white(self): ##to use
-        await self._turn("white")
-        self.started["white"] = True
-        self.started["black"] = False
+    async def switch(self):
+        self.running["white"] = not self.running["white"]
+        self.running["black"] = not self.running["black"]
 
-    async def black(self): ##to use
-        await self._turn("black")
-        self.started["white"] = False
-        self.started["black"] = True
-
-    async def _turn(self, color):#func
+    async def _turn(self, color):
         now = time.monotonic()
         e = now - self.last_time
         self.last_time = now
@@ -69,26 +63,16 @@ class Timer:
                 self.timers[clr] = max(0, self.timers[clr] - e)
         self.running = {"white": color == "white", "black": color == "black"}
 
-    async def white_time(self): ##to use
+    async def white_time(self):
         return round(self.timers["white"], 0)
 
-    async def black_time(self): ##to use
+    async def black_time(self):
         return round(self.timers["black"], 0)
 
     async def stop(self):
         if self.t:
             self.t.cancel()
         self.running = {"white": False, "black": False}
-        self.timers = {"white": self.timers["white"], "black": self.timers["black"]}
-        self.started = {"white": False, "black": False}
-
-    async def clear(self): ##to use
-        if self.t:
-            self.t.cancel()
-        self.timers = {"white": 0, "black": 0}
-        self.running = {"white": False, "black": False}
-        self.started = {"white": False, "black": False}
-        self.t = None
 
 @loader.tds
 class Chess(loader.Module):
@@ -258,7 +242,7 @@ class Chess(loader.Module):
 
     async def _invite(self, call, game_id):
         if not await self._check_player(call, game_id): return
-        game: dict[str, Timer]  = self.games[game_id]
+        game  = self.games[game_id]
         await utils.answer(
             call, 
             self.strings["invite"].format(opponent=utils.escape_html(self.games[game_id]["opponent"]["name"])) + self.strings['settings_text'].format(
@@ -476,7 +460,6 @@ class Chess(loader.Module):
                 async def timer_loop(game_id):
                     timer: Timer = self.games[game_id]["Timer"]["class"]
                     await timer.start()
-                    await timer.white()
                     while self.games[game_id]["Timer"]["timer_loop"]:
                         if not any([await timer.white_time(), await timer.black_time()]):
                             self.games[game_id]["Timer"]["timer_loop"] = False
@@ -488,6 +471,7 @@ class Chess(loader.Module):
                             )
                         )
                         await asyncio.sleep(1.1)
+                        await timer.switch()
                     await timer.stop()
                 asyncio.create_task(timer_loop(game_id))
 
