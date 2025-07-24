@@ -470,8 +470,7 @@ class Chess(loader.Module):
                             "" if self.games[game_id]["game"]["board"] else "⏹️ " + self.strings[self.games[game_id]["game"]["reason"]]
                             )
                         )
-                        await asyncio.sleep(1.1)
-                        await timer.switch()
+                        await asyncio.sleep(1)
                     await timer.stop()
                 asyncio.create_task(timer_loop(game_id))
 
@@ -481,7 +480,6 @@ class Chess(loader.Module):
         if not await self._check_player(call, game_id): return
         timer = self.games[game_id]["Timer"]
         timer["timer_loop"] = True
-        # excepting that loop will edit timer message and remove button from it
         await self._start_game(board_call, game_id)
 
     async def _start_game(self, call, game_id):
