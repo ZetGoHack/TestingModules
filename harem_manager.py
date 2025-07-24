@@ -6,7 +6,7 @@ __version__ = (1,2,4)
 #░░░███░███░░█░░███░███
 # H:Mods Team [💎]
 # meta developer: @nullmod
-# requires: gdown pillow
+# requires: gdown
 
 
 # -      main      - #
@@ -21,8 +21,6 @@ import sqlite3
 import time
 import random
 import re
-from io import BytesIO
-from PIL import Image
 # -    func(tl)    - #
 from telethon.tl.functions.chatlists import CheckChatlistInviteRequest, JoinChatlistInviteRequest, LeaveChatlistRequest
 from telethon.tl.functions.messages import ImportChatInviteRequest, CheckChatInviteRequest
@@ -157,8 +155,12 @@ class HaremManager(loader.Module):
                                 ahash = hashlib.md5(photo_bytes).hexdigest()
                                 name_image = self._find_image_by_hash('hashes.db', ahash)
                                 if name_image:
-                                    rnd = random.choice(["", "@garem_chatbot"])
-                                    await message.reply(f"/claim{rnd} {name_image}")
+                                    text = f"/claim@garem_chatbot {name_image}"
+                                    rnd = random.randint(0,1)
+                                    await (message.reply(text) 
+                                           if rnd else 
+                                           message.respond(text)
+                                        )
                                 else: return
                                 ### КОД ВЗЯТ И ОТРЕДАКТИРОВАН ИЗ МОДУЛЯ ОТ @qwertys50! СПАСИБО! ### close
 
