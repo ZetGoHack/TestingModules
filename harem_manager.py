@@ -1,4 +1,4 @@
-__version__ = (1,2,1)
+__version__ = (1,2,2)
 #░░░███░███░███░███░███
 #░░░░░█░█░░░░█░░█░░░█░█
 #░░░░█░░███░░█░░█░█░█░█
@@ -14,10 +14,12 @@ from .. import loader, utils
 # -      func      - #
 import asyncio
 import gdown
+import hashlib
 import logging
 import os
 import sqlite3
 import time
+import random
 import re
 from io import BytesIO
 from PIL import Image
@@ -111,7 +113,7 @@ class HaremManager(loader.Module):
         if not os.path.isfile("hashes.db"):
             logger.info("Базы данных нету! Скачиваю...")
             try:
-                url = "https://drive.google.com/uc?id=1MamiOEusJI_rSAjYaoeuKIsbZyRa8-WQ"
+                url = ""
                 gdown.download(url, quiet=True)
             except Exception as e: 
                 logger.error(f"Ошибка при скачивании базы данных ({e})")
@@ -152,10 +154,11 @@ class HaremManager(loader.Module):
                                 if not photo_bytes:
                                     logger.error("Не удалось скачать фото")
                                     return
-                                ahash = self._calculate_image_hash(photo_bytes)
+                                ahash = hashlib.md5(photo_bytes).hexdigest()
                                 name_image = self._find_image_by_hash('hashes.db', ahash)
                                 if name_image:
-                                    await message.reply(f"/claim {name_image}")
+                                    rnd = random.choice(["", "@garem_chatbot"])
+                                    await message.reply(f"/claim{rnd} {name_image}")
                                 else: return
                                 ### КОД ВЗЯТ И ОТРЕДАКТИРОВАН ИЗ МОДУЛЯ ОТ @qwertys50! СПАСИБО! ### close
 
@@ -440,51 +443,22 @@ class HaremManager(loader.Module):
 
         return None
 
-    ### КОД ВЗЯТ ИЗ МОДУЛЯ ОТ @qwertys50! СПАСИБО! ### open
-    def _calculate_image_hash(self, image_bytes, hash_size=8):
-
-        try:
-            
-            image = Image.open(
-                BytesIO(image_bytes)
-            ).convert('L').resize(
-                (hash_size, hash_size), Image.LANCZOS
-            )
-
-            pixels = list(image.getdata())
-
-            avg = sum(pixels) / len(pixels)
-
-            bits = ''.join(['1' if pixel > avg else '0' 
-                for pixel in pixels]
-            )
-            return '{:0{}x}'.format(int(bits, 2), 16)
-        
-        except Exception: return None
-    
     def _find_image_by_hash(self, db_path, target_hash):
 
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
         
         try:
-            cursor.execute("SELECT image_url FROM hashs WHERE hash = ?", (target_hash,))
+            cursor.execute("SELECT name_waifu FROM hashes WHERE hashes = ?", (target_hash,))
             result = cursor.fetchone()
             
             if result:
-                return self._extract_name(result[0])
+                return result[0]
             else:
                 return None
                 
         except sqlite3.Error: return None
         finally: conn.close()
-
-    def _extract_name(self, path):
-
-        match = re.search(r"\\([^\\]+)_", path)
-        if match: return match.group(1)
-
-        return None
     ### КОД ВЗЯТ ИЗ МОДУЛЯ ОТ @qwertys50! СПАСИБО! ### close
 
     @loader.command()
