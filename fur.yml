@@ -851,10 +851,10 @@ loader:
   save: 💿 Save
   save_for_all: 💽 Awways save two fs
   scam_module: '<emoji document_id=5454225457916420314>😖</emoji> <b>The moduwe</b>
-    <code>{nyame}</code> <b>is a scam, pwease wepowt it two de suppowt gwoup (</b><code>{prefix}suppowt</code><b>)</b>
+    <code>{name}</code> <b>is a scam, pwease wepowt it two de suppowt gwoup (</b><code>{prefix}suppowt</code><b>)</b>
 
 
-    <tg-spoiwew><i>Pwotection has stopped its woading.</i></tg-spoiwew>'
+    <tg-spoiler><i>Pwotection has stopped its woading.</i></tg-spoiler>'
   share_link_doc: Shawe moduwe wink in wesuwt message of .dwmod
   subscribe: 💬 Subscwibe
   subscribed: 💬 Subscwibed
@@ -871,6 +871,8 @@ loader:
     <emoji document_id=5472146462362048818>💡</emoji><i> Don''t wepowt it as bug. It''s
     a secuwity measuwe two pwevent wepwacing cowe moduwes wid some junk</i>'
   unloaded: '{} <b>Moduwe {} unwoaded.</b>'
+  modules_unloaded: "<emoji document_id=5784993237412351403>✅</emoji> <b>Unwoaded {unloaded_num} moduwes:</b>\n<blockquote expandable>{unloaded}</blockquote>"
+  modules_not_unloaded: "<emoji document_id=5210952531676504517>🚫</emoji> <b>Failed two unwoad {not_unloaded} moduwes.</b>\n<blockquote expandable>{errors}</blockquote>"
   version_incompatible: '<emoji document_id=5454225457916420314>😖</emoji> <b>This
     moduwe wequiwes Hewoku {}+
 
