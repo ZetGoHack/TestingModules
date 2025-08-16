@@ -161,7 +161,7 @@ class Gifts(loader.Module):
                 text += self.strings["exp"].format(nfts)
             if user_gifts[0]["gifts"]:
                 stars = [gift["sum"] for gift in user_gifts[0]["gifts"]]
-                text += self.strings["giftline"].format(user_gifts[3][1]).format(sum(stars))
+                text += self.strings["giftline"].format(user_gifts[3][1], sum(stars))
                 gifts = ""
                 for gift in user_gifts[0]["gifts"]:
                     gifts += self.strings["gift"].format(gift["count"], gift["emoji"], gift["sum"])
