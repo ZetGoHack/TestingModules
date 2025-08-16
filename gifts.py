@@ -73,7 +73,7 @@ class Gifts(loader.Module):
         "up": "Unpinned",
         "giftline": "\n<emoji document_id=6032644646587338669>🎁</emoji> <b>Gifts ({}):</b>\n",
         "gift": "[x{}] {} — {} <emoji document_id=5951810621887484519>⭐️</emoji>\n\n",
-        "doesnthave": "<emoji document_id=5325773049201434770>😭</emoji> <b>User {} doesn't have any public gifts</b>",
+        "doesnthave": "<emoji document_id=5325773049201434770>😭</emoji> <b>{} doesn't have any public gifts</b>",
         # / .gifts command
         "not_available": "<i>Not available</i>",
         "docerror": "I can't show it (Invalid document ID).\nReport this to @gitneko",
@@ -94,7 +94,7 @@ class Gifts(loader.Module):
         "p": "Закреплено",
         "up": "Не закреплено",
         "giftline": "\n<emoji document_id=6032644646587338669>🎁</emoji> <b>Подарки ({}):</b>\n",
-        "doesnthave": "<emoji document_id=5325773049201434770>😭</emoji> <b>Пользователь {} не имеет публичных подарков</b>",
+        "doesnthave": "<emoji document_id=5325773049201434770>😭</emoji> <b>{} не имеет публичных подарков</b>",
         # / .gifts command
         "not_available": "<i>Не доступно</i>",
     }
@@ -205,10 +205,10 @@ class Gifts(loader.Module):
                     gifts_count += 1
                     st_id = str(gift.gift.sticker.id).replace("5231003994519794860", "5253982443215547954").replace("5465502401358226185", "5298801741209299033").replace("5384540360863150750", "5413732008033543033") # < - jst dumpfix to avoid DocumentInvalidError
                     gift_exists = False
-                    for gift in gifts[0]["gifts"]:
-                        if st_id in gift["emoji"]:
-                            gift["count"] += 1
-                            gift["sum"] += gift.gift.stars
+                    for gft in gifts[0]["gifts"]:
+                        if st_id in gft["emoji"]:
+                            gft["count"] += 1
+                            gft["sum"] += gift.gift.stars
                             gift_exists = True
                             break
                     if gift_exists: continue
