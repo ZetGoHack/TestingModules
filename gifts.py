@@ -71,7 +71,7 @@ class Gifts(loader.Module):
   <b>More details:</b> <code>.gift {}</code>\n""",
         "p": "Pinned",
         "up": "Unpinned",
-        "giftline": "\n<emoji document_id=6032644646587338669>🎁</emoji> <b>Gifts ({}):</b>\n",
+        "giftline": "\n<emoji document_id=6032644646587338669>🎁</emoji> <b>Gifts ({}) - {} <emoji document_id=5951810621887484519>⭐️</emoji>:</b>\n",
         "gift": "[x{}] {} — {} <emoji document_id=5951810621887484519>⭐️</emoji>\n\n",
         "doesnthave": "<emoji document_id=5325773049201434770>😭</emoji> <b>{} doesn't have any public gifts</b>",
         # / .gifts command
@@ -90,10 +90,10 @@ class Gifts(loader.Module):
   {}
   <emoji document_id=5776219138917668486>📈</emoji> <b>Всего подарков:</b> <code>{}</code>
   <emoji document_id=5776213190387961618>🕓</emoji> <b>Возможно передать после</b> <code>{}</code>
-  <b>Подробнее о подарке:</b> <code>.gift {}</code>\n""",
+  <b>Подробнее о подарке:</b> <code>gift {}</code>\n""",
         "p": "Закреплено",
         "up": "Не закреплено",
-        "giftline": "\n<emoji document_id=6032644646587338669>🎁</emoji> <b>Подарки ({}):</b>\n",
+        "giftline": "\n<emoji document_id=6032644646587338669>🎁</emoji> <b>Подарки ({}) - {} <emoji document_id=5951810621887484519>⭐️</emoji>::</b>\n",
         "doesnthave": "<emoji document_id=5325773049201434770>😭</emoji> <b>{} не имеет публичных подарков</b>",
         # / .gifts command
         "not_available": "<i>Не доступно</i>",
@@ -160,7 +160,8 @@ class Gifts(loader.Module):
                                                         nft["availability_total"], nft["can_transfer_at"], nft["slug"])
                 text += self.strings["exp"].format(nfts)
             if user_gifts[0]["gifts"]:
-                text += self.strings["giftline"].format(user_gifts[3][1])
+                stars = [gift["sum"] for gift in user_gifts[0]["gifts"]]
+                text += self.strings["giftline"].format(user_gifts[3][1]).format(sum(stars))
                 gifts = ""
                 for gift in user_gifts[0]["gifts"]:
                     gifts += self.strings["gift"].format(gift["count"], gift["emoji"], gift["sum"])
