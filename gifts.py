@@ -4,14 +4,13 @@
 #░░░█░░░█░░░░█░░█░█░█░█
 #░░░███░███░░█░░███░███
 #H:Mods Team [💎]
-v = ("o", "ka", "k")
+v = ("o", "ka", "kk")
 # meta developer: @nullmod
 # scope: heroku_min 1.7.0
 # scope: hikka_min 1.7.0
 
 # -      main      - #
 import herokutl
-import herokutl.client
 from .. import loader, utils
 # -      func      - #
 import time
@@ -19,12 +18,10 @@ from herokutl.client.messageparse import MessageParseMethods as prs
 from herokutl.tl.functions.messages import EditMessageRequest, SendMessageRequest
 from herokutl.tl.functions.payments import GetSavedStarGiftsRequest, GetUniqueStarGiftRequest
 # -      types     - #
-from herokutl.tl.types import SavedStarGift, StarGift, StarGiftUnique
+from herokutl.tl.types import Channel, SavedStarGift, StarGift, StarGiftUnique, User
 # -      error       - #
 from herokutl.errors.rpcerrorlist import DocumentInvalidError
 # -      end       - #
-
-from herokutl.client.telegramclient import TelegramClient
 
 @loader.tds
 class Gifts(loader.Module):
@@ -62,6 +59,7 @@ class Gifts(loader.Module):
         "noargs": "<emoji document_id=5019523782004441717>❌</emoji> No arguments provided",
         "toomany": "<emoji document_id=5019523782004441717>❌</emoji> Too many arguments",
         "unotexist": "<emoji document_id=5019523782004441717>❌</emoji> User does not exist",
+        "not_user_or_channel": "<emoji document_id=5019523782004441717>❌</emoji> This is not a user or channel",
         "gifterr": "<emoji document_id=5019523782004441717>❌</emoji> Gift slug is invalid",
         # .gifts command
         "firstline": "<emoji document_id=5875180111744995604>🎁</emoji> <b>Gifts ({}/{} shown) of {}</b>",
@@ -84,6 +82,7 @@ class Gifts(loader.Module):
         "toomany": "<emoji document_id=5019523782004441717>❌</emoji> Слишком много аргументов",
         "noargs": "<emoji document_id=5019523782004441717>❌</emoji> Вы не указали аргументы",
         "unotexist": "<emoji document_id=5019523782004441717>❌</emoji> Такого пользователя не существует",
+        "not_user_or_channel": "<emoji document_id=5019523782004441717>❌</emoji> Это не пользователь и не канал",
         "gifterr": "<emoji document_id=5019523782004441717>❌</emoji> Некорректный id подарка",
         # .gifts command
         "firstline": "<emoji document_id=5875180111744995604>🎁</emoji> <b>Подарки ({}/{} показано) у {}</b>",
@@ -144,7 +143,12 @@ class Gifts(loader.Module):
         if not user_gifts:
             await utils.answer(message, self.strings["unotexist"])
             return
-        name = (await self.client.get_entity(id)).first_name
+        entity = await self.client.get_entity(id)
+        if isinstance(entity, (Channel, User)):
+            name = entity.first_name if hasattr(entity, "first_name") else entity.title
+        else:
+            await utils.answer(message, self.strings["not_user_or_channel"])
+            return
         if user_gifts[0]["nfts"] or user_gifts[0]["gifts"]:
             text = self.strings["firstline"].format(user_gifts[2], user_gifts[1], name)
             if user_gifts[0]["nfts"]:
@@ -173,7 +177,6 @@ class Gifts(loader.Module):
             "nfts": [],
             "gifts": [],
         }]
-        zzz = 0
         nft_count = 0
         gifts_count = 0
         try:
@@ -200,15 +203,15 @@ class Gifts(loader.Module):
                     })
                 elif isinstance(gift.gift, StarGift):
                     gifts_count += 1
-                    st_id = str(gift.gift.sticker.id).replace("5231003994519794860", "5253982443215547954").replace("5465502401358226185", "5298801741209299033") # < - jst dumpfix to avoid DocumentInvalidError
-                    zzz = False
-                    for gft in gifts[0]["gifts"]:
-                        if st_id in gft["emoji"]:
-                            gft["count"] += 1
-                            gft["sum"] += gift.gift.stars
-                            zzz = True
+                    st_id = str(gift.gift.sticker.id).replace("5231003994519794860", "5253982443215547954").replace("5465502401358226185", "5298801741209299033").replace("5384540360863150750", "5413732008033543033") # < - jst dumpfix to avoid DocumentInvalidError
+                    gift_exists = False
+                    for gift in gifts[0]["gifts"]:
+                        if st_id in gift["emoji"]:
+                            gift["count"] += 1
+                            gift["sum"] += gift.gift.stars
+                            gift_exists = True
                             break
-                    if zzz: continue
+                    if gift_exists: continue
                     gifts[0]["gifts"].append({
                         "emoji": "<emoji document_id={}>{}</emoji>".format(st_id, gift.gift.sticker.attributes[1].alt),
                         "stars": f"<code>{gift.gift.stars}</code>" + " <emoji document_id=5951810621887484519>⭐️</emoji>",
@@ -235,29 +238,8 @@ class Gifts(loader.Module):
             if "STARGIFT_SLUG_INVALID" in str(e):
                 await utils.answer(message, self.strings["gifterr"])
                 return
-        text = f"<a href='t.me/nft/{args[0]}'>\u200f</a>Окак"
+        text = f"<a href='t.me/nft/{args[0]}'>\u200f</a>Окак (команда в процессе разработки не нужно это того самое)"
         await utils.answer(message, text)#, invert_media=True)
-    
-    async def local_answer(self, message, response, **kwargs):
-        if not (edit := (message.out and not message.via_bot_id and not message.fwd_from)):
-            kwargs.setdefault(
-                "reply_to",
-                getattr(message, "reply_to_msg_id", None),
-            )
-        parse_mode = herokutl.utils.sanitize_parse_mode(
-                message.client.parse_mode
-            )
-        text, entities = parse_mode.parse(response)
-        
-        message, formatting_entities = await prs._parse_message_text(message, parse_mode)
-        
-        req = (EditMessageRequest if edit else SendMessageRequest)(
-            text,
-            entities=lambda t: (t, entities),
-            **kwargs,
-        )
-        result = await self.client(req)
-        return result
 
         
 __version__ = v
