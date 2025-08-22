@@ -38,7 +38,7 @@ class SchedulePlus(loader.Module):
             return await utils.answer(message, self.strings["too_many"])
 
         chat_id = message.chat_id
-        forum_topic_id = message.reply_to.reply_to_msg_id if message.reply_to else message.reply_to
+        reply_message_id = message.reply_to.reply_to_msg_id if len(args) == 3 else None
         await utils.answer(message, self.strings["scheduled"])
 
         variables = {}
@@ -46,7 +46,7 @@ class SchedulePlus(loader.Module):
         for i in range(count):
             send_time = datetime.now(timezone.utc) + timedelta(seconds=interval * i)
             formatted_text = self.process_text(text, variables)
-            await self.client.send_message(chat_id, formatted_text, file=resp.media, schedule=send_time, reply_to=forum_topic_id)
+            await self.client.send_message(chat_id, formatted_text, file=resp.media, schedule=send_time, reply_to=reply_message_id)
 
     def process_text(self, text, variables):
         """Process text okay?"""
