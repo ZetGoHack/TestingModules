@@ -9,8 +9,6 @@ __version__ = ("updated", 2, 0) #######################
 # meta developer: @nullmod
 # requires: python-chess
 
-# meta developer: @nullmod
-
 # -      main      - #
 from .. import loader, utils
 # -      func      - #
@@ -416,23 +414,23 @@ class Chess(loader.Module):
             await utils.answer(call, self.strings["declined"])
             return
         game = self.games[game_id]
-        await utils.answer(call, self.strings["step1"]) # Создание доски..
+        await utils.answer(call, self.strings["step1"])
         game["board"] = chess.Board()
         await asyncio.sleep(0.8)
-        await utils.answer(call, self.strings["step2"])  # Ставлю стиль..
+        await utils.answer(call, self.strings["step2"])
         game["style"] = self.styles[game["style"]]
         await asyncio.sleep(0.8)
-        await utils.answer(call, self.strings["step3"]) # Выбираю цвета..
+        await utils.answer(call, self.strings["step3"])
         if (turn := game.pop("host_plays")) == "r":
             turn = "w" if r.choice([0, 1]) == 0 else "b"
         game["turn"] = turn
         await asyncio.sleep(0.8)
-        await utils.answer(call, self.strings["step4"]) # Убираем лишние ключи
+        await utils.answer(call, self.strings["step4"])
         game.pop("host_plays", None)
         game["Timer"].pop("available", None)
         await asyncio.sleep(0.8)
         if isinstance(self.games[game_id]["Timer"]["class"], Timer):
-            await utils.answer(call, self.strings["step4.T"]) # Подключаю таймер..
+            await utils.answer(call, self.strings["step4.T"])
             await self._set_timer(call, game_id, call._units[call.unit_id]['chat'])
             await asyncio.sleep(0.8)
             return await utils.answer(call, self.strings["waiting_for_start"])
