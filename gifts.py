@@ -93,7 +93,7 @@ class Gifts(loader.Module):
   <b>Подробнее о подарке:</b> <code>gift {}</code>\n""",
         "p": "Закреплено",
         "up": "Не закреплено",
-        "giftline": "\n<emoji document_id=6032644646587338669>🎁</emoji> <b>Подарки ({}) - {} <emoji document_id=5951810621887484519>⭐️</emoji>::</b>\n",
+        "giftline": "\n<emoji document_id=6032644646587338669>🎁</emoji> <b>Подарки ({}) - {} <emoji document_id=5951810621887484519>⭐️</emoji>:</b>\n",
         "doesnthave": "<emoji document_id=5325773049201434770>😭</emoji> <b>{} не имеет публичных подарков</b>",
         # / .gifts command
         "not_available": "<i>Не доступно</i>",
