@@ -187,16 +187,15 @@ class Gifts(loader.Module):
         nft_count = 0
         gifts_count = 0
         try:
-            gifts_info: SavedStarGifts = await self.client(GetSavedStarGiftsRequest(peer=username, offset='', limit=int(self.config["gift_limit"]), **parameters))
+            gifts_info = await self.client(GetSavedStarGiftsRequest(peer=username, offset='', limit=int(self.config["gift_limit"]), **parameters))
             if int(self.config["gift_limit"]) > 100:
                 count = gifts_info.count
                 hundreds = count // 100
                 remainder = count % 100
                 limits = [*(100 for _ in range(hundreds-1)), *((remainder,) if remainder else ())]
                 offsets = [100*i for i in range(1, hundreds + 1)]
-                
                 for limit, offset in limits, offsets:
-                    next_offset: SavedStarGifts = await self.client(GetSavedStarGiftsRequest(peer=username, offset=str(offset).encode(), limit=limit), **parameters)
+                    next_offset = await self.client(GetSavedStarGiftsRequest(peer=username, offset=str(offset).encode(), limit=limit), **parameters)
                     gifts_info.gifts.append(*next_offset.gifts)
             gifts.append(gifts_info.count)
         except:
