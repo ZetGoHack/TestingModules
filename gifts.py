@@ -19,6 +19,7 @@ from herokutl.tl.functions.messages import EditMessageRequest, SendMessageReques
 from herokutl.tl.functions.payments import GetSavedStarGiftsRequest, GetUniqueStarGiftRequest
 # -      types     - #
 from herokutl.tl.types import Channel, SavedStarGift, StarGift, StarGiftUnique, User
+from herokutl.tl.types.payments import SavedStarGifts
 # -      error       - #
 from herokutl.errors.rpcerrorlist import DocumentInvalidError
 # -      end       - #
@@ -32,8 +33,8 @@ class Gifts(loader.Module):
             loader.ConfigValue(
                 "gift_limit",
                 20,
-                "0 to show first 20 gifts",
-                validator=loader.validators.Integer(),
+                "0 to show first 100 gifts",
+                validator=loader.validators.Integer(minimum=0, maximum=100),
             ),
         )
         
@@ -62,6 +63,7 @@ class Gifts(loader.Module):
         "not_user_or_channel": "<emoji document_id=5019523782004441717>❌</emoji> This is not a user or channel",
         "gifterr": "<emoji document_id=5019523782004441717>❌</emoji> Gift slug is invalid",
         # .gifts command
+        "loading": "<emoji document_id=6030657343744644592>🔁</emoji> Fetching gifts...",
         "firstline": "<emoji document_id=5875180111744995604>🎁</emoji> <b>Gifts ({}/{} shown) of {}</b>",
         "exp": "<blockquote expandable>{}</blockquote>",
         "nfts": """\n{} <a href='https://t.me/nft/{}'>{} #{}</a>
@@ -85,12 +87,13 @@ class Gifts(loader.Module):
         "not_user_or_channel": "<emoji document_id=5019523782004441717>❌</emoji> Это не пользователь и не канал",
         "gifterr": "<emoji document_id=5019523782004441717>❌</emoji> Некорректный id подарка",
         # .gifts command
+        "loading": "<emoji document_id=6030657343744644592>🔁</emoji> Получаю подарки...",
         "firstline": "<emoji document_id=5875180111744995604>🎁</emoji> <b>Подарки ({}/{} показано) у {}</b>",
         "nfts": """\n{} <a href='https://t.me/nft/{}'>{} #{}</a>
   {}
   <emoji document_id=5776219138917668486>📈</emoji> <b>Всего подарков:</b> <code>{}</code>
   <emoji document_id=5776213190387961618>🕓</emoji> <b>Возможно передать после</b> <code>{}</code>
-  <b>Подробнее о подарке:</b> <code>gift {}</code>\n""",
+  <b>Подробнее о подарке:</b> <code>gift {}</code>\n""", 
         "p": "Закреплено",
         "up": "Не закреплено",
         "giftline": "\n<emoji document_id=6032644646587338669>🎁</emoji> <b>Подарки ({}) - {} <emoji document_id=5951810621887484519>⭐️</emoji>:</b>\n",
@@ -139,6 +142,9 @@ class Gifts(loader.Module):
                 id = reply.sender.id
             else:
                 id = "me"
+
+        await utils.answer(message, self.strings["loading"])
+
         user_gifts = await self._get_gifts(id, params)
         if not user_gifts:
             await utils.answer(message, self.strings["unotexist"])
@@ -181,7 +187,17 @@ class Gifts(loader.Module):
         nft_count = 0
         gifts_count = 0
         try:
-            gifts_info = await self.client(GetSavedStarGiftsRequest(peer=username, offset='', limit=int(self.config["gift_limit"]), **parameters))
+            gifts_info: SavedStarGifts = await self.client(GetSavedStarGiftsRequest(peer=username, offset='', limit=int(self.config["gift_limit"]), **parameters))
+            if int(self.config["gift_limit"]) > 100:
+                count = gifts_info.count
+                hundreds = count // 100
+                remainder = count % 100
+                limits = [*(100 for _ in range(hundreds-1)), *((remainder,) if remainder else ())]
+                offsets = [100*i for i in range(1, hundreds + 1)]
+                
+                for limit, offset in limits, offsets:
+                    next_offset: SavedStarGifts = await self.client(GetSavedStarGiftsRequest(peer=username, offset=str(offset).encode(), limit=limit), **parameters)
+                    gifts_info.gifts.append(*next_offset.gifts)
             gifts.append(gifts_info.count)
         except:
             raise
