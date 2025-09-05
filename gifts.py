@@ -68,8 +68,7 @@ class Gifts(loader.Module):
         "nfts": """\n{} <a href='https://t.me/nft/{}'>{} #{}</a>
   {}
   <emoji document_id=5776219138917668486>📈</emoji> <b>Availability:</b> <code>{}</code>
-  <emoji document_id=5776213190387961618>🕓</emoji> <b>Can transfer after</b> <code>{}</code>
-  <b>More details:</b> <code>.gift {}</code>\n""",
+  <emoji document_id=5776213190387961618>🕓</emoji> <b>Can transfer after</b> <code>{}</code>\n""",
         "p": "Pinned",
         "up": "Unpinned",
         "giftline": "\n<emoji document_id=6032644646587338669>🎁</emoji> <b>Gifts ({}) - {} <emoji document_id=5951810621887484519>⭐️</emoji>:</b>\n",
@@ -77,7 +76,7 @@ class Gifts(loader.Module):
         "doesnthave": "<emoji document_id=5325773049201434770>😭</emoji> <b>{} doesn't have any public gifts</b>",
         # / .gifts command
         "not_available": "<i>Not available</i>",
-        "docerror": "I can't show it (Invalid document ID).\nReport this to @gitneko",
+        "docerror": "I can't show it (Invalid document ID).\nReport this message to @gitneko.\n{}",
     }
     strings_ru = {
         "toomany": "<emoji document_id=5019523782004441717>❌</emoji> Слишком много аргументов",
@@ -91,8 +90,7 @@ class Gifts(loader.Module):
         "nfts": """\n{} <a href='https://t.me/nft/{}'>{} #{}</a>
   {}
   <emoji document_id=5776219138917668486>📈</emoji> <b>Всего подарков:</b> <code>{}</code>
-  <emoji document_id=5776213190387961618>🕓</emoji> <b>Возможно передать после</b> <code>{}</code>
-  <b>Подробнее о подарке:</b> <code>gift {}</code>\n""", 
+  <emoji document_id=5776213190387961618>🕓</emoji> <b>Возможно передать после</b> <code>{}</code>\n""", 
         "p": "Закреплено",
         "up": "Не закреплено",
         "giftline": "\n<emoji document_id=6032644646587338669>🎁</emoji> <b>Подарки ({}) - {} <emoji document_id=5951810621887484519>⭐️</emoji>:</b>\n",
@@ -174,7 +172,11 @@ class Gifts(loader.Module):
             try:
                 await utils.answer(message, text)
             except DocumentInvalidError:
-                await utils.answer(message, self.strings["docerror"])
+                await utils.answer(message, self.strings["docerror"].format(
+                        "Limit: " + str(self.config["limit"]) + "\n"
+                        + "Peer: " + str(id)
+                    )
+                )
         else:
             await utils.answer(message, self.strings["doesnthave"].format(name))
 
@@ -188,7 +190,10 @@ class Gifts(loader.Module):
         try:
             gifts_info = await self.client(GetSavedStarGiftsRequest(peer=username, offset='', limit=int(self.config["gift_limit"]), **parameters))
             if int(self.config["gift_limit"]) > 100:
-                count = gifts_info.count
+                if self.config["gift_limit"] < gifts_info.count:
+                    count = self.config["gifts_limit"]
+                else:
+                    count = gifts_info.count
                 hundreds = count // 100
                 remainder = count % 100
                 limits = [*(100 for _ in range(hundreds-1)), *((remainder,) if remainder else ())]
