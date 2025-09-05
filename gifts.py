@@ -4,7 +4,7 @@
 #░░░█░░░█░░░░█░░█░█░█░█
 #░░░███░███░░█░░███░███
 #H:Mods Team [💎]
-v = ("o", "ka", "kkk")
+v = ("oo", "ka", "kkk")
 # meta developer: @nullmod
 # scope: heroku_min 1.7.0
 # scope: hikka_min 1.7.0
@@ -193,7 +193,7 @@ class Gifts(loader.Module):
                 remainder = count % 100
                 limits = [*(100 for _ in range(hundreds-1)), *((remainder,) if remainder else ())]
                 offsets = [100*i for i in range(1, hundreds + 1)]
-                for limit, offset in limits, offsets:
+                for limit, offset in zip(limits, offsets):
                     next_offset = await self.client(GetSavedStarGiftsRequest(peer=username, offset=str(offset).encode(), limit=limit), **parameters)
                     gifts_info.gifts.append(*next_offset.gifts)
             gifts.append(gifts_info.count)
