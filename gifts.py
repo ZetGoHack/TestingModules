@@ -4,7 +4,7 @@
 #░░░█░░░█░░░░█░░█░█░█░█
 #░░░███░███░░█░░███░███
 #H:Mods Team [💎]
-v = ("o", "ka", "kk")
+v = ("o", "ka", "kkk")
 # meta developer: @nullmod
 # scope: heroku_min 1.7.0
 # scope: hikka_min 1.7.0
@@ -19,7 +19,6 @@ from herokutl.tl.functions.messages import EditMessageRequest, SendMessageReques
 from herokutl.tl.functions.payments import GetSavedStarGiftsRequest, GetUniqueStarGiftRequest
 # -      types     - #
 from herokutl.tl.types import Channel, SavedStarGift, StarGift, StarGiftUnique, User
-from herokutl.tl.types.payments import SavedStarGifts
 # -      error       - #
 from herokutl.errors.rpcerrorlist import DocumentInvalidError
 # -      end       - #
@@ -34,7 +33,7 @@ class Gifts(loader.Module):
                 "gift_limit",
                 20,
                 "0 to show first 100 gifts",
-                validator=loader.validators.Integer(minimum=0, maximum=100),
+                validator=loader.validators.Integer(minimum=0),
             ),
         )
         
