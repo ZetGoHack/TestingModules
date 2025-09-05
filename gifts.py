@@ -4,7 +4,7 @@
 #░░░█░░░█░░░░█░░█░█░█░█
 #░░░███░███░░█░░███░███
 #H:Mods Team [💎]
-v = ("oo", "ka", "kkk")
+v = ("oo", "kaa", "kkk")
 # meta developer: @nullmod
 # scope: heroku_min 1.7.0
 # scope: hikka_min 1.7.0
@@ -195,7 +195,7 @@ class Gifts(loader.Module):
                 offsets = [100*i for i in range(1, hundreds + 1)]
                 for limit, offset in zip(limits, offsets):
                     next_offset = await self.client(GetSavedStarGiftsRequest(peer=username, offset=str(offset).encode(), limit=limit), **parameters)
-                    gifts_info.gifts.append(*next_offset.gifts)
+                    gifts_info.gifts.extend(next_offset.gifts)
             gifts.append(gifts_info.count)
         except:
             raise
