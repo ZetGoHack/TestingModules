@@ -1,4 +1,4 @@
-__version__ = ("updated", 2, 0) #######################
+__version__ = ("updated", 2, 1  ) #######################
 #░░░███░███░███░███░███
 #░░░░░█░█░░░░█░░█░░░█░█
 #░░░░█░░███░░█░░█░█░█░█
@@ -14,6 +14,7 @@ from .. import loader, utils
 # -      func      - #
 import asyncio
 import chess
+import chess.pgn
 import random as r
 import time
 # -      types     - #
@@ -184,13 +185,12 @@ class Chess(loader.Module):
             "style": "figures-with-circles", # "figures", "letters"
         }
         self.pgn = {
-            'event': '[Event "Chess Play With Module"]',
-            'site': '[Site "https://t.me/nullmod/"]',
-            'date': '[Date "{date}"]',
-            'round': '[Round "{game_id}"]',
-            'white': '[White "{player}"]',
-            'black': '[Black "{player}"]',
-            'result': '[Result "{result}"]',
+            'Event': "Chess Play In Module",
+            'Site': "https://t.me/nullmod/",
+            'Date': "{date}",
+            'Round': "{game_id}",
+            'White': "{player}",
+            'Black': "{player}",
         }
         
     async def _check_player(self, call, game_id, only_opponent=False):
@@ -254,7 +254,7 @@ class Chess(loader.Module):
                 else self.strings['white'] if game['host_plays'] == 'w'
                 else self.strings['black']
             ),
-            reply_markup=[
+            reply_markup = [
                 [
                     {
                         "text": self.strings["yes"],
@@ -483,10 +483,12 @@ class Chess(loader.Module):
     async def _start_game(self, call, game_id):
         if not await self._check_player(call, game_id): return
         game = self.games[game_id]
+        node = chess.pgn.Game()
+        node.headers.update(self.pgn)
         game["game"] = {
             "board": game.pop("board"),
-            "pgn": self.pgn.copy(),
+            "node": node,
         }
         await utils.answer(call, f"filler\n{utils.escape_html(str(self.games[game_id]))}", reply_markup={"text":"stop", "callback": lambda c, id: self.games[id]['Timer'].update({'timer_loop': not self.games[id]['Timer']['timer_loop']}), "args": (game_id,)}, disable_security=True)
 
-# TODO таймер | начало игры | хранение состояния игры в self.games[game_id][game] | закончить таймер
+# TODO начало игры
