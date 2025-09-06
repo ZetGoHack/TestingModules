@@ -1,4 +1,4 @@
-__version__ = ("updated", 2, 1  ) #######################
+__version__ = ("updated", 2, 2) #######################
 #░░░███░███░███░███░███
 #░░░░░█░█░░░░█░░█░░░█░█
 #░░░░█░░███░░█░░█░█░█░█
@@ -491,4 +491,4 @@ class Chess(loader.Module):
         }
         await utils.answer(call, f"filler\n{utils.escape_html(str(self.games[game_id]))}", reply_markup={"text":"stop", "callback": lambda c, id: self.games[id]['Timer'].update({'timer_loop': not self.games[id]['Timer']['timer_loop']}), "args": (game_id,)}, disable_security=True)
 
-# TODO начало игры
+# TODO начало игры (придумать текста, генерация доски (чтение и запись фигур из доски, отрисовка в разных стилях, отображение возможных ходов), возможность выгрузить pgn при нажатии на A1 5 раз подряд в любой момент игры, кнопки ничьи/сдачи), игра (отображение событий(шах), синхронизация с таймером), лень
