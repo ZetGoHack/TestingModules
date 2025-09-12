@@ -76,6 +76,7 @@ class Gifts(loader.Module):
         "doesnthave": "<emoji document_id=5325773049201434770>😭</emoji> <b>{} doesn't have any public gifts</b>",
         # / .gifts command
         "not_available": "<i>Not available</i>",
+        "nft": "",
         "docerror": "I can't show it (Invalid document ID).\nReport this message to @gitneko.\n{}",
     }
     strings_ru = {
@@ -97,6 +98,7 @@ class Gifts(loader.Module):
         "doesnthave": "<emoji document_id=5325773049201434770>😭</emoji> <b>{} не имеет публичных подарков</b>",
         # / .gifts command
         "not_available": "<i>Не доступно</i>",
+        "nft": "",
     }
 
     @loader.command(ru_doc="""[юзернейм/ответ/'me'] посмотреть подарки пользователя
@@ -260,6 +262,13 @@ class Gifts(loader.Module):
                 return
         text = f"<a href='t.me/nft/{args[0]}'>\u200f</a>Окак (команда в процессе разработки не нужно это того самое)"
         await utils.answer(message, text)#, invert_media=True)
+
+    async def _split_nfts(self, gifts):
+        strings = []
+        for gift in gifts:
+            strings.append(
+                self.strings["nft"]
+            )
 
         
 __version__ = v
