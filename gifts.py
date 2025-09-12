@@ -4,18 +4,16 @@
 #░░░█░░░█░░░░█░░█░█░█░█
 #░░░███░███░░█░░███░███
 #H:Mods Team [💎]
-v = ("ooo", "kaa", "kkk")
+v = ("oooo", "kaa", "kkk")
 # meta developer: @nullmod
-# scope: heroku_min 1.7.0
-# scope: hikka_min 1.7.0
+# scope: heroku_min 1.7.2
+# scope: hikka_min 1.7.2
 
 # -      main      - #
-import herokutl
 from .. import loader, utils
 # -      func      - #
+import asyncio
 import time
-from herokutl.client.messageparse import MessageParseMethods as prs
-from herokutl.tl.functions.messages import EditMessageRequest, SendMessageRequest
 from herokutl.tl.functions.payments import GetSavedStarGiftsRequest, GetUniqueStarGiftRequest
 # -      types     - #
 from herokutl.tl.types import Channel, SavedStarGift, StarGift, StarGiftUnique, User
@@ -76,7 +74,7 @@ class Gifts(loader.Module):
         "doesnthave": "<emoji document_id=5325773049201434770>😭</emoji> <b>{} doesn't have any public gifts</b>",
         # / .gifts command
         "not_available": "<i>Not available</i>",
-        "nft": "",
+        "nft": "<a href='t.me/nft/{}'>\u200f</a>",
         "docerror": "I can't show it (Invalid document ID).\nReport this message to @gitneko.\n{}",
     }
     strings_ru = {
@@ -98,20 +96,24 @@ class Gifts(loader.Module):
         "doesnthave": "<emoji document_id=5325773049201434770>😭</emoji> <b>{} не имеет публичных подарков</b>",
         # / .gifts command
         "not_available": "<i>Не доступно</i>",
-        "nft": "",
+        "nft": "<a href='t.me/nft/{}'>\u200f</a>",
     }
 
     @loader.command(ru_doc="""[юзернейм/ответ/'me'] посмотреть подарки пользователя
     Команда имеет несколько флагов для фильтрации вывода:
         -n(ft) — исключить NFT
         -g(ifts) — исключить обычные подарки(розы, мишки и т.п.)
-        -l(imited) — исключить редкие подарки""")
+        -l(imited) — исключить редкие подарки
+        -u(pgradable) — показать только улучшаемые подарки
+        -s(aved) — показать только не скрытые подарки""")
     async def gifts(self, message):
         """[username/reply/'me'] view user's gifts
         Module have some flags to filter output:
         -n(ft) — excludes nft gifts
         -g(ifts) — excludes regular gifts (not rare)
-        -l(imited) — excludes limited(rare) gifts"""
+        -l(imited) — excludes limited(rare) gifts
+        -u(pgradable) — shows only upgradable gifts
+        -s(aved) — shows only not hidden gifts"""
         params = {} # < - excluding args
         args = utils.get_args_raw(message)
         if "-nft" in args or "-n" in args:
@@ -124,7 +126,15 @@ class Gifts(loader.Module):
 
         if "-limited" in args or "-l" in args:
             args = args.replace("-limited", "").replace("-l", "")
-            params["exclude_limited"] = True
+            params["exclude_unupgradable"] = True
+
+        if "-upgradable" in args or "-u" in args:
+            args = args.replace("-upgradable", "").replace("-u", "")
+            params["exclude_upgradable"] = True
+
+        if "-saved" in args or "-s" in args:
+            args = args.replace("-saved", "").replace("-s", "")
+            params["exclude_saved"] = True
             
         args = args.strip().split()
         if len(args) > 1:
@@ -201,6 +211,7 @@ class Gifts(loader.Module):
                 limits = [*(100 for _ in range(hundreds-1)), *((remainder,) if remainder else ())]
                 offsets = [100*i for i in range(1, hundreds + 1)]
                 for limit, offset in zip(limits, offsets):
+                    await asyncio.sleep(0.4)
                     next_offset = await self.client(GetSavedStarGiftsRequest(peer=username, offset=str(offset).encode(), limit=limit, **parameters))
                     gifts_info.gifts.extend(next_offset.gifts)
             gifts.append(gifts_info.count)
