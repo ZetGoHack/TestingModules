@@ -134,7 +134,7 @@ class Gifts(loader.Module):
 
         if "-saved" in args or "-s" in args:
             args = args.replace("-saved", "").replace("-s", "")
-            params["exclude_saved"] = True
+            params["exclude_unsaved"] = True
             
         args = args.strip().split()
         if len(args) > 1:
