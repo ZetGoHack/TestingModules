@@ -4,7 +4,7 @@
 #░░░█░░░█░░░░█░░█░█░█░█
 #░░░███░███░░█░░███░███
 #H:Mods Team [💎]
-v = ("oooo", "kaa", "kkk")
+v = ("oooo", "kaaa", "kkk")
 # meta developer: @nullmod
 # scope: heroku_min 1.7.2
 # scope: hikka_min 1.7.2
@@ -203,7 +203,7 @@ class Gifts(loader.Module):
             gifts_info = await self.client(GetSavedStarGiftsRequest(peer=username, offset='', limit=int(self.config["gift_limit"]), **parameters))
             if int(self.config["gift_limit"]) > 100:
                 if self.config["gift_limit"] < gifts_info.count:
-                    count = self.config["gifts_limit"]
+                    count = self.config["gift_limit"]
                 else:
                     count = gifts_info.count
                 hundreds = count // 100
