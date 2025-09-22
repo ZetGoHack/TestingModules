@@ -193,8 +193,10 @@ class Chess(loader.Module):
             'Black': "{player}",
         }
         
-    async def _check_player(self, call, game_id, only_opponent=False):
-        if isinstance(call, (BotInlineCall, InlineCall, InlineMessage)): 
+    async def _check_player(self, call: InlineCall, game_id, only_opponent=False):
+        if isinstance(call, (BotInlineCall, InlineCall, InlineMessage)):
+            call.inline_manager[call.unit_id]["always_allow"] = True # хоба патчим забывчивость хикки
+
             if call.from_user.id != self.games[game_id]["sender"]["id"]:
                 if call.from_user.id != self.games[game_id]["opponent"]["id"]:
                     await call.answer(self.strings["not_available"])
@@ -238,7 +240,7 @@ class Chess(loader.Module):
         }
         return (sender, opponent)
 
-    async def _invite(self, call, game_id):
+    async def _invite(self, call: InlineCall, game_id):
         if not await self._check_player(call, game_id): return
         game  = self.games[game_id]
         await utils.answer(
@@ -278,7 +280,7 @@ class Chess(loader.Module):
             disable_security=True
         )
 
-    async def settings(self, call, game_id):
+    async def settings(self, call: InlineCall, game_id):
         if not await self._check_player(call, game_id): return
         game = self.games[game_id]
         reply_markup = []
@@ -314,7 +316,7 @@ class Chess(loader.Module):
             reply_markup=reply_markup,
             disable_security=True
         )
-    async def _settings(self, call, game_id, ruleset: str | list):
+    async def _settings(self, call: InlineCall, game_id, ruleset: str | list):
         reply_markup = []
         text = "🍓"
         if isinstance(ruleset, str):
@@ -407,7 +409,7 @@ class Chess(loader.Module):
 
     ############## Preparing all for game start... ##############
 
-    async def _init_game(self, call, game_id, ans="yes"):
+    async def _init_game(self, call: InlineCall, game_id, ans="yes"):
         if not await self._check_player(call, game_id=game_id, only_opponent=True): return
         if ans == "no":
             self.games.pop(game_id, None)
@@ -436,7 +438,7 @@ class Chess(loader.Module):
             return await utils.answer(call, self.strings["waiting_for_start"])
         await self._start_game(call, game_id)
 
-    async def _set_timer(self, board_call, game_id, chat_id):
+    async def _set_timer(self, board_call: InlineCall, game_id, chat_id):
         timer = self.games[game_id]["Timer"]["class"]
         self.games[game_id]["Timer"]["message"] = (
             await self.inline.form(self.strings["timer_text"].format(
@@ -474,18 +476,19 @@ class Chess(loader.Module):
 
     ############## Starting game... ############## 
 
-    async def _start_timer(self, call, board_call, game_id):
+    async def _start_timer(self, call: InlineCall, board_call, game_id):
         if not await self._check_player(call, game_id): return
         timer = self.games[game_id]["Timer"]
         timer["timer_loop"] = True
         await self._start_game(board_call, game_id)
 
-    async def _start_game(self, call, game_id):
+    async def _start_game(self, call: InlineCall, game_id):
         if not await self._check_player(call, game_id): return
         game = self.games[game_id]
         node = chess.pgn.Game()
         node.headers.update(self.pgn)
         game["game"] = {
+            "": call._units,
             "board": game.pop("board"),
             "node": node,
         }
