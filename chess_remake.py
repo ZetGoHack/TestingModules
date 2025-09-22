@@ -488,7 +488,6 @@ class Chess(loader.Module):
         node = chess.pgn.Game()
         node.headers.update(self.pgn)
         game["game"] = {
-            "": call._units,
             "board": game.pop("board"),
             "node": node,
         }
