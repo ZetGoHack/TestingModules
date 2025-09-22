@@ -195,7 +195,7 @@ class Chess(loader.Module):
         
     async def _check_player(self, call: InlineCall, game_id, only_opponent=False):
         if isinstance(call, (BotInlineCall, InlineCall, InlineMessage)):
-            call.inline_manager[call.unit_id]["always_allow"] = True # хоба патчим забывчивость хикки
+            call.inline_manager._units[call.unit_id]["always_allow"] = True # хоба патчим забывчивость хикки
 
             if call.from_user.id != self.games[game_id]["sender"]["id"]:
                 if call.from_user.id != self.games[game_id]["opponent"]["id"]:
