@@ -1,8 +1,8 @@
 import typing
-import telethon
+import herokutl
 
 import grapheme
-from telethon.tl.types import (
+from herokutl.tl.types import (
     MessageEntityBankCard,
     MessageEntityBlockquote,
     MessageEntityBold,
@@ -48,7 +48,7 @@ FormattingEntity = typing.Union[
     MessageEntitySpoiler,
 ]
 
-parser = telethon.utils.sanitize_parse_mode("html")
+parser = herokutl.utils.sanitize_parse_mode("html")
 def _copy_tl(o, **kwargs):
     d = o.to_dict()
     del d["_"]
@@ -75,7 +75,7 @@ def smart_split(
 
     :example:
         >>> utils.smart_split(
-            *telethon.extensions.html.parse(
+            *herokutl.extensions.html.parse(
                 "<b>Hello, world!</b>"
             )
         )
@@ -96,7 +96,7 @@ def smart_split(
         if bytes_offset + length * 2 >= bytes_length:
             yield parser.unparse(
                 text[text_offset:],
-                list(sorted(pending_entities, key=lambda x: x.offset)),
+                list(sorted(pending_entities, key=lambda x: (x.offset, -x.length))),
             )
             break
 
@@ -196,7 +196,7 @@ def smart_split(
         current_text = text[text_offset:split_index]
         yield parser.unparse(
             current_text,
-            list(sorted(current_entities, key=lambda x: x.offset)),
+            list(sorted(current_entities, key=lambda x: (x.offset, -x.length))),
         )
 
         text_offset = split_index + exclude
@@ -416,10 +416,11 @@ textm = """<emoji document_id=5875180111744995604>🎁</emoji> <b>Подарки
 
 </blockquote>"""
 
-parse_mode = telethon.utils.sanitize_parse_mode(
+parse_mode = herokutl.utils.sanitize_parse_mode(
         "html"
     )
 text, entities = parse_mode.parse(textm)
 
-print(list(smart_split(text, entities)))
+for t in list(smart_split(text, entities)):
+  print(t)
 
