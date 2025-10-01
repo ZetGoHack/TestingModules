@@ -320,6 +320,6 @@ class Gifts(loader.Module):
             lines.append(f"<emoji document_id=6014655953457123498>💱</emoji> <b>Price</b>: <code>{res.gift.value_amount // 100}</code> {res.gift.value_currency}")
 
         result = "\n".join(lines)
-        await utils.answer(message, f'<a href="t.me/nft/{slug}">\u200f</a><blockquote>{result}</blockquote>', invert_media=True)
+        await utils.answer(message, f'<a href="t.me/nft/{slug}">\u200f</a><blockquote>{result}</blockquote>', link_preview=True, invert_media=True)
 
 __version__ = v
