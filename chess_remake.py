@@ -167,14 +167,17 @@ class Chess(loader.Module):
             "figures-with-circles": {
             "r": "♖⚫", "n": "♘⚫", "b": "♗⚫", "q": "♕⚫", "k": "♔⚫", "p": "♙⚫",
             "R": "♖⚪", "N": "♘⚪", "B": "♗⚪", "Q": "♕⚪", "K": "♔⚪", "P": "♙⚪",
+            "move": "●", "capture": "×", "promotion": "↻", "capture_promotion": "×↻",
             },
             "figures": {
             "r": "♜", "n": "♞", "b": "♝", "q": "𝗾", "k": "♚", "p": "♟",
             "R": "♖", "N": "♘", "B": "♗", "Q": "𝗤", "K": "♔", "P": "♙",
+            "move": "●", "capture": "×", "promotion": "↻", "capture_promotion": "×↻",
             },
             "letters": {
             "r": "𝗿", "n": "𝗻", "b": "𝗯", "q": "𝗾", "k": "𝗸", "p": "𝗽",
             "R": "𝗥", "N": "𝗡", "B": "𝗕", "Q": "𝗤", "K": "𝗞", "P": "𝗣",
+            "move": "●", "capture": "×", "promotion": "↻", "capture_promotion": "×↻",
             }
         }
         self.coords = {
@@ -494,6 +497,7 @@ class Chess(loader.Module):
         game["game"] = {
             "board": game.pop("board"),
             "node": node,
+            "state": "idle", # 'idle' - начальное состояние (показать ток доску с фигурами), 'in_choose' - игрок жамкнул на фигуру и нужно показать доступные ходы
         }
         await utils.answer(call, f"filler\n{utils.escape_html(str(self.games[game_id]))}", reply_markup={"text":"stop", "callback": lambda c, id: self.games[id]['Timer'].update({'timer_loop': not self.games[id]['Timer']['timer_loop']}), "args": (game_id,)}, disable_security=True)
 
