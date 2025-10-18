@@ -149,6 +149,7 @@ class SafeBase(loader.Module):
             file.name = f"participants_{entity.full_chat.id}.txt"
             await utils.answer(message, self.strings["file_part_list"].format(group), file=file)
 
+    @loader.command()
     async def scam(self, message):
         """[имя шортката] [id] [ссылка на доказательства] шорткат для заноса человека в скамеров"""
         args = utils.get_args(message)
