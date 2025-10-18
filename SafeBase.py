@@ -54,9 +54,7 @@ class SafeBase(loader.Module):
         if not self.get("shortcuts", {}):
             self.set(
                 key="shortcuts",
-                value={
-                    ""
-                }
+                value={}
             )
         return
 
