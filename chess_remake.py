@@ -1,4 +1,4 @@
-__version__ = ("updated", 2, 2) #######################
+__version__ = ("updated", 2, 3) #######################
 #░░░███░███░███░███░███
 #░░░░░█░█░░░░█░░█░░░█░█
 #░░░░█░░███░░█░░█░█░█░█
@@ -167,15 +167,22 @@ class Chess(loader.Module):
             "figures-with-circles": {
             "r": "♖⚫", "n": "♘⚫", "b": "♗⚫", "q": "♕⚫", "k": "♔⚫", "p": "♙⚫",
             "R": "♖⚪", "N": "♘⚪", "B": "♗⚪", "Q": "♕⚪", "K": "♔⚪", "P": "♙⚪",
+            "move": "●", "capture": "×", "promotion": "↻", "capture_promotion": "×↻",
             },
             "figures": {
             "r": "♜", "n": "♞", "b": "♝", "q": "𝗾", "k": "♚", "p": "♟",
             "R": "♖", "N": "♘", "B": "♗", "Q": "𝗤", "K": "♔", "P": "♙",
+            "move": "●", "capture": "×", "promotion": "↻", "capture_promotion": "×↻",
             },
             "letters": {
             "r": "𝗿", "n": "𝗻", "b": "𝗯", "q": "𝗾", "k": "𝗸", "p": "𝗽",
             "R": "𝗥", "N": "𝗡", "B": "𝗕", "Q": "𝗤", "K": "𝗞", "P": "𝗣",
+            "move": "●", "capture": "×", "promotion": "↻", "capture_promotion": "×↻",
             }
+        }
+        self.coords = {
+            f"{col}{row}": "" for col in "abcdefgh"
+            for row in range(1, 9)
         }
         games = self.get("games", {})
         if games:
@@ -490,7 +497,18 @@ class Chess(loader.Module):
         game["game"] = {
             "board": game.pop("board"),
             "node": node,
+            "state": "idle", # 'idle' - начальное состояние (показать ток доску с фигурами), 'in_choose' - игрок жамкнул на фигуру и нужно показать доступные ходы
         }
         await utils.answer(call, f"filler\n{utils.escape_html(str(self.games[game_id]))}", reply_markup={"text":"stop", "callback": lambda c, id: self.games[id]['Timer'].update({'timer_loop': not self.games[id]['Timer']['timer_loop']}), "args": (game_id,)}, disable_security=True)
 
 # TODO начало игры (придумать текста, генерация доски (чтение и запись фигур из доски, отрисовка в разных стилях, отображение возможных ходов), возможность выгрузить pgn при нажатии на A1 5 раз подряд в любой момент игры, кнопки ничьи/сдачи), игра (отображение событий(шах), синхронизация с таймером), лень
+
+    def _get_piece_symbol(self, game_id, key):
+        piece = self.games[game_id]["game"]["board"].piece_at(chess.parse_square(key)).symbol()
+        return self.games[game_id]["style"][piece] if piece else " "
+
+    def _get_board_dict(self, game_id) -> dict:
+        game = self.games[game_id]
+        coords = self.coords.copy()
+        for key in self.coords:
+            coords[key] = self._get_piece_symbol(game_id, key)

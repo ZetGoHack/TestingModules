@@ -467,7 +467,6 @@ class Chess(loader.Module):
             self.loopState = False
             await self.time_message.edit(text=f"♔ Белые: {int(await self.Timer.white_time())}\n♚ Чёрные: {int(await self.Timer.black_time())}\n❌ Остановлен по причине: {self.reason}")
         for row in range(1, 9):
-            rows = []
             for col in "ABCDEFGH":
                 coord = f"{col}{row}"
                 piece = self.Board.piece_at(chess.parse_square(coord.lower()))
