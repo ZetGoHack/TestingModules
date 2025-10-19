@@ -30,7 +30,7 @@ class SafeBase(loader.Module):
             "answer_file": "<emoji document_id=5019523782004441717>❌</emoji> <b>Вы должны ответить на файл!</b>",
             "no_ids": "<emoji document_id=5019523782004441717>❌</emoji> <b>В файле нет id людей</b>",
             "inv_shct": """<emoji document_id=5019523782004441717>❌</emoji> <b>Шорткат установлен неверно. Пример правильной команды:</b>
-<code>.addscam scamgroup /scam {id} 2 Участник скам-тимы {link}</code>""",
+<code>.addscam scamgroup /scam {account} 2 Участник скам-тимы {link}</code>""",
             "shct_set": "<emoji document_id=5361940169937158185>🥇</emoji> <b>Шорткат <code>{}</code> установлен!</b>",
             "shct_rm": "<emoji document_id=5361940169937158185>🥇</emoji> <b>Шорткат <code>{}</code> удалён!</b>",
             "succes": "<emoji document_id=5364035851984603413>💪</emoji> <b>Заношу в базу {} человек...</b>",
@@ -175,9 +175,14 @@ class SafeBase(loader.Module):
             link = reply.link()
         else:
             shortcut, account, link = args
+
+        shortcuts = self.get("shortcuts", {})
+        if not shortcut in shortcuts:
+            return await utils.answer(message, self.strings["no_shct"].format(shortcut))
+
         ids = []
-        if account == "file" and reply:
-            if reply.media is None:
+        if account == "file":
+            if not reply or reply.media is None:
                 return await utils.answer(message, self.strings["answer_file"])
             file = (await reply.download_media(bytes)).decode()
             lines = [x for x in file.splitlines() if x.strip().isdigit()]
@@ -188,10 +193,6 @@ class SafeBase(loader.Module):
 
         if not ids:
             return await utils.answer(message, self.strings["no_ids"])
-
-        shortcuts = self.get("shortcuts", {})
-        if not shortcut in shortcuts:
-            return await utils.answer(message, self.strings["no_shct"].format(shortcut))
         
         await utils.answer(message, self.strings["entr_to_base"].format(len(ids)))
         
