@@ -121,7 +121,7 @@ class SafeBase(loader.Module):
                     self.get_messages_time(self.config["msgs_limit"])
                 )
             )
-            async for msg in self.client.get_messages(group, limit=limit):
+            for msg in (await self.client.get_messages(group, limit=limit)):
                 if self.getlist_c:
                     if msg.sender and not getattr(msg.sender, "bot", True):
                         ids.add(msg.sender.id)
