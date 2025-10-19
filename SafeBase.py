@@ -5,6 +5,7 @@
 #░░░███░███░░█░░███░███
 
 # meta developer: @ZetGo
+__version__ = (1,0,0)
 import asyncio, herokutl, math, io
 from herokutl.tl.types import MessageService
 from herokutl.tl.functions.channels import GetFullChannelRequest
