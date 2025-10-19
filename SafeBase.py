@@ -179,7 +179,7 @@ class SafeBase(loader.Module):
         if account == "file" and reply:
             if reply.media is None:
                 return await utils.answer(message, self.strings["answer_file"])
-            file = reply.download_media(bytes).decode()
+            file = (await reply.download_media(bytes)).decode()
             lines = [x for x in file.splitlines() if x.strip().isdigit()]
             ids.extend(lines)
         else: 
