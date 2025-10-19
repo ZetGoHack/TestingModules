@@ -26,12 +26,14 @@ class SafeBase(loader.Module):
             "file_part_list": "<emoji document_id=5361940169937158185>🥇</emoji> <b>Список участников группы @{}",
             "stop_cycle": "Вы можете остановить выполнение команды",
             "stop": "🛑 Остановить",
-            "no_shct": "<emoji document_id=5019523782004441717>❌</emoji> <b>Такого шортката не существует</b>",
+            "no_shct": "<emoji document_id=5019523782004441717>❌</emoji> <b>Шортката {} не существует</b>",
             "answer_file": "<emoji document_id=5019523782004441717>❌</emoji> <b>Вы должны ответить на файл!</b>",
             "no_ids": "<emoji document_id=5019523782004441717>❌</emoji> <b>В файле нет id людей</b>",
             "inv_shct": """<emoji document_id=5019523782004441717>❌</emoji> <b>Шорткат установлен неверно. Пример правильной команды:</b>
-<code>.addscam scamgroup /scam {{id}} 2 Участник скам-тимы {{link}}</code>""",
+<code>.addscam scamgroup /scam {id} 2 Участник скам-тимы {link}</code>""",
             "shct_set": "<emoji document_id=5361940169937158185>🥇</emoji> <b>Шорткат <code>{}</code> установлен!</b>",
+            "shct_rm": "<emoji document_id=5361940169937158185>🥇</emoji> <b>Шорткат <code>{}</code> удалён!</b>",
+            
         }
 
     def __init__(self):
@@ -188,7 +190,7 @@ class SafeBase(loader.Module):
 
         shortcuts = self.get("shortcuts", {})
         if not shortcut in shortcuts:
-            return await utils.answer(message, self.strings["no_shct"])
+            return await utils.answer(message, self.strings["no_shct"].format(shortcut))
         
         for acc_id in ids:
             await self.client.send_message(
@@ -207,7 +209,7 @@ class SafeBase(loader.Module):
         Пример:
         .addscam scamgroup /scam {account} 2 Участник скам-тимы {link}
 
-        При вызове ``.scam scamgroup 1226061707 https://t.me/cht/25``
+        При вызове .scam scamgroup 1226061707 https://t.me/cht/25
         отправит в чат:
         /scam 1226061707 2 Участник скам-тимы https://t.me/cht/25
         """
@@ -215,10 +217,7 @@ class SafeBase(loader.Module):
         if len(args) != 2:
             return await utils.answer(message, self.strings["noargs"])
         
-        if (
-            len(args[1]) == len(args[1].format(account="5", link="t.me"))
-            or not len(args[1].format(account="5", link="t.me")) == len(args[1] + "5" + "t.me")
-        ):
+        if "{account}" not in args[1] or "{link}" not in args[1]:
             return await utils.answer(message, self.strings["inv_shct"])
 
         shortcuts = self.get("shortcuts", {})
@@ -226,3 +225,20 @@ class SafeBase(loader.Module):
         self.set("shortcuts", shortcuts)
 
         await utils.answer(message, self.strings["shct_set"].format(args[0]))
+
+    @loader.command()
+    async def delscam(self, message):
+        """[имя шортката] удалить шорткат"""
+        args = utils.get_args(message)
+        if not args:
+            return await utils.answer(message, self.strings["noargs"])
+        name = args[0]
+
+        shortcuts = self.get("shortcuts", {})
+        if not name in shortcuts:
+            return await utils.answer(message, self.strings["no_shct"].format(name))
+        else:
+            shortcuts.pop(name)
+            self.set("shortcuts", shortcuts)
+
+        await utils.answer(message, self.strings["shct_rm"].format(name))
