@@ -104,9 +104,9 @@ class SafeBase(loader.Module):
         ids = set()
 
         self.getlist_c = True
-        form = await utils.answer(,
+        form = await utils.answer(
             message,
-            self.strings["stop_cycle"]
+            self.strings["stop_cycle"],
             reply_markup={
                 "text": self.strings["stop"],
                 "callback": self._stop_getlist,
