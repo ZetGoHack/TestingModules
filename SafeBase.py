@@ -33,8 +33,8 @@ class SafeBase(loader.Module):
 <code>.addscam scamgroup /scam {account} 2 Участник скам-тимы {link}</code>""",
             "shct_set": "<emoji document_id=5361940169937158185>🥇</emoji> <b>Шорткат <code>{}</code> установлен!</b>",
             "shct_rm": "<emoji document_id=5361940169937158185>🥇</emoji> <b>Шорткат <code>{}</code> удалён!</b>",
-            "succes": "<emoji document_id=5364035851984603413>💪</emoji> <b>Заношу в базу {} человек...</b>",
-            "entr_to_base": "<emoji document_id=5361940169937158185>🥇</emoji> <b>Успешно занесено!</b>",
+            "entr_to_base": "<emoji document_id=5364035851984603413>💪</emoji> <b>Заношу в базу {} человек...</b>",
+            "succes": "<emoji document_id=5361940169937158185>🥇</emoji> <b>Успешно занесено {} человек!</b>",
         }
 
     def __init__(self):
