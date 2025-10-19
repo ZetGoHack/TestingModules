@@ -6,10 +6,12 @@
 
 # meta developer: @ZetGo
 import asyncio, herokutl, math, io
+from herokutl.tl.types import MessageService
 from herokutl.tl.functions.channels import GetFullChannelRequest
 from .. import loader, utils
 
 CHECK_DELAY = 0.7
+SCAM_DELAY = 1
 @loader.tds
 class SafeBase(loader.Module):
     """Небольшой инструментарий для модератора сейфбазы"""
@@ -24,7 +26,12 @@ class SafeBase(loader.Module):
             "file_part_list": "<emoji document_id=5361940169937158185>🥇</emoji> <b>Список участников группы @{}",
             "stop_cycle": "Вы можете остановить выполнение команды",
             "stop": "🛑 Остановить",
-            "no_shct": "<emoji document_id=5019523782004441717>❌</emoji> <b>Такого шортката не существует</b>"
+            "no_shct": "<emoji document_id=5019523782004441717>❌</emoji> <b>Такого шортката не существует</b>",
+            "answer_file": "<emoji document_id=5019523782004441717>❌</emoji> <b>Вы должны ответить на файл!</b>",
+            "no_ids": "<emoji document_id=5019523782004441717>❌</emoji> <b>В файле нет id людей</b>",
+            "inv_shct": """<emoji document_id=5019523782004441717>❌</emoji> <b>Шорткат установлен неверно. Пример правильной команды:</b>
+<code>.addscam scamgroup /scam {{id}} 2 Участник скам-тимы {{link}}</code>""",
+            "shct_set": "<emoji document_id=5361940169937158185>🥇</emoji> <b>Шорткат <code>{}</code> установлен!</b>",
         }
 
     def __init__(self):
@@ -151,28 +158,71 @@ class SafeBase(loader.Module):
 
     @loader.command()
     async def scam(self, message):
-        """[имя шортката] [id] [ссылка на доказательства] шорткат для заноса человека в скамеров"""
+        """[имя шортката] [id/file] [ссылка на доказательства] шорткат для заноса человека в скамеров"""
         args = utils.get_args(message)
         if not args or len(args) < 2:
             return await utils.answer(message, self.strings["noargs"])
+        reply = await message.get_reply_message()
+        reply = reply if not isinstance(reply, MessageService) else None
         if len(args) == 2:
-            if not message.is_reply:
+            if not reply:
                 return await utils.answer(message, self.strings["noargs"])
             
             shortcut, account = args
-            link = (await message.get_reply_message()).link()
+            link = reply.link()
         else:
             shortcut, account, link = args
-        account = int(account)
+        ids = []
+        if account == "file" and reply:
+            if reply.media is None:
+                return await utils.answer(message, self.strings["answer_file"])
+            file = reply.download_media(bytes).decode()
+            lines = [x for x in file.splitlines() if x.strip().isdigit()]
+            ids.extend(lines)
+        else: 
+            account = int(account)
+            ids.append(account)
+
+        if not ids:
+            return await utils.answer(message, self.strings["no_ids"])
 
         shortcuts = self.get("shortcuts", {})
         if not shortcut in shortcuts:
             return await utils.answer(message, self.strings["no_shct"])
         
-        await self.client.send_message(
-            self.config["send_scam_chat"],
-            shortcuts[shortcut].format(
-                account=account,
-                link=link,
+        for acc_id in ids:
+            await self.client.send_message(
+                self.config["send_scam_chat"],
+                shortcuts[shortcut].format(
+                    account=acc_id,
+                    link=link,
+                )
             )
-        )
+            await asyncio.sleep(SCAM_DELAY)
+    
+    @loader.command()
+    async def addscam(self, message):
+        """[имя шортката] [строка]
+
+        Пример:
+        .addscam scamgroup /scam {account} 2 Участник скам-тимы {link}
+
+        При вызове ``.scam scamgroup 1226061707 https://t.me/cht/25``
+        отправит в чат:
+        /scam 1226061707 2 Участник скам-тимы https://t.me/cht/25
+        """
+        args = utils.get_args_raw().split(maxsplit=1)
+        if len(args) != 2:
+            return await utils.answer(message, self.strings["noargs"])
+        
+        if (
+            len(args[1]) == len(args[1].format(account="5", link="t.me"))
+            or not len(args[1].format(account="5", link="t.me")) == len(args[1] + "5" + "t.me")
+        ):
+            return await utils.answer(message, self.strings["inv_shct"])
+
+        shortcuts = self.get("shortcuts", {})
+        shortcuts[args[0]] = args[1]
+        self.set("shortcuts", shortcuts)
+
+        await utils.answer(message, self.strings["shct_set"].format(args[0]))
