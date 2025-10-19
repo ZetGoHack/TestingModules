@@ -35,6 +35,9 @@ class SafeBase(loader.Module):
             "shct_rm": "<emoji document_id=5361940169937158185>🥇</emoji> <b>Шорткат <code>{}</code> удалён!</b>",
             "entr_to_base": "<emoji document_id=5364035851984603413>💪</emoji> <b>Заношу в базу {} человек...</b>",
             "succes": "<emoji document_id=5361940169937158185>🥇</emoji> <b>Успешно занёс!</b>",
+            "no_shcts": "<emoji document_id=5019523782004441717>❌</emoji> <b>Вы не добавили ни одного шортката!</b>",
+            "shct_list": "<emoji document_id=5361940169937158185>🥇</emoji> <b>Ваши шорткаты:</b><blockquote expandable>{}</blockquote>",
+            "list_child": "<code>{}</code> - {}",
         }
 
     def __init__(self):
@@ -248,3 +251,21 @@ class SafeBase(loader.Module):
             self.set("shortcuts", shortcuts)
 
         await utils.answer(message, self.strings["shct_rm"].format(name))
+
+    @loader.command()
+    async def listscam(self, message):
+        """показать список шорткатов"""
+        if not (shcts := self.get("shortcuts", {})):
+            return await utils.answer(message, self.strings["no_shcts"])
+        await utils.answer(
+            message,
+            self.strings["shct_list"].format(
+                "\n".join(
+                    [
+                        self.strings["list_child"].format(
+                            name, command
+                        ) for name, command in shcts.items()
+                ]
+                )
+            )
+        )
