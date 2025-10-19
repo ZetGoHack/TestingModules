@@ -34,7 +34,7 @@ class SafeBase(loader.Module):
             "shct_set": "<emoji document_id=5361940169937158185>🥇</emoji> <b>Шорткат <code>{}</code> установлен!</b>",
             "shct_rm": "<emoji document_id=5361940169937158185>🥇</emoji> <b>Шорткат <code>{}</code> удалён!</b>",
             "entr_to_base": "<emoji document_id=5364035851984603413>💪</emoji> <b>Заношу в базу {} человек...</b>",
-            "succes": "<emoji document_id=5361940169937158185>🥇</emoji> <b>Успешно занесено {} человек!</b>",
+            "succes": "<emoji document_id=5361940169937158185>🥇</emoji> <b>Успешно занёс!</b>",
         }
 
     def __init__(self):
@@ -206,7 +206,7 @@ class SafeBase(loader.Module):
             )
             await asyncio.sleep(SCAM_DELAY)
         
-        await utils.answer(message, self.strings["succes"].format(len(ids)))
+        await utils.answer(message, self.strings["succes"])
     
     @loader.command()
     async def addscam(self, message):
