@@ -211,7 +211,7 @@ class SafeBase(loader.Module):
         отправит в чат:
         /scam 1226061707 2 Участник скам-тимы https://t.me/cht/25
         """
-        args = utils.get_args_raw().split(maxsplit=1)
+        args = utils.get_args_raw(message).split(maxsplit=1)
         if len(args) != 2:
             return await utils.answer(message, self.strings["noargs"])
         
