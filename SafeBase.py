@@ -5,7 +5,7 @@
 #░░░███░███░░█░░███░███
 
 # meta developer: @ZetGo
-__version__ = (1,0,0)
+__version__ = (1,0,2)
 import asyncio, herokutl, math, io
 from herokutl.tl.types import MessageService
 from herokutl.tl.functions.channels import GetFullChannelRequest
@@ -143,15 +143,16 @@ class SafeBase(loader.Module):
                 async with self.client.conversation(self.config["check_chat_id"], exclusive=False) as conv:
                     await conv.send_message(f"чек {user}")
                     resp = await conv.get_response()
-                    if not "нет записей" in resp.text or not "Администратором" in resp.text:
+                    if not "нет записей" in resp.text or "Администратором" in resp.text:
                         ids.discard(user)
                     await asyncio.sleep(CHECK_DELAY)
             else:
                 return await message.delete()
 
         text = "\n".join(map(str, ids))
-
-        await form.delete()
+        try:
+            await form.delete()
+        except: pass
 
         if output == "message":
             await utils.answer(message, self.strings["part_list"].format(
