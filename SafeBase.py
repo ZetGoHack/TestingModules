@@ -103,9 +103,10 @@ class SafeBase(loader.Module):
         all_users = [u for u in (await self.client.get_participants(group))]
         ids = set()
 
+        helper = await message.respond("Opening form...")
         self.getlist_c = True
         form = await utils.answer(
-            message,
+            helper,
             self.strings["stop_cycle"],
             reply_markup={
                 "text": self.strings["stop"],
