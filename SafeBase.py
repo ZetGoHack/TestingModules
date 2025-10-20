@@ -5,7 +5,7 @@
 #░░░███░███░░█░░███░███
 
 # meta developer: @ZetGo
-__version__ = (1,0,2)
+__version__ = (1,0,3)
 import asyncio, herokutl, math, io
 from herokutl.tl.types import MessageService
 from herokutl.tl.functions.channels import GetFullChannelRequest
@@ -103,7 +103,7 @@ class SafeBase(loader.Module):
         all_users = [u for u in (await self.client.get_participants(group))]
         ids = set()
 
-        helper = await message.respond("Opening form...")
+        helper = await message.reply("Opening form...")
         self.getlist_c = True
         form = await utils.answer(
             helper,
