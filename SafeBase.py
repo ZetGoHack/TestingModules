@@ -178,7 +178,7 @@ class SafeBase(loader.Module):
                 return await utils.answer(message, self.strings["noargs"])
             
             shortcut, account = args
-            link = reply.link()
+            link = reply.link(thread=True)
         else:
             shortcut, account, link = args
 
