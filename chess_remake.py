@@ -200,7 +200,7 @@ class Chess(loader.Module):
             'Black': "{player}",
         }
         
-    async def _check_player(self, call: InlineCall, game_id, only_opponent=False):
+    async def _check_player(self, call: InlineCall, game_id: int, only_opponent=False):
         if isinstance(call, (BotInlineCall, InlineCall, InlineMessage)):
             call.inline_manager._units[call.unit_id]["always_allow"] = True # хоба патчим забывчивость хикки
 
@@ -247,7 +247,7 @@ class Chess(loader.Module):
         }
         return (sender, opponent)
 
-    async def _invite(self, call: InlineCall, game_id):
+    async def _invite(self, call: InlineCall, game_id: int):
         if not await self._check_player(call, game_id): return
         game  = self.games[game_id]
         await utils.answer(
@@ -287,7 +287,7 @@ class Chess(loader.Module):
             disable_security=True
         )
 
-    async def settings(self, call: InlineCall, game_id):
+    async def settings(self, call: InlineCall, game_id: int):
         if not await self._check_player(call, game_id): return
         game = self.games[game_id]
         reply_markup = []
@@ -323,7 +323,7 @@ class Chess(loader.Module):
             reply_markup=reply_markup,
             disable_security=True
         )
-    async def _settings(self, call: InlineCall, game_id, ruleset: str | list):
+    async def _settings(self, call: InlineCall, game_id: int, ruleset: str | list):
         reply_markup = []
         text = "🍓"
         if isinstance(ruleset, str):
@@ -416,7 +416,7 @@ class Chess(loader.Module):
 
     ############## Preparing all for game start... ##############
 
-    async def _init_game(self, call: InlineCall, game_id, ans="yes"):
+    async def _init_game(self, call: InlineCall, game_id: int, ans="yes"):
         if not await self._check_player(call, game_id=game_id, only_opponent=True): return
         if ans == "no":
             self.games.pop(game_id, None)
@@ -445,7 +445,7 @@ class Chess(loader.Module):
             return await utils.answer(call, self.strings["waiting_for_start"])
         await self._start_game(call, game_id)
 
-    async def _set_timer(self, board_call: InlineCall, game_id, chat_id):
+    async def _set_timer(self, board_call: InlineCall, game_id: int, chat_id):
         timer = self.games[game_id]["Timer"]["class"]
         self.games[game_id]["Timer"]["message"] = (
             await self.inline.form(self.strings["timer_text"].format(
@@ -483,13 +483,13 @@ class Chess(loader.Module):
 
     ############## Starting game... ############## 
 
-    async def _start_timer(self, call: InlineCall, board_call, game_id):
+    async def _start_timer(self, call: InlineCall, board_call, game_id: int):
         if not await self._check_player(call, game_id): return
         timer = self.games[game_id]["Timer"]
         timer["timer_loop"] = True
         await self._start_game(board_call, game_id)
 
-    async def _start_game(self, call: InlineCall, game_id):
+    async def _start_game(self, call: InlineCall, game_id: int):
         if not await self._check_player(call, game_id): return
         game = self.games[game_id]
         node = chess.pgn.Game()
@@ -497,18 +497,39 @@ class Chess(loader.Module):
         game["game"] = {
             "board": game.pop("board"),
             "node": node,
-            "state": "idle", # 'idle' - начальное состояние (показать ток доску с фигурами), 'in_choose' - игрок жамкнул на фигуру и нужно показать доступные ходы
+            "state": "idle", # 'idle' - начальное состояние (показать ток доску с фигурами), 'in_choose' - игрок жамкнул на фигуру и нужно показать доступные ходы, 'the_end' - конец партии
+            "add_params": {
+                "choosen_figure_coord": "",
+            }
         }
         await utils.answer(call, f"filler\n{utils.escape_html(str(self.games[game_id]))}", reply_markup={"text":"stop", "callback": lambda c, id: self.games[id]['Timer'].update({'timer_loop': not self.games[id]['Timer']['timer_loop']}), "args": (game_id,)}, disable_security=True)
 
 # TODO начало игры (придумать текста, генерация доски (чтение и запись фигур из доски, отрисовка в разных стилях, отображение возможных ходов), возможность выгрузить pgn при нажатии на A1 5 раз подряд в любой момент игры, кнопки ничьи/сдачи), игра (отображение событий(шах), синхронизация с таймером), лень
 
-    def _get_piece_symbol(self, game_id, key):
-        piece = self.games[game_id]["game"]["board"].piece_at(chess.parse_square(key)).symbol()
-        return self.games[game_id]["style"][piece] if piece else " "
+    def _get_piece_symbol(self, game_id: int, coord: str) -> str:
+        game = self.games[game_id]
+        piece = game["game"]["board"].piece_at(chess.parse_square(coord)).symbol()
+        return game["style"][piece] if piece else " "
+    
+    def _get_move_symbol(self, game_id: int, coord: str):
+        game = self.games[game_id]
+        if len(coord) == 5:
+            pass
+    
+    def _get_avaliable_moves(self, game_id: int, coord: str) -> list:
+        game = self.games[game_id]
+        coord = chess.parse_square(coord)
+        moves = [move.uci() for move in game["game"]["board"].legal_moves if move.from_square == coord]
+        return moves
 
-    def _get_board_dict(self, game_id) -> dict:
+    def _get_board_dict(self, game_id: int) -> dict:
         game = self.games[game_id]
         coords = self.coords.copy()
         for key in self.coords:
             coords[key] = self._get_piece_symbol(game_id, key)
+        
+        if game["game"]["state"] == "in_choose":
+            choosen_coord = game["game"]["add_params"]["choosen_figure_coord"]
+            for move in self._get_avaliable_moves(game_id, choosen_coord):
+                coord = move[2:4]
+                pass
