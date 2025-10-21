@@ -516,7 +516,7 @@ class Chess(loader.Module):
         if len(coord) == 5:
             pass
     
-    def _get_avaliable_moves(self, game_id: int, coord: str) -> list:
+    def _get_avaliable_moves(self, game_id: int, coord: str) -> list[str]:
         game = self.games[game_id]
         coord = chess.parse_square(coord)
         moves = [move.uci() for move in game["game"]["board"].legal_moves if move.from_square == coord]
