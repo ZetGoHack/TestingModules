@@ -19,8 +19,10 @@ import random as r
 import time
 # -      types     - #
 from telethon.tl.types import PeerUser
+
 from ..inline.types import BotInlineCall, InlineCall, InlineMessage
 # -      end       - #
+
 
 
 class Timer:
@@ -505,16 +507,28 @@ class Chess(loader.Module):
         await utils.answer(call, f"filler\n{utils.escape_html(str(self.games[game_id]))}", reply_markup={"text":"stop", "callback": lambda c, id: self.games[id]['Timer'].update({'timer_loop': not self.games[id]['Timer']['timer_loop']}), "args": (game_id,)}, disable_security=True)
 
 # TODO начало игры (придумать текста, генерация доски (чтение и запись фигур из доски, отрисовка в разных стилях, отображение возможных ходов), возможность выгрузить pgn при нажатии на A1 5 раз подряд в любой момент игры, кнопки ничьи/сдачи), игра (отображение событий(шах), синхронизация с таймером), лень
+    def VSCODE_SHOW_IT_PLS(self, pls: str = "🙏🙏🙏"):
+        self.games: dict[] = self.games
 
     def _get_piece_symbol(self, game_id: int, coord: str) -> str:
         game = self.games[game_id]
         piece = game["game"]["board"].piece_at(chess.parse_square(coord)).symbol()
         return game["style"][piece] if piece else " "
     
-    def _get_move_symbol(self, game_id: int, coord: str):
+    def _get_move_symbol(self, game_id: int, move: str):
         game = self.games[game_id]
-        if len(coord) == 5:
-            pass
+        if len(move) == 5:
+            return game["style"][
+                "capture_promotion" if (move := chess.Move.from_uci(move))
+                and game["game"]["board"].is_capture(move)
+                else "promotion"
+            ]
+        else:
+            return game["style"][
+                "capture" if (move := chess.Move.from_uci(move))
+                and game["game"]["board"].is_capture(move)
+                else "move"
+            ]
     
     def _get_avaliable_moves(self, game_id: int, coord: str) -> list[str]:
         game = self.games[game_id]
@@ -525,11 +539,13 @@ class Chess(loader.Module):
     def _get_board_dict(self, game_id: int) -> dict:
         game = self.games[game_id]
         coords = self.coords.copy()
-        for key in self.coords:
-            coords[key] = self._get_piece_symbol(game_id, key)
+        for coord in self.coords:
+            coords[coord] = self._get_piece_symbol(game_id, coord)
         
         if game["game"]["state"] == "in_choose":
             choosen_coord = game["game"]["add_params"]["choosen_figure_coord"]
             for move in self._get_avaliable_moves(game_id, choosen_coord):
                 coord = move[2:4]
-                pass
+                coords[coord] = self._get_move_symbol(game_id, move)
+        
+        return coords
