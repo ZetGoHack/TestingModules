@@ -18,7 +18,7 @@ import chess.pgn
 import random as r
 import time
 # -      types     - #
-from telethon.tl.types import PeerUser
+from telethon.tl.types import PeerUser, Message
 from typing import TypedDict, List
 from ..inline.types import BotInlineCall, InlineCall, InlineMessage
 # -      end       - #
@@ -249,7 +249,7 @@ class Chess(loader.Module):
                 return False
         return True
     
-    async def get_players(self, message):
+    async def get_players(self, message: Message):
         sender = {
             "id": message.from_id.user_id if isinstance(message.peer_id, PeerUser) else message.sender.id,
             "name": (await self.client.get_entity(message.from_id if isinstance(message.peer_id, PeerUser) else message.sender.id)).first_name
@@ -424,7 +424,7 @@ class Chess(loader.Module):
             
 
     @loader.command(ru_doc="[reply/username/id] - предложить человеку сыграть партию")
-    async def chess(self, message):
+    async def chess(self, message: Message):
         """[reply/username/id] - propose a person to play a game"""
         sender, opponent = await self.get_players(message)
         if not sender or not opponent: return
@@ -518,7 +518,7 @@ class Chess(loader.Module):
 
     ############## Starting game... ############## 
 
-    async def _start_timer(self, call: InlineCall, board_call, game_id: int):
+    async def _start_timer(self, call: InlineCall, board_call: InlineCall, game_id: int):
         if not await self._check_player(call, game_id): return
         timer = self.games[game_id]["Timer"]
         timer["timer_loop"] = True
@@ -546,7 +546,7 @@ class Chess(loader.Module):
         piece = game["game"]["board"].piece_at(chess.parse_square(coord)).symbol()
         return game["style"][piece] if piece else " "
     
-    def _get_move_symbol(self, game_id: int, move: str):
+    def _get_move_symbol(self, game_id: int, move: str) -> str:
         game = self.games[game_id]
         if len(move) == 5:
             return game["style"][
