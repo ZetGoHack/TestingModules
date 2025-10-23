@@ -19,11 +19,9 @@ import random as r
 import time
 # -      types     - #
 from telethon.tl.types import PeerUser
-
+from typing import TypedDict, List
 from ..inline.types import BotInlineCall, InlineCall, InlineMessage
 # -      end       - #
-
-
 
 class Timer:
     def __init__(self, scnds):
@@ -74,6 +72,41 @@ class Timer:
         if self.t:
             self.t.cancel()
         self.running = {"white": False, "black": False}
+
+### для удобства ###
+
+class Player(TypedDict):
+    id: int
+    name: str
+
+class TimerDict(TypedDict):
+    available: bool 
+    timer: Timer
+    timer_loop: bool
+    message: InlineCall
+
+class GameParams(TypedDict):
+    choosen_figure_coord: str
+
+class Game(TypedDict):
+    board: chess.Board
+    node: chess.pgn.Game
+    state: str
+    add_params: GameParams
+
+class GameObj(TypedDict):
+    game_id: int
+    game: Game
+    sender: Player
+    opponent: Player
+    Timer: TimerDict
+    time: int
+    host_plays: str
+    style: dict[str, str]
+
+GamesDict = dict[str, GameObj]
+
+### для удобства ###
 
 @loader.tds
 class Chess(loader.Module):
@@ -190,6 +223,7 @@ class Chess(loader.Module):
         if games:
             self.games = games
         else: self.games = {}
+        self.games: GamesDict
         self.gsettings = {
             "style": "figures-with-circles", # "figures", "letters"
         }
@@ -257,8 +291,8 @@ class Chess(loader.Module):
             self.strings["invite"].format(opponent=utils.escape_html(self.games[game_id]["opponent"]["name"])) + self.strings['settings_text'].format(
                 style=game['style'],
 
-                timer=self.strings['available'] if game['Timer']['available'] and not game['Timer']['class']
-                else self.strings['timer'].format(game['Timer']['class'].minutes()) if game['Timer']['class']
+                timer=self.strings['available'] if game['Timer']['available'] and not game['Timer']['timer']
+                else self.strings['timer'].format(game['Timer']['timer'].minutes()) if game['Timer']['timer']
                 else self.strings['not_available'],
                 
                 color=self.strings['random'] if game['host_plays'] == 'r' 
@@ -314,8 +348,8 @@ class Chess(loader.Module):
             self.strings['settings_text'].format(
                 style=game['style'],
 
-                timer=self.strings['available'] if game['Timer']['available'] and not game['Timer']['class']
-                else self.strings['timer'].format(game['Timer']['class'].minutes()) if game['Timer']['class']
+                timer=self.strings['available'] if game['Timer']['available'] and not game['Timer']['timer']
+                else self.strings['timer'].format(game['Timer']['timer'].minutes()) if game['Timer']['timer']
                 else self.strings['not_available'],
 
                 color=self.strings['random'] if game['host_plays'] == 'r' 
@@ -383,7 +417,7 @@ class Chess(loader.Module):
             if ruleset[0] == "style":
                 self.set('style', ruleset[1])
             if ruleset[0] == "Timer" and isinstance(ruleset[1], int):
-                self.games[game_id]['Timer']['class'] = Timer(ruleset[1]*60)
+                self.games[game_id]['Timer']['timer'] = Timer(ruleset[1]*60)
             else:
                 self.games[game_id][ruleset[0]] = ruleset[1]
             await self.settings(call, game_id)
@@ -402,18 +436,18 @@ class Chess(loader.Module):
             if not getattr(past_game, "game", None):
                 self.games.pop(past_game['game_id'], None)
         if not self.games:
-            game_id = 1
+            game_id = str(1)
         else:
-            game_id = max(self.games.keys()) + 1
-        self.games[game_id] = {
-            "game_id": game_id,
-            "sender": sender,
-            "opponent": opponent,
-            "Timer": {"available": True if isinstance(message.peer_id, PeerUser) else False, "class": None, "timer_loop": False},
-            "time": int(time.time()),
-            "host_plays": "r", # r(andom), w(hite), b(lack)
-            "style": self.gsettings['style'],
-        }
+            game_id = str(max(map(int, self.games.keys())) + 1)
+        self.games[game_id] = GameObj(
+            game_id = game_id,
+            sender = sender,
+            opponent = opponent,
+            Timer = {"available": True if isinstance(message.peer_id, PeerUser) else False, "timer": None, "timer_loop": False},
+            time = int(time.time()),
+            host_plays = "r", # r(andom), w(hite), b(lack)
+            style = self.gsettings['style']
+        )
         await self._invite(message, game_id)
 
     ############## Preparing all for game start... ##############
@@ -426,7 +460,6 @@ class Chess(loader.Module):
             return
         game = self.games[game_id]
         await utils.answer(call, self.strings["step1"])
-        game["board"] = chess.Board()
         await asyncio.sleep(0.8)
         await utils.answer(call, self.strings["step2"])
         game["style"] = self.styles[game["style"]]
@@ -440,7 +473,7 @@ class Chess(loader.Module):
         game.pop("host_plays", None)
         game["Timer"].pop("available", None)
         await asyncio.sleep(0.8)
-        if isinstance(self.games[game_id]["Timer"]["class"], Timer):
+        if isinstance(self.games[game_id]["Timer"]["timer"], Timer):
             await utils.answer(call, self.strings["step4.T"])
             await self._set_timer(call, game_id, call._units[call.unit_id]['chat'])
             await asyncio.sleep(0.8)
@@ -448,7 +481,7 @@ class Chess(loader.Module):
         await self._start_game(call, game_id)
 
     async def _set_timer(self, board_call: InlineCall, game_id: int, chat_id):
-        timer = self.games[game_id]["Timer"]["class"]
+        timer = self.games[game_id]["Timer"]["timer"]
         self.games[game_id]["Timer"]["message"] = (
             await self.inline.form(self.strings["timer_text"].format(
                 int(await timer.white_time()), 
@@ -467,7 +500,7 @@ class Chess(loader.Module):
             if self.games[game_id]["Timer"]["timer_loop"]:
 
                 async def timer_loop(game_id):
-                    timer: Timer = self.games[game_id]["Timer"]["class"]
+                    timer = self.games[game_id]["Timer"]["timer"]
                     await timer.start()
                     while self.games[game_id]["Timer"]["timer_loop"]:
                         if not any([await timer.white_time(), await timer.black_time()]):
@@ -497,7 +530,7 @@ class Chess(loader.Module):
         node = chess.pgn.Game()
         node.headers.update(self.pgn)
         game["game"] = {
-            "board": game.pop("board"),
+            "board": chess.Board(),
             "node": node,
             "state": "idle", # 'idle' - начальное состояние (показать ток доску с фигурами), 'in_choose' - игрок жамкнул на фигуру и нужно показать доступные ходы, 'the_end' - конец партии
             "add_params": {
@@ -507,8 +540,6 @@ class Chess(loader.Module):
         await utils.answer(call, f"filler\n{utils.escape_html(str(self.games[game_id]))}", reply_markup={"text":"stop", "callback": lambda c, id: self.games[id]['Timer'].update({'timer_loop': not self.games[id]['Timer']['timer_loop']}), "args": (game_id,)}, disable_security=True)
 
 # TODO начало игры (придумать текста, генерация доски (чтение и запись фигур из доски, отрисовка в разных стилях, отображение возможных ходов), возможность выгрузить pgn при нажатии на A1 5 раз подряд в любой момент игры, кнопки ничьи/сдачи), игра (отображение событий(шах), синхронизация с таймером), лень
-    def VSCODE_SHOW_IT_PLS(self, pls: str = "🙏🙏🙏"):
-        self.games: dict[] = self.games
 
     def _get_piece_symbol(self, game_id: int, coord: str) -> str:
         game = self.games[game_id]
