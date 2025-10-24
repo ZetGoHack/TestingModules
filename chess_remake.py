@@ -73,16 +73,16 @@ class Timer:
             self.t.cancel()
         self.running = {"white": False, "black": False}
 
-### для удобства ###
+### Type annotations ###
 
 class Player(TypedDict):
     id: int
     name: str
 
 class TimerDict(TypedDict):
-    available: bool 
     timer: Timer
     timer_loop: bool
+    timer_is_set: bool
     message: InlineCall
 
 class GameParams(TypedDict):
@@ -92,6 +92,7 @@ class Game(TypedDict):
     board: chess.Board
     node: chess.pgn.Game
     state: str
+    reason: str
     add_params: GameParams
 
 class GameObj(TypedDict):
@@ -106,7 +107,7 @@ class GameObj(TypedDict):
 
 GamesDict = dict[str, GameObj]
 
-### для удобства ###
+### Type annotations ###
 
 @loader.tds
 class Chess(loader.Module):
@@ -466,11 +467,10 @@ class Chess(loader.Module):
         await asyncio.sleep(0.8)
         await utils.answer(call, self.strings["step3"])
         if (turn := game.pop("host_plays")) == "r":
-            turn = "w" if r.choice([0, 1]) == 0 else "b"
-        game["turn"] = turn
+            turn = r.choice(["w", "b"])
+        game["host_plays"] = turn
         await asyncio.sleep(0.8)
         await utils.answer(call, self.strings["step4"])
-        game.pop("host_plays", None)
         game["Timer"].pop("available", None)
         await asyncio.sleep(0.8)
         if isinstance(self.games[game_id]["Timer"]["timer"], Timer):
@@ -497,11 +497,12 @@ class Chess(loader.Module):
     @loader.loop(interval=1, autostart=True)
     async def main_loop(self):
         for game_id in self.games:
-            if self.games[game_id]["Timer"]["timer_loop"]:
+            if self.games[game_id]["Timer"]["timer_loop"] and not self.games[game_id]["Timer"].get("timer_is_set", False):
 
                 async def timer_loop(game_id):
                     timer = self.games[game_id]["Timer"]["timer"]
                     await timer.start()
+                    self.games[game_id]["Timer"]["timer_is_set"] = True
                     while self.games[game_id]["Timer"]["timer_loop"]:
                         if not any([await timer.white_time(), await timer.black_time()]):
                             self.games[game_id]["Timer"]["timer_loop"] = False
@@ -575,11 +576,11 @@ class Chess(loader.Module):
         
         if game["game"]["state"] == "in_choose":
             choosen_coord = game["game"]["add_params"]["chosen_figure_coord"]
-            for move in self._get_avaliable_moves(game_id, choosen_coord):
+            for move in self._get_available_moves(game_id, choosen_coord):
                 coord = move[2:4]
                 coords[coord] = self._get_move_symbol(game_id, move)
         
         return coords
 
-    async def update_board():
+    async def update_board(self, game_id):
         pass # TODO
