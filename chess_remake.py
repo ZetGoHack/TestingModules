@@ -19,7 +19,7 @@ import random as r
 import time
 # -      types     - #
 from telethon.tl.types import PeerUser, Message
-from typing import TypedDict, List
+from typing import TypedDict
 from ..inline.types import BotInlineCall, InlineCall, InlineMessage
 # -      end       - #
 
@@ -86,7 +86,7 @@ class TimerDict(TypedDict):
     message: InlineCall
 
 class GameParams(TypedDict):
-    choosen_figure_coord: str
+    chosen_figure_coord: str
 
 class Game(TypedDict):
     board: chess.Board
@@ -534,7 +534,7 @@ class Chess(loader.Module):
             "node": node,
             "state": "idle", # 'idle' - начальное состояние (показать ток доску с фигурами), 'in_choose' - игрок жамкнул на фигуру и нужно показать доступные ходы, 'the_end' - конец партии
             "add_params": {
-                "choosen_figure_coord": "",
+                "chosen_figure_coord": "",
             }
         }
         await utils.answer(call, f"filler\n{utils.escape_html(str(self.games[game_id]))}", reply_markup={"text":"stop", "callback": lambda c, id: self.games[id]['Timer'].update({'timer_loop': not self.games[id]['Timer']['timer_loop']}), "args": (game_id,)}, disable_security=True)
@@ -543,8 +543,8 @@ class Chess(loader.Module):
 
     def _get_piece_symbol(self, game_id: int, coord: str) -> str:
         game = self.games[game_id]
-        piece = game["game"]["board"].piece_at(chess.parse_square(coord)).symbol()
-        return game["style"][piece] if piece else " "
+        piece = game["game"]["board"].piece_at(chess.parse_square(coord))
+        return game["style"][piece.symbol()] if piece else " "
     
     def _get_move_symbol(self, game_id: int, move: str) -> str:
         game = self.games[game_id]
@@ -561,22 +561,25 @@ class Chess(loader.Module):
                 else "move"
             ]
     
-    def _get_avaliable_moves(self, game_id: int, coord: str) -> list[str]:
+    def _get_available_moves(self, game_id: int, coord: str) -> list[str]:
         game = self.games[game_id]
         coord = chess.parse_square(coord)
         moves = [move.uci() for move in game["game"]["board"].legal_moves if move.from_square == coord]
         return moves
 
-    def _get_board_dict(self, game_id: int) -> dict:
+    def _get_board_dict(self, game_id: int) -> dict[str, str]:
         game = self.games[game_id]
         coords = self.coords.copy()
         for coord in self.coords:
             coords[coord] = self._get_piece_symbol(game_id, coord)
         
         if game["game"]["state"] == "in_choose":
-            choosen_coord = game["game"]["add_params"]["choosen_figure_coord"]
+            choosen_coord = game["game"]["add_params"]["chosen_figure_coord"]
             for move in self._get_avaliable_moves(game_id, choosen_coord):
                 coord = move[2:4]
                 coords[coord] = self._get_move_symbol(game_id, move)
         
         return coords
+
+    async def update_board():
+        pass # TODO
