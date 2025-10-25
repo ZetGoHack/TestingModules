@@ -90,6 +90,7 @@ class GameParams(TypedDict):
 
 class Game(TypedDict):
     board: chess.Board
+    message: InlineCall
     node: chess.pgn.Game
     state: str
     reason: str
@@ -532,6 +533,7 @@ class Chess(loader.Module):
         node.headers.update(self.pgn)
         game["game"] = {
             "board": chess.Board(),
+            "message": call,
             "node": node,
             "state": "idle", # 'idle' - начальное состояние (показать ток доску с фигурами), 'in_choose' - игрок жамкнул на фигуру и нужно показать доступные ходы, 'the_end' - конец партии
             "add_params": {
@@ -583,4 +585,22 @@ class Chess(loader.Module):
         return coords
 
     async def update_board(self, game_id):
-        pass # TODO
+        game = self.games[game_id]["game"]
+
+        reply_markup = utils.chunks(
+            [
+                {
+                    "text": figure,
+                    "callback": self.choose_coord,
+                    "args": (game_id, coord),
+                }
+                for coord, figure in self._get_board_dict(game_id)
+            ],
+            8
+        )
+        await utils.answer(
+            game["message"],
+            self.strings["board"],
+            reply_markup=reply_markup,
+        )
+        
