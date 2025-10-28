@@ -1,4 +1,4 @@
-__version__ = ("updated", 2, 3) #######################
+__version__ = ("updated", 2, 4) #######################
 #░░░███░███░███░███░███
 #░░░░░█░█░░░░█░░█░░░█░█
 #░░░░█░░███░░█░░█░█░█░█
@@ -11,6 +11,7 @@ __version__ = ("updated", 2, 3) #######################
 
 # -      main      - #
 from .. import loader, utils
+from ..inline.types import BotInlineCall, InlineCall, InlineMessage
 # -      func      - #
 import asyncio
 import chess
@@ -20,7 +21,6 @@ import time
 # -      types     - #
 from telethon.tl.types import PeerUser, Message
 from typing import TypedDict
-from ..inline.types import BotInlineCall, InlineCall, InlineMessage
 # -      end       - #
 
 class Timer:
@@ -544,6 +544,21 @@ class Chess(loader.Module):
 
 # TODO начало игры (придумать текста, генерация доски (чтение и запись фигур из доски, отрисовка в разных стилях, отображение возможных ходов), возможность выгрузить pgn при нажатии на A1 5 раз подряд в любой момент игры, кнопки ничьи/сдачи), игра (отображение событий(шах), синхронизация с таймером), лень
 
+    def idle(self, game_id: str):
+        game = self.games[game_id]["game"]
+        game["state"] = "idle"
+        game["add_params"]["chosen_figure_coord"] = ""
+        
+    def choose(self, game_id: str, coord: str):
+        game = self.games[game_id]["game"]
+        game["state"] = "in_choose"
+        game["add_params"]["chosen_figure_coord"] = coord
+        
+    def the_end(self, game_id: str):
+        game = self.games[game_id]["game"]
+        game["state"] = "in_choose"
+        game["add_params"]["chosen_figure_coord"] = ""
+
     def _get_piece_symbol(self, game_id: int, coord: str) -> str:
         game = self.games[game_id]
         piece = game["game"]["board"].piece_at(chess.parse_square(coord))
@@ -565,6 +580,7 @@ class Chess(loader.Module):
             ]
     
     def _get_available_moves(self, game_id: int, coord: str) -> list[str]:
+        if not coord: return []
         game = self.games[game_id]
         coord = chess.parse_square(coord)
         moves = [move.uci() for move in game["game"]["board"].legal_moves if move.from_square == coord]
@@ -584,7 +600,7 @@ class Chess(loader.Module):
         
         return coords
 
-    async def update_board(self, game_id):
+    async def update_board(self, game_id: int):
         game = self.games[game_id]["game"]
 
         reply_markup = utils.chunks(
@@ -594,7 +610,7 @@ class Chess(loader.Module):
                     "callback": self.choose_coord,
                     "args": (game_id, coord),
                 }
-                for coord, figure in self._get_board_dict(game_id)
+                for coord, figure in self._get_board_dict(game_id).items()
             ],
             8
         )
@@ -603,4 +619,37 @@ class Chess(loader.Module):
             self.strings["board"],
             reply_markup=reply_markup,
         )
+    
+    async def choose_coord(self, call: BotInlineCall, game_id: int, coord: str):
+        # тут проверку кто ходит окда
+        game = self.games[game_id]["game"]
+        state = game["state"]
+
+        if state == "idle":
+            self.choose(game_id, coord)
+            return await self.update_board(game_id)
         
+        elif state == "in_choose":
+            if coord == game["add_params"]["chosen_figure_coord"] or not game["board"].piece_at(chess.parse_square(coord)):
+                self.idle(game_id)
+                return await self.update_board(game_id)
+            
+            av_moves = self._get_available_moves(game_id, game["add_params"]["chosen_figure_coord"])
+            coord_matches = [move for move in av_moves if coord in move]
+
+            if len(coord_matches) == 4:
+                pass
+            elif len(coord_matches) == 1:
+                pass
+            else:
+                self.choose(game_id, coord)
+                return await self.update_board(game_id)
+            return 
+        
+        elif state == "the_end":
+            pass
+
+        else:
+            await call.answer("ты игру сломал?")
+            self.idle(game_id)
+            return
