@@ -103,7 +103,7 @@ class GameObj(TypedDict):
     opponent: Player
     Timer: TimerDict
     time: int
-    host_plays: str
+    host_plays: bool # True - white, False - black
     style: dict[str, str]
 
 GamesDict = dict[str, GameObj]
@@ -241,14 +241,19 @@ class Chess(loader.Module):
     async def _check_player(self, call: InlineCall, game_id: int, only_opponent=False):
         if isinstance(call, (BotInlineCall, InlineCall, InlineMessage)):
             call.inline_manager._units[call.unit_id]["always_allow"] = True # хоба патчим забывчивость хикки
+            game = self.games[game_id]
+            _from_id = call.from_user.id
 
-            if call.from_user.id != self.games[game_id]["sender"]["id"]:
-                if call.from_user.id != self.games[game_id]["opponent"]["id"]:
+            if _from_id != game["sender"]["id"]:
+                if _from_id != game["opponent"]["id"]:
                     await call.answer(self.strings["not_available"])
                     return False
-            elif call.from_user.id == self.games[game_id]["sender"]["id"] and only_opponent:
+            elif _from_id == game["sender"]["id"] and only_opponent:
                 await call.answer(self.strings["not_you"])
                 return False
+            elif game["host_plays"] == game["game"]["board"].turn and game["sender"]["id"] == _from_id:
+                return True
+            elif call: pass # TODO
         return True
     
     async def get_players(self, message: Message):
@@ -298,7 +303,7 @@ class Chess(loader.Module):
                 else self.strings['not_available'],
                 
                 color=self.strings['random'] if game['host_plays'] == 'r' 
-                else self.strings['white'] if game['host_plays'] == 'w'
+                else self.strings['white'] if game['host_plays'] == True
                 else self.strings['black']
             ),
             reply_markup = [
@@ -355,7 +360,7 @@ class Chess(loader.Module):
                 else self.strings['not_available'],
 
                 color=self.strings['random'] if game['host_plays'] == 'r' 
-                else self.strings['white'] if game['host_plays'] == 'w'
+                else self.strings['white'] if game['host_plays'] == True
                 else self.strings['black']
             ),
             reply_markup=reply_markup,
@@ -392,8 +397,8 @@ class Chess(loader.Module):
                 text = "♟️"
                 reply_markup.extend([
                     [
-                        {"text": self.strings['white'], "callback":self._settings, "args": (game_id, ['host_plays', 'w'])},
-                        {"text": self.strings['black'], "callback":self._settings, "args": (game_id, ['host_plays', 'b'] )}
+                        {"text": self.strings['white'], "callback":self._settings, "args": (game_id, ['host_plays', True])},
+                        {"text": self.strings['black'], "callback":self._settings, "args": (game_id, ['host_plays', True] )}
                     ],
                     [
                         {"text": self.strings['random'], "callback":self._settings, "args": (game_id, ['host_plays', 'r'])}
@@ -467,8 +472,8 @@ class Chess(loader.Module):
         game["style"] = self.styles[game["style"]]
         await asyncio.sleep(0.8)
         await utils.answer(call, self.strings["step3"])
-        if (turn := game.pop("host_plays")) == "r":
-            turn = r.choice(["w", "b"])
+        if (turn := game["host_plays"]) == "r":
+            turn = r.choice([True, False])
         game["host_plays"] = turn
         await asyncio.sleep(0.8)
         await utils.answer(call, self.strings["step4"])
@@ -630,21 +635,25 @@ class Chess(loader.Module):
             return await self.update_board(game_id)
         
         elif state == "in_choose":
-            if coord == game["add_params"]["chosen_figure_coord"] or not game["board"].piece_at(chess.parse_square(coord)):
+            if coord == game["add_params"]["chosen_figure_coord"]: # клик по той же фигуре
                 self.idle(game_id)
                 return await self.update_board(game_id)
             
             av_moves = self._get_available_moves(game_id, game["add_params"]["chosen_figure_coord"])
             coord_matches = [move for move in av_moves if coord in move]
 
-            if len(coord_matches) == 4:
+            if len(coord_matches) > 1: # пешка дошла до конца
                 pass
-            elif len(coord_matches) == 1:
+
+            elif len(coord_matches) == 1: # прост ход
                 pass
-            else:
+
+            elif game["board"].piece_at(chess.parse_square(coord)): # другая фигура
                 self.choose(game_id, coord)
-                return await self.update_board(game_id)
-            return 
+                await self.update_board(game_id)
+            
+            else: # в принципе нет там фигур
+                self.idle(game_id)
         
         elif state == "the_end":
             pass
