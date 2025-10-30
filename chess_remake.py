@@ -135,6 +135,7 @@ class Chess(loader.Module):
         "available": "Available",
         "not_available": "Not available",
         "not_you": "You cannot click here",
+        "opp_move": "Opponent's turn!",
         "random": "🎲 Random",
         "white": "⚪ White",
         "black": "⚫ Black",
@@ -177,6 +178,7 @@ class Chess(loader.Module):
         "available": "Доступно",
         "not_available": "Недоступно",
         "not_you": "Вы не можете нажать сюда!",
+        "opp_move": "Сейчас ход противника!",
         "random": "🎲 Рандом",
         "white": "⚪ Белые",
         "black": "⚫ Чёрные",
@@ -198,6 +200,16 @@ class Chess(loader.Module):
         "start_timer": "⏱️ Начать",
         "waiting_for_start": "🔁 Ожидаю включения таймера...",
     }
+
+    def __init__(self):
+        self.config = loader.ModuleConfig(
+            loader.ConfigValue(
+                "play_self",
+                False,
+                "Jst playing with urself",
+                validator=loader.validators.Boolean(),
+            )
+        )
     
     async def client_ready(self):
         self.styles = {
@@ -240,7 +252,6 @@ class Chess(loader.Module):
         
     async def _check_player(self, call: InlineCall, game_id: int, only_opponent=False):
         if isinstance(call, (BotInlineCall, InlineCall, InlineMessage)):
-            call.inline_manager._units[call.unit_id]["always_allow"] = True # хоба патчим забывчивость хикки
             game = self.games[game_id]
             _from_id = call.from_user.id
 
@@ -251,9 +262,13 @@ class Chess(loader.Module):
             elif _from_id == game["sender"]["id"] and only_opponent:
                 await call.answer(self.strings["not_you"])
                 return False
-            elif game["host_plays"] == game["game"]["board"].turn and game["sender"]["id"] == _from_id:
-                return True
-            elif call: pass # TODO
+            elif not self.config["play_self"]:
+                if game["host_plays"] == game["game"]["board"].turn and game["sender"]["id"] != _from_id:
+                    await call.answer(self.strings["opp_move"])
+                    return False
+                elif game["host_plays"] != game["game"]["board"].turn and game["opponent"]["id"] != _from_id:
+                    await call.answer(self.strings["opp_move"])
+                    return False
         return True
     
     async def get_players(self, message: Message):
@@ -435,7 +450,7 @@ class Chess(loader.Module):
         """[reply/username/id] - propose a person to play a game"""
         sender, opponent = await self.get_players(message)
         if not sender or not opponent: return
-        if sender['id'] == opponent['id']:
+        if sender['id'] == opponent['id'] and not self.config["play_self"]:
             await utils.answer(message, self.strings["playing_with_yourself?"])
             return
         if self.games:
@@ -504,7 +519,6 @@ class Chess(loader.Module):
     async def main_loop(self):
         for game_id in self.games:
             if self.games[game_id]["Timer"]["timer_loop"] and not self.games[game_id]["Timer"].get("timer_is_set", False):
-
                 async def timer_loop(game_id):
                     timer = self.games[game_id]["Timer"]["timer"]
                     await timer.start()
@@ -522,6 +536,12 @@ class Chess(loader.Module):
                         await asyncio.sleep(1)
                     await timer.stop()
                 asyncio.create_task(timer_loop(game_id))
+            if self.games[game_id]["game"].get("message", None):
+                self.games[game_id]["game"]["message"].inline_manager._units[
+                    self.games[game_id]["game"]["message"].unit_id
+                ]["always_allow"] = True # для ругающегося на эту строку гпт - по неизвестно какой причине фреймворк в какое-то время попросту
+                                         # забывает про отключение его проверки. мне это нужно, чтобы сам модуль брал на себя ответсвенность
+                                         # проверки, кто может управлять доской, а до кого очередь ещё не дошла
 
     ############## Starting game... ############## 
 
@@ -626,7 +646,7 @@ class Chess(loader.Module):
         )
     
     async def choose_coord(self, call: BotInlineCall, game_id: int, coord: str):
-        # тут проверку кто ходит окда
+        if not self._check_player(call, game_id): return
         game = self.games[game_id]["game"]
         state = game["state"]
 
@@ -642,18 +662,19 @@ class Chess(loader.Module):
             av_moves = self._get_available_moves(game_id, game["add_params"]["chosen_figure_coord"])
             coord_matches = [move for move in av_moves if coord in move]
 
-            if len(coord_matches) > 1: # пешка дошла до конца
-                pass
+            if len(coord_matches) == 1: # прост ход
+                pass # TODO
 
-            elif len(coord_matches) == 1: # прост ход
-                pass
+            elif len(coord_matches) > 1: # пешка дошла до конца
+                pass # TODO
 
             elif game["board"].piece_at(chess.parse_square(coord)): # другая фигура
                 self.choose(game_id, coord)
-                await self.update_board(game_id)
+                return await self.update_board(game_id)
             
             else: # в принципе нет там фигур
                 self.idle(game_id)
+                return await self.update_board(game_id)
         
         elif state == "the_end":
             pass
