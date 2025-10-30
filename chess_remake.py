@@ -18,6 +18,7 @@ import chess
 import chess.pgn
 import random as r
 import time
+from datetime import datetime, timezone
 # -      types     - #
 from telethon.tl.types import PeerUser, Message
 from typing import TypedDict
@@ -555,7 +556,12 @@ class Chess(loader.Module):
         if not await self._check_player(call, game_id): return
         game = self.games[game_id]
         node = chess.pgn.Game()
-        node.headers.update(self.pgn)
+        pgn = self.pgn.copy()
+        pgn["Date"] = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+        pgn["Round"] = str(game_id)
+        pgn["White"] = game["sender"] if game["host_plays"] else game["opponent"]
+        pgn["Black"] = game["opponent"] if game["host_plays"] else game["sender"]
+        node.headers.update(pgn)
         game["game"] = {
             "board": chess.Board(),
             "message": call,
@@ -644,6 +650,12 @@ class Chess(loader.Module):
             self.strings["board"],
             reply_markup=reply_markup,
         )
+
+    async def make_move(self, game_id: int, move: str):
+        game = self.games[game_id]["game"]
+        move = chess.Move.from_uci(move)
+        game["board"].push(move)
+        game["node"] = game["node"].add_variation(move)
     
     async def choose_coord(self, call: BotInlineCall, game_id: int, coord: str):
         if not self._check_player(call, game_id): return
@@ -651,7 +663,8 @@ class Chess(loader.Module):
         state = game["state"]
 
         if state == "idle":
-            self.choose(game_id, coord)
+            if self._get_available_moves(game_id, coord):
+                self.choose(game_id, coord)
             return await self.update_board(game_id)
         
         elif state == "in_choose":
@@ -663,7 +676,8 @@ class Chess(loader.Module):
             coord_matches = [move for move in av_moves if coord in move]
 
             if len(coord_matches) == 1: # прост ход
-                pass # TODO
+                self.make_move(game_id, coord_matches[0])
+                return await self.update_board(game_id)
 
             elif len(coord_matches) > 1: # пешка дошла до конца
                 pass # TODO
@@ -682,4 +696,4 @@ class Chess(loader.Module):
         else:
             await call.answer("ты игру сломал?")
             self.idle(game_id)
-            return
+            return await self.update_board(game_id)
