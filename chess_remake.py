@@ -157,7 +157,8 @@ class Chess(loader.Module):
         "reason_timer": "Time is out!",
         "start_timer": "⏱️ Start",
         "waiting_for_start": "🔁 Waiting for timer to start...",
-        }
+        "board": "",
+    }
     strings_ru = {
         "noargs": "<emoji document_id=5370724846936267183>🤔</emoji> Вы не указали с кем играть",
         "whosthat": "<emoji document_id=5019523782004441717>❌</emoji> Я не нахожу такого пользователя",
@@ -200,6 +201,7 @@ class Chess(loader.Module):
         "reason_timer": "Время вышло!",
         "start_timer": "⏱️ Начать",
         "waiting_for_start": "🔁 Ожидаю включения таймера...",
+        "board": "",
     }
 
     def __init__(self):
@@ -571,9 +573,13 @@ class Chess(loader.Module):
                 "chosen_figure_coord": "",
             }
         }
-        await utils.answer(call, f"filler\n{utils.escape_html(str(self.games[game_id]))}", reply_markup={"text":"stop", "callback": lambda c, id: self.games[id]['Timer'].update({'timer_loop': not self.games[id]['Timer']['timer_loop']}), "args": (game_id,)}, disable_security=True)
-
-# TODO начало игры (придумать текста, генерация доски (чтение и запись фигур из доски, отрисовка в разных стилях, отображение возможных ходов), возможность выгрузить pgn при нажатии на A1 5 раз подряд в любой момент игры, кнопки ничьи/сдачи), игра (отображение событий(шах), синхронизация с таймером), лень
+        await utils.answer(call, f"filler\n{utils.escape_html(str(self.games[game_id]))}",
+                           reply_markup={
+                               "text":"stop",
+                               "callback": lambda c, id: self.games[id]['Timer'].update({'timer_loop': not self.games[id]['Timer']['timer_loop']}),
+                               "args": (game_id,)},
+                            disable_security=True
+                        )
 
     def idle(self, game_id: str):
         game = self.games[game_id]["game"]
