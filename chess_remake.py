@@ -262,7 +262,7 @@ class Chess(loader.Module):
                 if _from_id != game["opponent"]["id"]:
                     await call.answer(self.strings["not_available"])
                     return False
-            elif _from_id == game["sender"]["id"] and only_opponent:
+            elif _from_id == game["sender"]["id"] and only_opponent and not self.config["play_self"]:
                 await call.answer(self.strings["not_you"])
                 return False
             elif not self.config["play_self"]:
@@ -546,7 +546,7 @@ class Chess(loader.Module):
                     await timer.stop()
                 asyncio.create_task(timer_loop(game_id))
 
-            if self.games[game_id]["game"].get("message", None):
+            if self.games[game_id].get("game", None):
                 self.games[game_id]["game"]["message"].inline_manager._units[
                     self.games[game_id]["game"]["message"].unit_id
                 ]["always_allow"] = True # для ругающегося на эту строку гпт - по неизвестно какой причине фреймворк в какое-то время попросту
