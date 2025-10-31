@@ -534,11 +534,18 @@ class Chess(loader.Module):
                             int(await timer.white_time()), 
                             int(await timer.black_time()), 
                             "" if self.games[game_id]["game"]["board"] else "⏹️ " + self.strings[self.games[game_id]["game"]["reason"]]
-                            )
+                            ),
+                            reply_markup={
+                               "text":"stop",
+                               "callback": lambda c, id: self.games[id]['Timer'].update({'timer_loop': not self.games[id]['Timer']['timer_loop']}),
+                               "args": (game_id,)
+                            },
+                            disable_security=True
                         )
                         await asyncio.sleep(1)
                     await timer.stop()
                 asyncio.create_task(timer_loop(game_id))
+
             if self.games[game_id]["game"].get("message", None):
                 self.games[game_id]["game"]["message"].inline_manager._units[
                     self.games[game_id]["game"]["message"].unit_id
@@ -573,13 +580,7 @@ class Chess(loader.Module):
                 "chosen_figure_coord": "",
             }
         }
-        await utils.answer(call, f"filler\n{utils.escape_html(str(self.games[game_id]))}",
-                           reply_markup={
-                               "text":"stop",
-                               "callback": lambda c, id: self.games[id]['Timer'].update({'timer_loop': not self.games[id]['Timer']['timer_loop']}),
-                               "args": (game_id,)},
-                            disable_security=True
-                        )
+        await self.update_board(game_id)
 
     def idle(self, game_id: str):
         game = self.games[game_id]["game"]
