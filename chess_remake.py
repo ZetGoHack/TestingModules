@@ -1,4 +1,4 @@
-__version__ = ("updated", 2, 4) #######################
+__version__ = ("updated", 2, 5) #######################
 #░░░███░███░███░███░███
 #░░░░░█░█░░░░█░░█░░░█░█
 #░░░░█░░███░░█░░█░█░█░█
@@ -201,7 +201,13 @@ class Chess(loader.Module):
         "reason_timer": "Время вышло!",
         "start_timer": "⏱️ Начать",
         "waiting_for_start": "🔁 Ожидаю включения таймера...",
-        "board": "",
+        "board": """\
+♔ Белые - {}
+♚ Чёрные - {}
+
+♟️ Сейчас ходят <b>{}</b>
+
+{}""",
     }
 
     def __init__(self):
@@ -639,7 +645,7 @@ class Chess(loader.Module):
         return coords
 
     async def update_board(self, game_id: int):
-        game = self.games[game_id]["game"]
+        game = self.games[game_id]
 
         reply_markup = utils.chunks(
             [
@@ -652,9 +658,19 @@ class Chess(loader.Module):
             ],
             8
         )
+
+        pgn = game["game"]["node"].accept(chess.pgn.StringExporter(columns=None, headers=False)).rsplit(maxsplit=1)
+        pgn[1] = f"<b>{pgn[1]}</b>"
+        last_moves = " ".join(pgn)
+
         await utils.answer(
-            game["message"],
-            self.strings["board"],
+            game["game"]["message"],
+            self.strings["board"].format(
+                game["sender"]["name"] if game["game"]["board"].turn else game["opponent"]["name"],
+                game["opponent"]["name"] if game["game"]["board"].turn else game["sender"]["name"],
+                self.strings["white"] if game["game"]["board"].turn else self.strings["black"],
+                last_moves[-16:],
+            ),
             reply_markup=reply_markup,
         )
 
