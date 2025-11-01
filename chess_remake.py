@@ -642,7 +642,7 @@ class Chess(loader.Module):
                 coord = move[2:4]
                 coords[coord] = self._get_move_symbol(game_id, move)
         
-        return coords[::-1]
+        return coords
 
     async def update_board(self, game_id: int):
         game = self.games[game_id]
@@ -655,7 +655,7 @@ class Chess(loader.Module):
                     "args": (game_id, coord),
                 }
                 for coord, figure in self._get_board_dict(game_id).items()
-            ],
+            ][::-1],
             8
         )
 
