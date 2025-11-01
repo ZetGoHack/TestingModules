@@ -3,7 +3,7 @@ import chess
 import chess.engine
 import chess.pgn
 
-engine = chess.engine.SimpleEngine.popen_uci("../stockfish-windows-x86-64-avx2/stockfish/stockfish-windows-x86-64-avx2.exe")
+engine = chess.engine.SimpleEngine.popen_uci("C:\\Users\\aleks\\Downloads\\stockfish-windows-x86-64-avx2\\stockfish\\stockfish-windows-x86-64-avx2.exe")
 board = chess.Board()
 game = chess.pgn.Game() 
 game.headers["Event"] = "test_chessengine %s" % (engine.id)
@@ -23,4 +23,4 @@ while not board.is_game_over():
     moveIndex+=1
 
 engine.quit()    
-print(game)
+print(game.accept(chess.pgn.StringExporter(columns=16, headers=False)))
