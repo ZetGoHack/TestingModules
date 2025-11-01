@@ -691,7 +691,7 @@ It's <b>{}</b>'s turn
             8
         )
 
-        pgn = game["game"]["root_node"].accept(chess.pgn.StringExporter(columns=None, headers=False)).rsplit(maxsplit=1)
+        pgn = game["game"]["root_node"].accept(chess.pgn.StringExporter(columns=None, headers=False)).replace("*", "").rsplit(maxsplit=1)
         pgn[-1] = f"<b>{pgn[-1]}</b>"
         last_moves = " ".join(pgn)
 
