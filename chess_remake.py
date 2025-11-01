@@ -674,7 +674,7 @@ class Chess(loader.Module):
             reply_markup=reply_markup,
         )
 
-    async def make_move(self, game_id: int, move: str):
+    def make_move(self, game_id: int, move: str):
         game = self.games[game_id]["game"]
         move = chess.Move.from_uci(move)
         game["board"].push(move)
