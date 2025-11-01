@@ -701,8 +701,12 @@ It's <b>{}</b>'s turn
                 game["sender"]["name"] if game["game"]["board"].turn else game["opponent"]["name"],
                 game["opponent"]["name"] if game["game"]["board"].turn else game["sender"]["name"],
                 self.strings["white"] if game["game"]["board"].turn else self.strings["black"],
-                self.strings["check"] + "\n" if game["game"]["board"].is_check() else "",
-                last_moves[-18:],
+                self.strings["check"] + "\n"
+                if game["game"]["board"].is_check()
+                and not game["game"]["board"].is_checkmate()
+                else self.strings["checkmate"] + "\n"
+                if game["game"]["board"].is_checkmate() else "",
+                last_moves[-32:],
             ),
             reply_markup=reply_markup,
         )
