@@ -1,4 +1,4 @@
-__version__ = ("updated", 2, 5) #######################
+__version__ = ("updated", 2, 6) #######################
 #░░░███░███░███░███░███
 #░░░░░█░█░░░░█░░█░░░█░█
 #░░░░█░░███░░█░░█░█░█░█
@@ -20,7 +20,7 @@ import random as r
 import time
 from datetime import datetime, timezone
 # -      types     - #
-from telethon.tl.types import PeerUser, Message
+from telethon.tl.types import PeerUser, User, Message
 from typing import TypedDict
 # -      end       - #
 
@@ -88,6 +88,7 @@ class TimerDict(TypedDict):
 
 class GameParams(TypedDict):
     chosen_figure_coord: str
+    reason_of_ending: str
 
 class Game(TypedDict):
     board: chess.Board
@@ -118,6 +119,7 @@ class Chess(loader.Module):
         "name": "Chess",
         "noargs": "<emoji document_id=5370724846936267183>🤔</emoji> You did not specify who to play with",
         "whosthat": "<emoji document_id=5019523782004441717>❌</emoji> I cannot find such a user",
+        "not_a_user": "<emoji document_id=5019523782004441717>❌</emoji> This is not a user",
         "playing_with_yourself?": "<emoji document_id=5384398004172102616>😈</emoji> Playing with yourself? Sorry, you can't",
         "invite": "{opponent} you have invited to play chess! Do you accept?\n\n",
         "settings_text": "⚙️ Current settings: \n\n    🎛️ <b>Style:</b> {style}\n    ⏲️ <b>Timer:</b> {timer}\n    ♟️ <b>Host plays:</b> {color}",
@@ -157,11 +159,21 @@ class Chess(loader.Module):
         "reason_timer": "Time is out!",
         "start_timer": "⏱️ Start",
         "waiting_for_start": "🔁 Waiting for timer to start...",
-        "board": "",
+        "board": """\
+♔ White - {}
+♚ Black - {}
+
+It's <b>{}</b>'s turn
+{}
+{}""",
+        "no_moves": "No moves for this piece!",
+        "check": "<b>Check!</b> ",
+        "checkmate": "<b>Checkmate!</b> ",
     }
     strings_ru = {
         "noargs": "<emoji document_id=5370724846936267183>🤔</emoji> Вы не указали с кем играть",
         "whosthat": "<emoji document_id=5019523782004441717>❌</emoji> Я не нахожу такого пользователя",
+        "not_a_user": "<emoji document_id=5019523782004441717>❌</emoji> Это не пользователь",
         "playing_with_yourself?": "<emoji document_id=5384398004172102616>😈</emoji> Одиночные шахматы? Простите, нет",
         "invite": "{opponent}, вас пригласили сыграть партию шахмат! Примите?\n\n",
         "settings_text": "⚙️ Текущие настройки: \n\n    🎛️ <b>Стиль доски:</b> <code>{style}</code>\n    ⏱️ <b>Таймер:</b> {timer}\n    ♟️ <b>Хост играет за:</b> {color}",
@@ -205,9 +217,13 @@ class Chess(loader.Module):
 ♔ Белые - {}
 ♚ Чёрные - {}
 
-♟️ Сейчас ходят <b>{}</b>
-
+Сейчас ходят <b>{}</b>
+{}
 {}""",
+        "no_moves": "Для этой фигуры нет ходов!",
+        "check": "<b>Шах!</b> ",
+        "checkmate": "<b>Шах и мат!</b> ",
+        "game_ended": "Игра завершена. Вы не можете делать ходы."
     }
 
     def __init__(self):
@@ -278,6 +294,9 @@ class Chess(loader.Module):
                 elif game["host_plays"] != game["game"]["board"].turn and game["opponent"]["id"] != _from_id:
                     await call.answer(self.strings["opp_move"])
                     return False
+            if game["game"]["state"] == "end_game":
+                await call.answer(self.strings["game_ended"], show_alert=True)
+                return
         return True
     
     async def get_players(self, message: Message):
@@ -288,6 +307,9 @@ class Chess(loader.Module):
         if message.is_reply:
             r = await message.get_reply_message()
             opponent = r.sender
+            if not isinstance(opponent, User):
+                await utils.answer(message, self.strings["not_a_user"])
+                return (None, None)
             opp_id = opponent.id
             opp_name = opponent.first_name
         else:
@@ -300,9 +322,15 @@ class Chess(loader.Module):
                 if opponent.isdigit():
                     opp_id = int(opponent)
                     opponent = await self.client.get_entity(opp_id)
+                    if not isinstance(opponent, User):
+                        await utils.answer(message, self.strings["not_a_user"])
+                        return (None, None)
                     opp_name = opponent.first_name
                 else:
                     opponent = await self.client.get_entity(opponent)
+                    if not isinstance(opponent, User):
+                        await utils.answer(message, self.strings["not_a_user"])
+                        return (None, None)
                     opp_name = opponent.first_name
                     opp_id = opponent.id
             except:
@@ -584,6 +612,7 @@ class Chess(loader.Module):
             "state": "idle", # 'idle' - начальное состояние (показать ток доску с фигурами), 'in_choose' - игрок жамкнул на фигуру и нужно показать доступные ходы, 'the_end' - конец партии
             "add_params": {
                 "chosen_figure_coord": "",
+                "reason_of_ending": "",
             }
         }
         await self.update_board(game_id)
@@ -598,9 +627,10 @@ class Chess(loader.Module):
         game["state"] = "in_choose"
         game["add_params"]["chosen_figure_coord"] = coord
         
-    def the_end(self, game_id: str):
+    def the_end(self, game_id: str, reason: str):
         game = self.games[game_id]["game"]
-        game["state"] = "in_choose"
+        game["state"] = "the_end"
+        game["add_params"]["reason_of_ending"] = reason
         game["add_params"]["chosen_figure_coord"] = ""
 
     def _get_piece_symbol(self, game_id: int, coord: str) -> str:
@@ -669,7 +699,8 @@ class Chess(loader.Module):
                 game["sender"]["name"] if game["game"]["board"].turn else game["opponent"]["name"],
                 game["opponent"]["name"] if game["game"]["board"].turn else game["sender"]["name"],
                 self.strings["white"] if game["game"]["board"].turn else self.strings["black"],
-                last_moves[-16:],
+                self.strings["check"] + "\n" if game["game"]["board"].is_check() else "",
+                last_moves[-32:],
             ),
             reply_markup=reply_markup,
         )
@@ -680,6 +711,20 @@ class Chess(loader.Module):
         game["board"].push(move)
         game["node"] = game["node"].add_variation(move)
     
+    def set_game_state(self, game_id: int):
+        game = self.games[game_id]["game"]
+        board = game["board"]
+        if board.is_checkmate():
+            self.the_end(game_id, "checkmate")
+        elif board.is_stalemate():
+            self.the_end(game_id, "stalemate")
+        elif board.is_insufficient_material():
+            self.the_end(game_id, "insufficient_material")
+        elif board.can_claim_fifty_moves():
+            self.the_end(game_id, "fifty_moves")
+        elif board.can_claim_threefold_repetition():
+            self.the_end(game_id, "threefold_repetition")
+    
     async def choose_coord(self, call: BotInlineCall, game_id: int, coord: str):
         if not await self._check_player(call, game_id): return
         game = self.games[game_id]["game"]
@@ -688,6 +733,8 @@ class Chess(loader.Module):
         if state == "idle":
             if self._get_available_moves(game_id, coord):
                 self.choose(game_id, coord)
+            else:
+                await call.answer(self.strings["no_moves"])
             return await self.update_board(game_id)
         
         elif state == "in_choose":
@@ -700,6 +747,7 @@ class Chess(loader.Module):
 
             if len(coord_matches) == 1: # прост ход
                 self.make_move(game_id, coord_matches[0])
+                self.set_game_state(game_id)
                 return await self.update_board(game_id)
 
             elif len(coord_matches) > 1: # пешка дошла до конца
@@ -714,7 +762,7 @@ class Chess(loader.Module):
                 return await self.update_board(game_id)
         
         elif state == "the_end":
-            pass
+            return
 
         else:
             await call.answer("ты игру сломал?")
