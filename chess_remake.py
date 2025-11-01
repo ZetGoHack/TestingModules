@@ -295,7 +295,7 @@ It's <b>{}</b>'s turn
                 elif game["host_plays"] != game["game"]["board"].turn and game["opponent"]["id"] != _from_id:
                     await call.answer(self.strings["opp_move"])
                     return False
-            if game.get("game", None) and game["game"]["state"] == "end_game":
+            if game.get("game", None) and game["game"]["state"] == "the_end":
                 await call.answer(self.strings["game_ended"], show_alert=True)
                 return
         return True
@@ -768,7 +768,7 @@ It's <b>{}</b>'s turn
                 return await self.update_board(game_id)
         
         elif state == "the_end":
-            return
+            return await call.answer(self.strings["game_ended"])
 
         else:
             await call.answer("ты игру сломал?")
