@@ -239,8 +239,8 @@ class Chess(loader.Module):
             }
         }
         self.coords = {
-            f"{col}{row}": "" for col in "abcdefgh"
-            for row in range(1, 9)
+            f"{col}{row}": "" for row in range(1, 9)
+            for col in "abcdefgh"
         }
         games = self.get("games", {})
         if games:
@@ -642,7 +642,7 @@ class Chess(loader.Module):
                 coord = move[2:4]
                 coords[coord] = self._get_move_symbol(game_id, move)
         
-        return coords
+        return coords[::-1]
 
     async def update_board(self, game_id: int):
         game = self.games[game_id]
