@@ -660,7 +660,7 @@ class Chess(loader.Module):
         )
 
         pgn = game["game"]["node"].accept(chess.pgn.StringExporter(columns=None, headers=False)).rsplit(maxsplit=1)
-        pgn[1] = f"<b>{pgn[1]}</b>"
+        pgn[-1] = f"<b>{pgn[-1]}</b>"
         last_moves = " ".join(pgn)
 
         await utils.answer(
