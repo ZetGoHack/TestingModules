@@ -294,7 +294,7 @@ It's <b>{}</b>'s turn
                 elif game["host_plays"] != game["game"]["board"].turn and game["opponent"]["id"] != _from_id:
                     await call.answer(self.strings["opp_move"])
                     return False
-            if game["game"]["state"] == "end_game":
+            if game.get("game", None) and game["game"]["state"] == "end_game":
                 await call.answer(self.strings["game_ended"], show_alert=True)
                 return
         return True
