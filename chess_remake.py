@@ -681,7 +681,7 @@ class Chess(loader.Module):
         game["node"] = game["node"].add_variation(move)
     
     async def choose_coord(self, call: BotInlineCall, game_id: int, coord: str):
-        if not self._check_player(call, game_id): return
+        if not await self._check_player(call, game_id): return
         game = self.games[game_id]["game"]
         state = game["state"]
 
