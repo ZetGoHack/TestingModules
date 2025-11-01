@@ -93,13 +93,14 @@ class GameParams(TypedDict):
 class Game(TypedDict):
     board: chess.Board
     message: InlineCall
-    node: chess.pgn.Game
+    root_node: chess.pgn.Game
+    curr_node: chess.pgn.Game
     state: str
     reason: str
     add_params: GameParams
 
 class GameObj(TypedDict):
-    game_id: int
+    game_id: str
     game: Game
     sender: Player
     opponent: Player
@@ -275,7 +276,7 @@ It's <b>{}</b>'s turn
             'Black': "{player}",
         }
         
-    async def _check_player(self, call: InlineCall, game_id: int, only_opponent=False):
+    async def _check_player(self, call: InlineCall, game_id: str, only_opponent=False):
         if isinstance(call, (BotInlineCall, InlineCall, InlineMessage)):
             game = self.games[game_id]
             _from_id = call.from_user.id
@@ -342,7 +343,7 @@ It's <b>{}</b>'s turn
         }
         return (sender, opponent)
 
-    async def _invite(self, call: InlineCall, game_id: int):
+    async def _invite(self, call: InlineCall, game_id: str):
         if not await self._check_player(call, game_id): return
         game  = self.games[game_id]
         await utils.answer(
@@ -382,7 +383,7 @@ It's <b>{}</b>'s turn
             disable_security=True
         )
 
-    async def settings(self, call: InlineCall, game_id: int):
+    async def settings(self, call: InlineCall, game_id: str):
         if not await self._check_player(call, game_id): return
         game = self.games[game_id]
         reply_markup = []
@@ -418,7 +419,7 @@ It's <b>{}</b>'s turn
             reply_markup=reply_markup,
             disable_security=True
         )
-    async def _settings(self, call: InlineCall, game_id: int, ruleset: str | list):
+    async def _settings(self, call: InlineCall, game_id: str, ruleset: str | list):
         reply_markup = []
         text = "🍓"
         if isinstance(ruleset, str):
@@ -511,7 +512,7 @@ It's <b>{}</b>'s turn
 
     ############## Preparing all for game start... ##############
 
-    async def _init_game(self, call: InlineCall, game_id: int, ans="yes"):
+    async def _init_game(self, call: InlineCall, game_id: str, ans="yes"):
         if not await self._check_player(call, game_id=game_id, only_opponent=True): return
         if ans == "no":
             self.games.pop(game_id, None)
@@ -538,7 +539,7 @@ It's <b>{}</b>'s turn
             return await utils.answer(call, self.strings["waiting_for_start"])
         await self._start_game(call, game_id)
 
-    async def _set_timer(self, board_call: InlineCall, game_id: int, chat_id):
+    async def _set_timer(self, board_call: InlineCall, game_id: str, chat_id):
         timer = self.games[game_id]["Timer"]["timer"]
         self.games[game_id]["Timer"]["message"] = (
             await self.inline.form(self.strings["timer_text"].format(
@@ -589,13 +590,13 @@ It's <b>{}</b>'s turn
 
     ############## Starting game... ############## 
 
-    async def _start_timer(self, call: InlineCall, board_call: InlineCall, game_id: int):
+    async def _start_timer(self, call: InlineCall, board_call: InlineCall, game_id: str):
         if not await self._check_player(call, game_id): return
         timer = self.games[game_id]["Timer"]
         timer["timer_loop"] = True
         await self._start_game(board_call, game_id)
 
-    async def _start_game(self, call: InlineCall, game_id: int):
+    async def _start_game(self, call: InlineCall, game_id: str):
         if not await self._check_player(call, game_id): return
         game = self.games[game_id]
         node = chess.pgn.Game()
@@ -608,7 +609,8 @@ It's <b>{}</b>'s turn
         game["game"] = {
             "board": chess.Board(),
             "message": call,
-            "node": node,
+            "root_node": node,
+            "curr_node": node,
             "state": "idle", # 'idle' - начальное состояние (показать ток доску с фигурами), 'in_choose' - игрок жамкнул на фигуру и нужно показать доступные ходы, 'the_end' - конец партии
             "add_params": {
                 "chosen_figure_coord": "",
@@ -633,12 +635,12 @@ It's <b>{}</b>'s turn
         game["add_params"]["reason_of_ending"] = reason
         game["add_params"]["chosen_figure_coord"] = ""
 
-    def _get_piece_symbol(self, game_id: int, coord: str) -> str:
+    def _get_piece_symbol(self, game_id: str, coord: str) -> str:
         game = self.games[game_id]
         piece = game["game"]["board"].piece_at(chess.parse_square(coord))
         return game["style"][piece.symbol()] if piece else " "
     
-    def _get_move_symbol(self, game_id: int, move: str) -> str:
+    def _get_move_symbol(self, game_id: str, move: str) -> str:
         game = self.games[game_id]
         if len(move) == 5:
             return game["style"][
@@ -653,14 +655,14 @@ It's <b>{}</b>'s turn
                 else "move"
             ]
     
-    def _get_available_moves(self, game_id: int, coord: str) -> list[str]:
+    def _get_available_moves(self, game_id: str, coord: str) -> list[str]:
         if not coord: return []
         game = self.games[game_id]
         coord = chess.parse_square(coord)
         moves = [move.uci() for move in game["game"]["board"].legal_moves if move.from_square == coord]
         return moves
 
-    def _get_board_dict(self, game_id: int) -> dict[str, str]:
+    def _get_board_dict(self, game_id: str) -> dict[str, str]:
         game = self.games[game_id]
         coords = self.coords.copy()
         for coord in self.coords:
@@ -674,7 +676,7 @@ It's <b>{}</b>'s turn
         
         return coords
 
-    async def update_board(self, game_id: int):
+    async def update_board(self, game_id: str):
         game = self.games[game_id]
 
         reply_markup = utils.chunks(
@@ -689,7 +691,7 @@ It's <b>{}</b>'s turn
             8
         )
 
-        pgn = game["game"]["node"].accept(chess.pgn.StringExporter(columns=None, headers=False)).rsplit(maxsplit=1)
+        pgn = game["game"]["root_node"].accept(chess.pgn.StringExporter(columns=None, headers=False)).rsplit(maxsplit=1)
         pgn[-1] = f"<b>{pgn[-1]}</b>"
         last_moves = " ".join(pgn)
 
@@ -700,18 +702,18 @@ It's <b>{}</b>'s turn
                 game["opponent"]["name"] if game["game"]["board"].turn else game["sender"]["name"],
                 self.strings["white"] if game["game"]["board"].turn else self.strings["black"],
                 self.strings["check"] + "\n" if game["game"]["board"].is_check() else "",
-                last_moves[-32:],
+                last_moves[-18:],
             ),
             reply_markup=reply_markup,
         )
 
-    def make_move(self, game_id: int, move: str):
+    def make_move(self, game_id: str, move: str):
         game = self.games[game_id]["game"]
         move = chess.Move.from_uci(move)
         game["board"].push(move)
-        game["node"] = game["node"].add_variation(move)
+        game["curr_node"] = game["curr_node"].add_variation(move)
     
-    def set_game_state(self, game_id: int):
+    def set_game_state(self, game_id: str):
         game = self.games[game_id]["game"]
         board = game["board"]
         if board.is_checkmate():
@@ -725,7 +727,7 @@ It's <b>{}</b>'s turn
         elif board.can_claim_threefold_repetition():
             self.the_end(game_id, "threefold_repetition")
     
-    async def choose_coord(self, call: BotInlineCall, game_id: int, coord: str):
+    async def choose_coord(self, call: BotInlineCall, game_id: str, coord: str):
         if not await self._check_player(call, game_id): return
         game = self.games[game_id]["game"]
         state = game["state"]
