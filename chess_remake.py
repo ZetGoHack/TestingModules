@@ -692,14 +692,17 @@ It's <b>{}</b>'s turn
         )
 
         pgn = game["game"]["root_node"].accept(chess.pgn.StringExporter(columns=None, headers=False)).replace("*", "").rsplit(maxsplit=1)
-        pgn[-1] = f"<b>{pgn[-1]}</b>"
+        if pgn:
+            pgn[-1] = f"<b>{pgn[-1]}</b>"
+        else:
+            pgn = ["<b>|</b>"]
         last_moves = " ".join(pgn)
 
         await utils.answer(
             game["game"]["message"],
             self.strings["board"].format(
-                game["sender"]["name"] if game["game"]["board"].turn else game["opponent"]["name"],
-                game["opponent"]["name"] if game["game"]["board"].turn else game["sender"]["name"],
+                utils.escape_html(game["sender"]["name"] if game["game"]["board"].turn else game["opponent"]["name"]),
+                utils.escape_html(game["opponent"]["name"] if game["game"]["board"].turn else game["sender"]["name"]),
                 self.strings["white"] if game["game"]["board"].turn else self.strings["black"],
                 self.strings["check"] + "\n"
                 if game["game"]["board"].is_check()
