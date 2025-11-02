@@ -288,7 +288,7 @@ It's <b>{}</b>'s turn
             elif _from_id == game["sender"]["id"] and only_opponent and not self.config["play_self"]:
                 await call.answer(self.strings["not_you"])
                 return False
-            elif not self.config["play_self"]:
+            elif not self.config["play_self"] and game.get("game", None):
                 if game["host_plays"] == game["game"]["board"].turn and game["sender"]["id"] != _from_id:
                     await call.answer(self.strings["opp_move"])
                     return False
@@ -701,8 +701,8 @@ It's <b>{}</b>'s turn
         await utils.answer(
             game["game"]["message"],
             self.strings["board"].format(
-                utils.escape_html(game["sender"]["name"] if game["game"]["board"].turn else game["opponent"]["name"]),
-                utils.escape_html(game["opponent"]["name"] if game["game"]["board"].turn else game["sender"]["name"]),
+                utils.escape_html(game["sender"]["name"] if game["host_plays"] else game["opponent"]["name"]),
+                utils.escape_html(game["opponent"]["name"] if game["host_plays"] else game["sender"]["name"]),
                 self.strings["white"] if game["game"]["board"].turn else self.strings["black"],
                 self.strings["check"] + "\n"
                 if game["game"]["board"].is_check()
