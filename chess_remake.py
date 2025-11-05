@@ -1,4 +1,4 @@
-__version__ = ("updated", 2, 6) #######################
+__version__ = ("updated", 2, 7) #######################
 #░░░███░███░███░███░███
 #░░░░░█░█░░░░█░░█░░░█░█
 #░░░░█░░███░░█░░█░█░█░█
@@ -89,6 +89,7 @@ class TimerDict(TypedDict):
 class GameParams(TypedDict):
     chosen_figure_coord: str
     reason_of_ending: str
+    promotion_move: str
 
 class Game(TypedDict):
     board: chess.Board
@@ -170,6 +171,9 @@ It's <b>{}</b>'s turn
         "no_moves": "No moves for this piece!",
         "check": "<b>Check!</b> ",
         "checkmate": "<b>Checkmate!</b> ",
+        "can_not_move": "You cannot make moves right now!",
+        "choose_promotion": "Choose a piece for promotion!",
+        "game_ended": "Game ended. You cannot make moves.",
     }
     strings_ru = {
         "noargs": "<emoji document_id=5370724846936267183>🤔</emoji> Вы не указали с кем играть",
@@ -222,9 +226,11 @@ It's <b>{}</b>'s turn
 {}
 <blockquote>{}</blockquote>""",
         "no_moves": "Для этой фигуры нет ходов!",
-        "check": "<b>Шах!</b> ",
-        "checkmate": "<b>Шах и мат!</b> ",
-        "game_ended": "Игра завершена. Вы не можете делать ходы."
+        "check": "❗ <b>Шах!</b> ",
+        "checkmate": "❗ <b>Шах и мат!</b> ",
+        "can_not_move": "Вы не можете делать ходы в данный момент!",
+        "choose_promotion": "Выберите фигуру для превращения!",
+        "game_ended": "Игра завершена. Вы не можете делать ходы.",
     }
 
     def __init__(self):
@@ -257,7 +263,7 @@ It's <b>{}</b>'s turn
         }
         self.coords = {
             f"{col}{row}": "" for row in range(1, 9)
-            for col in "abcdefgh"
+            for col in "hgfedcba"
         }
         games = self.get("games", {})
         if games:
@@ -615,6 +621,7 @@ It's <b>{}</b>'s turn
             "add_params": {
                 "chosen_figure_coord": "",
                 "reason_of_ending": "",
+                "promotion_move": "",
             }
         }
         await self.update_board(game_id)
@@ -623,17 +630,26 @@ It's <b>{}</b>'s turn
         game = self.games[game_id]["game"]
         game["state"] = "idle"
         game["add_params"]["chosen_figure_coord"] = ""
+        game["add_params"]["promotion_move"] = ""
         
     def choose(self, game_id: str, coord: str):
         game = self.games[game_id]["game"]
         game["state"] = "in_choose"
         game["add_params"]["chosen_figure_coord"] = coord
+        game["add_params"]["promotion_move"] = ""
+
+    def promotion(self, game_id: str, move: str):
+        game = self.games[game_id]["game"]
+        game["state"] = "in_promotion"
+        game["add_params"]["chosen_figure_coord"] = ""
+        game["add_params"]["promotion_move"] = move
         
     def the_end(self, game_id: str, reason: str):
         game = self.games[game_id]["game"]
         game["state"] = "the_end"
         game["add_params"]["reason_of_ending"] = reason
         game["add_params"]["chosen_figure_coord"] = ""
+        game["add_params"]["promotion_move"] = ""
 
     def _get_piece_symbol(self, game_id: str, coord: str) -> str:
         game = self.games[game_id]
@@ -676,7 +692,7 @@ It's <b>{}</b>'s turn
         
         return coords
 
-    async def update_board(self, game_id: str):
+    async def update_board(self, game_id: str, promotion: bool = False):
         game = self.games[game_id]
 
         reply_markup = utils.chunks(
@@ -690,6 +706,20 @@ It's <b>{}</b>'s turn
             ][::-1],
             8
         )
+
+        if promotion:
+            reply_markup.append(
+                [{"text": "⬇️↻⬇️", "action": "answer", "message": self.strings["choose_promotion"]}]
+            )
+            reply_markup.append(
+                [
+                    {
+                        "text": game["style"].get(piece, piece),
+                        "callback": self.pawn_promotion,
+                        "args": (game_id, piece),
+                    } for piece in "qrnb"
+                ]
+            )
 
         pgn = game["game"]["root_node"].accept(chess.pgn.StringExporter(columns=None, headers=False)).replace("*", "").rsplit(maxsplit=1)
         if pgn:
@@ -720,12 +750,20 @@ It's <b>{}</b>'s turn
         game["board"].push(move)
         game["curr_node"] = game["curr_node"].add_variation(move)
 
-    async def pawn_promotion(self, game_id: str):
-        pass
+    async def pawn_promotion(self, call: InlineCall, game_id: str, piece: str):
+        if not await self._check_player(call, game_id): return
+        game = self.games[game_id]["game"]
+        move = game["add_params"]["promotion_move"] + piece
+
+        self.make_move(game_id, move)
+        self.set_game_state(game_id)
+
+        return await self.update_board(game_id)
     
     def set_game_state(self, game_id: str):
         game = self.games[game_id]["game"]
         board = game["board"]
+        self.idle(game_id)
         if board.is_checkmate():
             self.the_end(game_id, "checkmate")
         elif board.is_stalemate():
@@ -763,8 +801,9 @@ It's <b>{}</b>'s turn
                 return await self.update_board(game_id)
 
             elif len(coord_matches) > 1: # пешка дошла до конца
-                await self.pawn_promotion(game_id)
-                pass # TODO
+                move = coord_matches[0][:4]
+                self.promotion(game_id, move)
+                return await self.update_board(game_id, promotion=True)
 
             elif game["board"].piece_at(chess.parse_square(coord)): # другая фигура
                 self.choose(game_id, coord)
@@ -773,6 +812,9 @@ It's <b>{}</b>'s turn
             else: # в принципе нет там фигур
                 self.idle(game_id)
                 return await self.update_board(game_id)
+            
+        elif state == "in_promotion":
+            return await call.answer(self.strings["can_not_move"])
         
         elif state == "the_end":
             return await call.answer(self.strings["game_ended"])
