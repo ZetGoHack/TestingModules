@@ -220,7 +220,7 @@ It's <b>{}</b>'s turn
 
 Сейчас ходят <b>{}</b>
 {}
-{}""",
+<blockquote>{}</blockquote>""",
         "no_moves": "Для этой фигуры нет ходов!",
         "check": "<b>Шах!</b> ",
         "checkmate": "<b>Шах и мат!</b> ",
@@ -281,11 +281,14 @@ It's <b>{}</b>'s turn
             game = self.games[game_id]
             _from_id = call.from_user.id
 
+            if game.get("game", None) and game["game"]["state"] == "the_end":
+                await call.answer(self.strings["game_ended"], show_alert=True)
+                return
             if _from_id != game["sender"]["id"]:
                 if _from_id != game["opponent"]["id"]:
                     await call.answer(self.strings["not_available"])
                     return False
-            elif _from_id == game["sender"]["id"] and only_opponent and not self.config["play_self"]:
+            if _from_id == game["sender"]["id"] and only_opponent and not self.config["play_self"]:
                 await call.answer(self.strings["not_you"])
                 return False
             elif not self.config["play_self"] and game.get("game", None):
@@ -295,9 +298,6 @@ It's <b>{}</b>'s turn
                 elif game["host_plays"] != game["game"]["board"].turn and game["opponent"]["id"] != _from_id:
                     await call.answer(self.strings["opp_move"])
                     return False
-            if game.get("game", None) and game["game"]["state"] == "the_end":
-                await call.answer(self.strings["game_ended"], show_alert=True)
-                return
         return True
     
     async def get_players(self, message: Message):
@@ -564,14 +564,14 @@ It's <b>{}</b>'s turn
                     while self.games[game_id]["Timer"]["timer_loop"]:
                         if not any([await timer.white_time(), await timer.black_time()]):
                             self.games[game_id]["Timer"]["timer_loop"] = False
-                            self.games[game_id]["game"]["reason"] = "reason_timer"
+                            self.the_end(game_id, "time_left")
                         await self.games[game_id]["Timer"]["message"].edit(self.strings["timer_text"].format(
                             int(await timer.white_time()), 
                             int(await timer.black_time()), 
-                            "" if self.games[game_id]["game"]["board"] else "⏹️ " + self.strings[self.games[game_id]["game"]["reason"]]
+                            "" if self.games[game_id]["game"]["state"] != "the_end" else "⏹️ " + self.strings[self.games[game_id]["game"]["add_params"]["reason_of_ending"]]
                             ),
                             reply_markup={
-                               "text":"stop",
+                               "text":"Stop",
                                "callback": lambda c, id: self.games[id]['Timer'].update({'timer_loop': not self.games[id]['Timer']['timer_loop']}),
                                "args": (game_id,)
                             },
@@ -611,7 +611,7 @@ It's <b>{}</b>'s turn
             "message": call,
             "root_node": node,
             "curr_node": node,
-            "state": "idle", # 'idle' - начальное состояние (показать ток доску с фигурами), 'in_choose' - игрок жамкнул на фигуру и нужно показать доступные ходы, 'the_end' - конец партии
+            "state": "idle", # 'idle' - начальное состояние (показать ток доску с фигурами), 'in_choose' - игрок жамкнул на фигуру и нужно показать доступные ходы, 'in_promotion' - пешка дошла до конца и над спросить игрока, в кого превращаться, 'the_end' - конец партии
             "add_params": {
                 "chosen_figure_coord": "",
                 "reason_of_ending": "",
@@ -719,6 +719,9 @@ It's <b>{}</b>'s turn
         move = chess.Move.from_uci(move)
         game["board"].push(move)
         game["curr_node"] = game["curr_node"].add_variation(move)
+
+    async def pawn_promotion(self, game_id: str):
+        pass
     
     def set_game_state(self, game_id: str):
         game = self.games[game_id]["game"]
@@ -760,6 +763,7 @@ It's <b>{}</b>'s turn
                 return await self.update_board(game_id)
 
             elif len(coord_matches) > 1: # пешка дошла до конца
+                await self.pawn_promotion(game_id)
                 pass # TODO
 
             elif game["board"].piece_at(chess.parse_square(coord)): # другая фигура
