@@ -166,13 +166,22 @@ class Chess(loader.Module):
 ♚ Black - {}
 
 It's <b>{}</b>'s turn
-{}
-{}""",
+<b>{}</b>
+<blockquote>{}</blockquote>""",
         "no_moves": "No moves for this piece!",
-        "check": "<b>Check!</b> ",
-        "checkmate": "<b>Checkmate!</b> ",
+        "check": "❗ <b>Check!</b> ",
+        "checkmate": "❗ <b>Checkmate!</b> ",
+        "resign": "🏳️ Player {} has resigned!",
+        "draw": "🤝 Players agreed to a draw!",
         "can_not_move": "You cannot make moves right now!",
         "choose_promotion": "Choose a piece for promotion!",
+        "resign": "🏳️ Player {} has resigned!",
+        "draw": "🤝 Players agreed to a draw!",
+        "resign_check": "Are you sure you want to resign?",
+        "resign_yes": "🏳️ Resign",
+        "resign_no": "❌ Cancel",
+        "draw_offer": "🤝 Draw?",
+        "draw_yes": "🤝 Accept",
         "game_ended": "Game ended. You cannot make moves.",
     }
     strings_ru = {
@@ -223,13 +232,20 @@ It's <b>{}</b>'s turn
 ♚ Чёрные - {}
 
 Сейчас ходят <b>{}</b>
-{}
+<b>{}</b>
 <blockquote>{}</blockquote>""",
         "no_moves": "Для этой фигуры нет ходов!",
         "check": "❗ <b>Шах!</b> ",
         "checkmate": "❗ <b>Шах и мат!</b> ",
+        "resign": "🏳️ Игрок {} сдался!",
+        "draw": "🤝 Игроки согласились на ничью!",
         "can_not_move": "Вы не можете делать ходы в данный момент!",
         "choose_promotion": "Выберите фигуру для превращения!",
+        "resign_check": "Вы действительно хотите сдаться?",
+        "resign_yes": "🏳️ Сдаться",
+        "resign_no": "❌ Отмена",
+        "draw_offer": "🤝 Ничья?",
+        "draw_yes": "🤝 Согласиться",
         "game_ended": "Игра завершена. Вы не можете делать ходы.",
     }
 
@@ -499,7 +515,7 @@ It's <b>{}</b>'s turn
             return
         if self.games:
             past_game =  next(reversed(self.games.values()))
-            if not getattr(past_game, "game", None):
+            if not past_game.get("game", None):
                 self.games.pop(past_game['game_id'], None)
         if not self.games:
             game_id = str(1)
@@ -593,6 +609,7 @@ It's <b>{}</b>'s turn
                 ]["always_allow"] = True # для ругающегося на эту строку гпт - по неизвестно какой причине фреймворк в какое-то время попросту
                                          # забывает про отключение его проверки. мне это нужно, чтобы сам модуль брал на себя ответсвенность
                                          # проверки, кто может управлять доской, а до кого очередь ещё не дошла
+                self.set("games", self.games)
 
     ############## Starting game... ############## 
 
@@ -720,6 +737,20 @@ It's <b>{}</b>'s turn
                     } for piece in "qrnb"
                 ]
             )
+        else:
+            resign = [
+                {
+                    "text": "🏳️",
+                    "callback": self.resign,
+                    "args": (game_id,),
+                },
+                {
+                    "text": "🤝",
+                    "callback": self.offer_draw,
+                    "args": (game_id,),
+                }
+            ]
+            reply_markup.append(resign)
 
         pgn = game["game"]["root_node"].accept(chess.pgn.StringExporter(columns=None, headers=False)).replace("*", "").rsplit(maxsplit=1)
         if pgn:
@@ -759,6 +790,14 @@ It's <b>{}</b>'s turn
         self.set_game_state(game_id)
 
         return await self.update_board(game_id)
+    
+    async def resign(self, call: InlineCall, game_id: str):
+        if not await self._check_player(call, game_id): return
+        await call.answer("he made it as TODO placeholder, wait for update", show_alert=True)
+
+    async def offer_draw(self, call: InlineCall, game_id: str):
+        if not await self._check_player(call, game_id): return
+        await call.answer("he made it as TODO placeholder, wait for update", show_alert=True)
     
     def set_game_state(self, game_id: str):
         game = self.games[game_id]["game"]
