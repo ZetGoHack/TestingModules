@@ -118,6 +118,7 @@ GamesDict = dict[str, GameObj]
 class Chess(loader.Module):
     """A reworked version of the Chess module"""
     strings = {
+        "": "",
         "name": "Chess",
         "noargs": "<emoji document_id=5370724846936267183>🤔</emoji> You did not specify who to play with",
         "whosthat": "<emoji document_id=5019523782004441717>❌</emoji> I cannot find such a user",
@@ -170,7 +171,12 @@ It's <b>{}</b>'s turn
 <blockquote>{}</blockquote>""",
         "no_moves": "No moves for this piece!",
         "check": "❗ <b>Check!</b> ",
-        "checkmate": "❗ <b>Checkmate!</b> ",
+        "checkmate": "🛑 <b>Checkmate!</b> ",
+        "time_is_up": "⌛ Time is up!",
+        "stalemate": "🤝 Stalemate!",
+        "insufficient_material": "🤝 Draw! Insufficient material to win!",
+        "seventyfive_moves": "🤝 Draw! 75-move rule!",
+        "fivefold_repetition": "🤝 Draw! Fivefold repetition!",
         "resign": "🏳️ Player {} has resigned!",
         "draw": "🤝 Players agreed to a draw!",
         "can_not_move": "You cannot make moves right now!",
@@ -236,7 +242,12 @@ It's <b>{}</b>'s turn
 <blockquote>{}</blockquote>""",
         "no_moves": "Для этой фигуры нет ходов!",
         "check": "❗ <b>Шах!</b> ",
-        "checkmate": "❗ <b>Шах и мат!</b> ",
+        "checkmate": "🛑 <b>Шах и мат!</b> ",
+        "time_is_up": "⌛ Время истекло!",
+        "stalemate": "🤝 Пат!",
+        "insufficient_material": "🤝 Ничья! Недостаточно материала для победы!",
+        "seventyfive_moves": "🤝 Ничья! Правило 75 ходов!",
+        "fivefold_repetition": "🤝 Ничья! Пятикратное повторение ходов!",
         "resign": "🏳️ Игрок {} сдался!",
         "draw": "🤝 Игроки согласились на ничью!",
         "can_not_move": "Вы не можете делать ходы в данный момент!",
@@ -586,18 +597,12 @@ It's <b>{}</b>'s turn
                     while self.games[game_id]["Timer"]["timer_loop"]:
                         if not any([await timer.white_time(), await timer.black_time()]):
                             self.games[game_id]["Timer"]["timer_loop"] = False
-                            self.the_end(game_id, "time_left")
+                            self.the_end(game_id, "time_is_up")
                         await self.games[game_id]["Timer"]["message"].edit(self.strings["timer_text"].format(
                             int(await timer.white_time()), 
                             int(await timer.black_time()), 
                             "" if self.games[game_id]["game"]["state"] != "the_end" else "⏹️ " + self.strings[self.games[game_id]["game"]["add_params"]["reason_of_ending"]]
                             ),
-                            reply_markup={
-                               "text":"Stop",
-                               "callback": lambda c, id: self.games[id]['Timer'].update({'timer_loop': not self.games[id]['Timer']['timer_loop']}),
-                               "args": (game_id,)
-                            },
-                            disable_security=True
                         )
                         await asyncio.sleep(1)
                     await timer.stop()
@@ -711,6 +716,12 @@ It's <b>{}</b>'s turn
 
     async def update_board(self, game_id: str, promotion: bool = False):
         game = self.games[game_id]
+        is_end = game["game"]["state"] == "the_end"
+        reason_of_ending = game["game"]["add_params"]["reason_of_ending"]
+        status = (
+            self.strings["check"] if game["game"]["board"].is_check() and not is_end
+            else self.strings[reason_of_ending] + "\n"
+        )
 
         reply_markup = utils.chunks(
             [
@@ -737,7 +748,7 @@ It's <b>{}</b>'s turn
                     } for piece in "qrnb"
                 ]
             )
-        else:
+        elif not is_end:
             resign = [
                 {
                     "text": "🏳️",
@@ -765,11 +776,7 @@ It's <b>{}</b>'s turn
                 utils.escape_html(game["sender"]["name"] if game["host_plays"] else game["opponent"]["name"]),
                 utils.escape_html(game["opponent"]["name"] if game["host_plays"] else game["sender"]["name"]),
                 self.strings["white"] if game["game"]["board"].turn else self.strings["black"],
-                self.strings["check"] + "\n"
-                if game["game"]["board"].is_check()
-                and not game["game"]["board"].is_checkmate()
-                else self.strings["checkmate"] + "\n"
-                if game["game"]["board"].is_checkmate() else "",
+                status,
                 last_moves[-32:],
             ),
             reply_markup=reply_markup,
@@ -809,10 +816,10 @@ It's <b>{}</b>'s turn
             self.the_end(game_id, "stalemate")
         elif board.is_insufficient_material():
             self.the_end(game_id, "insufficient_material")
-        elif board.can_claim_fifty_moves():
-            self.the_end(game_id, "fifty_moves")
-        elif board.can_claim_threefold_repetition():
-            self.the_end(game_id, "threefold_repetition")
+        elif board.is_seventyfive_moves():
+            self.the_end(game_id, "seventyfive_moves")
+        elif board.is_fivefold_repetition():
+            self.the_end(game_id, "fivefold_repetition")
     
     async def choose_coord(self, call: BotInlineCall, game_id: str, coord: str):
         if not await self._check_player(call, game_id): return
