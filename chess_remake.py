@@ -47,6 +47,11 @@ class Timer:
 
     async def start(self, from_color: str = "white"):
         self.last_time = time.monotonic()
+        if from_color == "restore":
+            if self.running["white"]:
+                from_color = "white"
+            else:
+                from_color = "black"
         await self._turn(from_color)
         self.t = asyncio.create_task(self._count())
 
@@ -68,6 +73,18 @@ class Timer:
 
     async def black_time(self):
         return round(self.timers["black"], 0)
+
+    def restore(self, white_time: float, black_time: float, running: dict):
+        self.timers["white"] = white_time
+        self.timers["black"] = black_time
+        self.running = running
+
+    def backup(self):
+        return {
+            "white_time": self.timers["white"],
+            "black_time": self.timers["black"],
+            "running": self.running
+        }
 
     async def stop(self):
         if self.t:
@@ -623,7 +640,12 @@ It's <b>{}</b>'s turn
                 ]["always_allow"] = True # для ругающегося на эту строку гпт - по неизвестно какой причине фреймворк в какое-то время попросту
                                          # забывает про отключение его проверки. мне это нужно, чтобы сам модуль брал на себя ответсвенность
                                          # проверки, кто может управлять доской, а до кого очередь ещё не дошла
-                #self.set("games", self.games)
+                games_backup = self.games.copy()
+                for game in games_backup.values():
+                    if isinstance(game.get("Timer", {}).get("timer", None), Timer):
+                        game["Timer"] = game["Timer"]["timer"].backup()
+                    del game["game"]["message"]
+                self.set("games_backup", games_backup)
 
     ############## Starting game... ############## 
 
@@ -683,6 +705,11 @@ It's <b>{}</b>'s turn
         game["add_params"]["winner_color"] = winner
         game["add_params"]["chosen_figure_coord"] = ""
         game["add_params"]["promotion_move"] = ""
+        game["root_node"].headers["Result"] = (
+            "1-0" if winner is True else
+            "0-1" if winner is False else
+            "1/2-1/2"
+        )
 
     def _get_loser_and_winner(self, game_id: str) -> tuple[str, str]:
         game = self.games[game_id]
