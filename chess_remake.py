@@ -186,18 +186,16 @@ It's <b>{}</b>'s turn
 <blockquote>{}</blockquote>""",
         "no_moves": "No moves for this piece!",
         "check": "❗ Check!",
-        "checkmate": "🛑 Checkmate!",
-        "time_is_up": "⌛ {}'s time is up! {} wins!",
+        "checkmate": "🛑 Checkmate! {winner} wins!",
+        "time_is_up": "⌛ {loser}'s time is up! {winner} wins!",
         "stalemate": "🤝 Stalemate!",
         "insufficient_material": "🤝 Draw! Insufficient material to win!",
         "seventyfive_moves": "🤝 Draw! 75-move rule!",
         "fivefold_repetition": "🤝 Draw! Fivefold repetition!",
-        "resign": "🏳️ Player {} has resigned!",
+        "resign": "🏳️ Player {loser} has resigned!",
         "draw": "🤝 Players agreed to a draw!",
         "can_not_move": "You cannot make moves right now!",
         "choose_promotion": "Choose a piece for promotion!",
-        "resign": "🏳️ Player {} has resigned!",
-        "draw": "🤝 Players agreed to a draw!",
         "resign_check": "Are you sure you want to resign?",
         "resign_yes": "🏳️ Resign",
         "resign_no": "❌ Cancel",
@@ -257,13 +255,13 @@ It's <b>{}</b>'s turn
 <blockquote>{}</blockquote>""",
         "no_moves": "Для этой фигуры нет ходов!",
         "check": "❗ Шах!",
-        "checkmate": "🛑 Шах и мат!",
-        "time_is_up": "⌛ Время у {} истекло! Победил {}!",
+        "checkmate": "🛑 Шах и мат! Победил(а) {winner}!",
+        "time_is_up": "⌛ Время у {loser} истекло! Победил(а) {winner}!",
         "stalemate": "🤝 Пат!",
         "insufficient_material": "🤝 Ничья! Недостаточно материала для победы!",
         "seventyfive_moves": "🤝 Ничья! Правило 75 ходов!",
         "fivefold_repetition": "🤝 Ничья! Пятикратное повторение ходов!",
-        "resign": "🏳️ Игрок {} сдался!",
+        "resign": "🏳️ Игрок {loser} сдался!",
         "draw": "🤝 Игроки согласились на ничью!",
         "can_not_move": "Вы не можете делать ходы в данный момент!",
         "choose_promotion": "Выберите фигуру для превращения!",
@@ -814,7 +812,7 @@ It's <b>{}</b>'s turn
                         },
                         {
                             "text": self.strings["resign_no"],
-                            "callback": self.update_board,
+                            "callback": self._back_to_game,
                             "args": (game_id,),
                         },
                     ]
@@ -861,7 +859,7 @@ It's <b>{}</b>'s turn
                 utils.escape_html(game["sender"]["name"] if game["host_plays"] else game["opponent"]["name"]),
                 utils.escape_html(game["opponent"]["name"] if game["host_plays"] else game["sender"]["name"]),
                 self.strings["white"] if game["game"]["board"].turn else self.strings["black"],
-                status.format(loser, winner),
+                status.format(loser=loser, winner=winner),
                 last_moves[-32:],
             ),
             reply_markup=reply_markup,
@@ -883,30 +881,14 @@ It's <b>{}</b>'s turn
 
         return await self.update_board(game_id)
     
+    async def _back_to_game(self, _, game_id: str):
+        await self.update_board(game_id)
+
     async def resign(self, call: InlineCall, game_id: str, confirm: bool = False):
         if not await self._check_player(call, game_id): return
         game = self.games[game_id]
         if not confirm:
-            await utils.answer(
-                call,
-                self.strings["resign_check"],
-                reply_markup=[
-                    [
-                        {
-                            "text": self.strings["resign_yes"],
-                            "callback": self.resign,
-                            "args": (game_id, True),
-                        },
-                        {
-                            "text": self.strings["resign_no"],
-                            "callback": self.update_board,
-                            "args": (game_id,),
-                        },
-                    ]
-                ],
-                disable_security=True,
-            )
-            return
+            return await self.update_board(game_id, resign_confirm=True)
         self.the_end(game_id, "resign", winner=not game["game"]["board"].turn)
         await self.update_board(game_id)
 
@@ -919,7 +901,7 @@ It's <b>{}</b>'s turn
         board = game["board"]
         self.idle(game_id)
         if board.is_checkmate():
-            self.the_end(game_id, "checkmate")
+            self.the_end(game_id, "checkmate", winner=not board.turn)
         elif board.is_stalemate():
             self.the_end(game_id, "stalemate")
         elif board.is_insufficient_material():
