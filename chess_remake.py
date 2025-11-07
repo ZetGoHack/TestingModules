@@ -1,4 +1,4 @@
-__version__ = ("-beta", 2, 8) #######################
+__version__ = ("-beta", 2, 9) #######################
 #░░░███░███░███░███░███
 #░░░░░█░█░░░░█░░█░░░█░█
 #░░░░█░░███░░█░░█░█░█░█
@@ -646,7 +646,7 @@ It's <b>{}</b>'s turn
                         game_copy["game"] = {k: v for k, v in game["game"].items()
                                              if k not in ("message", "root_node", "curr_node", "board")}
                         game_copy["game"]["node"] = str(game["game"]["root_node"])
-                    if game.get("Timer", None):
+                    if game.get("Timer", None) and game["Timer"].get("timer", None):
                         game_copy["Timer"] = game["Timer"]["timer"].backup()
 
                     for key, value in game.items():
