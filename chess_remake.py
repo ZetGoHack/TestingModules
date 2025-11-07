@@ -9,20 +9,21 @@ __version__ = ("-beta", 2, 8) #######################
 # meta developer: @nullmod
 # requires: python-chess
 
-# -      main      - #
+
 from .. import loader, utils
 from ..inline.types import BotInlineCall, InlineCall, InlineMessage
-# -      func      - #
+
 import asyncio
 import chess
 import chess.pgn
+import copy
 import random as r
 import time
 from datetime import datetime, timezone
-# -      types     - #
+
 from telethon.tl.types import PeerUser, User, Message
 from typing import TypedDict
-# -      end       - #
+
 
 class Timer:
     def __init__(self, scnds):
@@ -91,8 +92,6 @@ class Timer:
             self.t.cancel()
         self.running = {"white": False, "black": False}
 
-### Type annotations ###
-
 class Player(TypedDict):
     id: int
     name: str
@@ -129,8 +128,6 @@ class GameObj(TypedDict):
     style: dict[str, str]
 
 GamesDict = dict[str, GameObj]
-
-### Type annotations ###
 
 @loader.tds
 class Chess(loader.Module):
@@ -640,7 +637,7 @@ It's <b>{}</b>'s turn
                 ]["always_allow"] = True # для ругающегося на эту строку гпт - по неизвестно какой причине фреймворк в какое-то время попросту
                                          # забывает про отключение его проверки. мне это нужно, чтобы сам модуль брал на себя ответсвенность
                                          # проверки, кто может управлять доской, а до кого очередь ещё не дошла
-                games_backup = self.games.copy()
+                games_backup = copy.deepcopy(self.games)
                 for game in games_backup.values():
                     if isinstance(game.get("Timer", {}).get("timer", None), Timer):
                         game["Timer"] = game["Timer"]["timer"].backup()
@@ -659,11 +656,11 @@ It's <b>{}</b>'s turn
         if not await self._check_player(call, game_id): return
         game = self.games[game_id]
         node = chess.pgn.Game()
-        pgn = self.pgn.copy()
+        pgn = copy.deepcopy(self.pgn)
         pgn["Date"] = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
         pgn["Round"] = str(game_id)
-        pgn["White"] = game["sender"] if game["host_plays"] else game["opponent"]
-        pgn["Black"] = game["opponent"] if game["host_plays"] else game["sender"]
+        pgn["White"] = game["sender"]["name"] if game["host_plays"] else game["opponent"]["name"]
+        pgn["Black"] = game["opponent"]["name"] if game["host_plays"] else game["sender"]["name"]
         node.headers.update(pgn)
         game["game"] = {
             "board": chess.Board(),
@@ -747,7 +744,7 @@ It's <b>{}</b>'s turn
 
     def _get_board_dict(self, game_id: str) -> dict[str, str]:
         game = self.games[game_id]
-        coords = self.coords.copy()
+        coords = copy.deepcopy(self.coords)
         for coord in self.coords:
             coords[coord] = self._get_piece_symbol(game_id, coord)
         
