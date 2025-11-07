@@ -80,7 +80,7 @@ class Timer:
         self.timers["black"] = black_time
         self.running = running
 
-    def backup(self):
+    def backup(self) -> dict:
         return {
             "white_time": self.timers["white"],
             "black_time": self.timers["black"],
@@ -637,11 +637,24 @@ It's <b>{}</b>'s turn
                 ]["always_allow"] = True # для ругающегося на эту строку гпт - по неизвестно какой причине фреймворк в какое-то время попросту
                                          # забывает про отключение его проверки. мне это нужно, чтобы сам модуль брал на себя ответсвенность
                                          # проверки, кто может управлять доской, а до кого очередь ещё не дошла
-                games_backup = copy.deepcopy(self.games)
-                for game in games_backup.values():
-                    if isinstance(game.get("Timer", {}).get("timer", None), Timer):
-                        game["Timer"] = game["Timer"]["timer"].backup()
-                    del game["game"]["message"]
+                games_backup = {}
+                games = self.games
+                for game_id, game in games.items():
+                    game_copy = {}
+
+                    if game.get("game", None):
+                        game_copy["game"] = {k: v for k, v in game["game"].items()
+                                             if k not in ("message", "root_node", "curr_node", "board")}
+                        game_copy["game"]["node"] = str(game["game"]["root_node"])
+                    if game.get("Timer", None):
+                        game_copy["Timer"] = game["Timer"]["timer"].backup()
+
+                    for key, value in game.items():
+                        if key not in ("game", "Timer"):
+                            game_copy[key] = value
+                    
+                    games_backup[game_id] = game_copy
+                
                 self.set("games_backup", games_backup)
 
     ############## Starting game... ############## 
