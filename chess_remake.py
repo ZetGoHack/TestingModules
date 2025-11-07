@@ -1,4 +1,4 @@
-__version__ = ("updated", 2, 7) #######################
+__version__ = ("-beta", 2, 8) #######################
 #░░░███░███░███░███░███
 #░░░░░█░█░░░░█░░█░░░█░█
 #░░░░█░░███░░█░░█░█░█░█
@@ -89,6 +89,7 @@ class TimerDict(TypedDict):
 class GameParams(TypedDict):
     chosen_figure_coord: str
     reason_of_ending: str
+    winner_color: bool | None 
     promotion_move: str
 
 class Game(TypedDict):
@@ -170,9 +171,9 @@ It's <b>{}</b>'s turn
 <b>{}</b>
 <blockquote>{}</blockquote>""",
         "no_moves": "No moves for this piece!",
-        "check": "❗ <b>Check!</b> ",
-        "checkmate": "🛑 <b>Checkmate!</b> ",
-        "time_is_up": "⌛ Time is up!",
+        "check": "❗ Check!",
+        "checkmate": "🛑 Checkmate!",
+        "time_is_up": "⌛ {}'s time is up! {} wins!",
         "stalemate": "🤝 Stalemate!",
         "insufficient_material": "🤝 Draw! Insufficient material to win!",
         "seventyfive_moves": "🤝 Draw! 75-move rule!",
@@ -241,9 +242,9 @@ It's <b>{}</b>'s turn
 <b>{}</b>
 <blockquote>{}</blockquote>""",
         "no_moves": "Для этой фигуры нет ходов!",
-        "check": "❗ <b>Шах!</b> ",
-        "checkmate": "🛑 <b>Шах и мат!</b> ",
-        "time_is_up": "⌛ Время истекло!",
+        "check": "❗ Шах!",
+        "checkmate": "🛑 Шах и мат!",
+        "time_is_up": "⌛ Время у {} истекло! Победил {}!",
         "stalemate": "🤝 Пат!",
         "insufficient_material": "🤝 Ничья! Недостаточно материала для победы!",
         "seventyfive_moves": "🤝 Ничья! Правило 75 ходов!",
@@ -595,13 +596,21 @@ It's <b>{}</b>'s turn
                     await timer.start()
                     self.games[game_id]["Timer"]["timer_is_set"] = True
                     while self.games[game_id]["Timer"]["timer_loop"]:
-                        if not any([await timer.white_time(), await timer.black_time()]):
+                        if not all([await timer.white_time(), await timer.black_time()]):
                             self.games[game_id]["Timer"]["timer_loop"] = False
                             self.the_end(game_id, "time_is_up")
+                        elif self.games[game_id]["game"]["state"] == "the_end":
+                            self.games[game_id]["Timer"]["timer_loop"] = False
+                        
+                        loser, winner = self._get_loser_and_winner(game_id)
+
                         await self.games[game_id]["Timer"]["message"].edit(self.strings["timer_text"].format(
                             int(await timer.white_time()), 
                             int(await timer.black_time()), 
-                            "" if self.games[game_id]["game"]["state"] != "the_end" else "⏹️ " + self.strings[self.games[game_id]["game"]["add_params"]["reason_of_ending"]]
+                            "" if self.games[game_id]["game"]["state"] != "the_end"
+                               else "⏹️ " + self.strings[self.games[game_id]["game"]["add_params"]["reason_of_ending"]].format(
+                                      loser, winner
+                               )
                             ),
                         )
                         await asyncio.sleep(1)
@@ -643,6 +652,7 @@ It's <b>{}</b>'s turn
             "add_params": {
                 "chosen_figure_coord": "",
                 "reason_of_ending": "",
+                "winner_color": None,
                 "promotion_move": "",
             }
         }
@@ -666,12 +676,20 @@ It's <b>{}</b>'s turn
         game["add_params"]["chosen_figure_coord"] = ""
         game["add_params"]["promotion_move"] = move
         
-    def the_end(self, game_id: str, reason: str):
+    def the_end(self, game_id: str, reason: str, winner: bool = None):
         game = self.games[game_id]["game"]
         game["state"] = "the_end"
         game["add_params"]["reason_of_ending"] = reason
+        game["add_params"]["winner_color"] = winner
         game["add_params"]["chosen_figure_coord"] = ""
         game["add_params"]["promotion_move"] = ""
+
+    def _get_loser_and_winner(self, game_id: str) -> tuple[str, str]:
+        game = self.games[game_id]
+        if game["host_plays"] == self.games[game_id]["game"]["add_params"]["winner_color"]:
+            return (game["opponent"]["name"], game["sender"]["name"])
+        else:
+            return (game["sender"]["name"], game["opponent"]["name"])
 
     def _get_piece_symbol(self, game_id: str, coord: str) -> str:
         game = self.games[game_id]
@@ -714,15 +732,9 @@ It's <b>{}</b>'s turn
         
         return coords
 
-    async def update_board(self, game_id: str, promotion: bool = False):
+    def _get_reply_markup(self, game_id: str, promotion: bool = False, resign_confirm: bool = False) -> list[list[dict]]:
         game = self.games[game_id]
         is_end = game["game"]["state"] == "the_end"
-        reason_of_ending = game["game"]["add_params"]["reason_of_ending"]
-        status = (
-            self.strings["check"] if game["game"]["board"].is_check() and not is_end
-            else self.strings[reason_of_ending] + "\n"
-        )
-
         reply_markup = utils.chunks(
             [
                 {
@@ -748,6 +760,29 @@ It's <b>{}</b>'s turn
                     } for piece in "qrnb"
                 ]
             )
+        elif resign_confirm:
+            reply_markup.extend(
+                [
+                    [
+                        {
+                            "text": self.strings["resign_check"],
+                            "data": "_there_is_nothing",
+                        }
+                    ],
+                    [
+                        {
+                            "text": self.strings["resign_yes"],
+                            "callback": self.resign,
+                            "args": (game_id, True),
+                        },
+                        {
+                            "text": self.strings["resign_no"],
+                            "callback": self.update_board,
+                            "args": (game_id,),
+                        },
+                    ]
+                ]
+            )
         elif not is_end:
             resign = [
                 {
@@ -762,6 +797,19 @@ It's <b>{}</b>'s turn
                 }
             ]
             reply_markup.append(resign)
+        return reply_markup
+
+    async def update_board(self, game_id: str, promotion: bool = False, resign_confirm: bool = False):
+        game = self.games[game_id]
+        is_end = game["game"]["state"] == "the_end"
+        reason_of_ending = game["game"]["add_params"]["reason_of_ending"]
+        status = (
+            self.strings["check"] if game["game"]["board"].is_check() and not is_end
+            else self.strings[reason_of_ending] + "\n"
+        )
+        loser, winner = self._get_loser_and_winner(game_id)
+
+        reply_markup = self._get_reply_markup(game_id, promotion, resign_confirm)
 
         pgn = game["game"]["root_node"].accept(chess.pgn.StringExporter(columns=None, headers=False)).replace("*", "").rsplit(maxsplit=1)
         if pgn:
@@ -776,7 +824,7 @@ It's <b>{}</b>'s turn
                 utils.escape_html(game["sender"]["name"] if game["host_plays"] else game["opponent"]["name"]),
                 utils.escape_html(game["opponent"]["name"] if game["host_plays"] else game["sender"]["name"]),
                 self.strings["white"] if game["game"]["board"].turn else self.strings["black"],
-                status,
+                status.format(loser, winner),
                 last_moves[-32:],
             ),
             reply_markup=reply_markup,
@@ -798,9 +846,32 @@ It's <b>{}</b>'s turn
 
         return await self.update_board(game_id)
     
-    async def resign(self, call: InlineCall, game_id: str):
+    async def resign(self, call: InlineCall, game_id: str, confirm: bool = False):
         if not await self._check_player(call, game_id): return
-        await call.answer("he made it as TODO placeholder, wait for update", show_alert=True)
+        game = self.games[game_id]
+        if not confirm:
+            await utils.answer(
+                call,
+                self.strings["resign_check"],
+                reply_markup=[
+                    [
+                        {
+                            "text": self.strings["resign_yes"],
+                            "callback": self.resign,
+                            "args": (game_id, True),
+                        },
+                        {
+                            "text": self.strings["resign_no"],
+                            "callback": self.update_board,
+                            "args": (game_id,),
+                        },
+                    ]
+                ],
+                disable_security=True,
+            )
+            return
+        self.the_end(game_id, "resign", winner=not game["game"]["board"].turn)
+        await self.update_board(game_id)
 
     async def offer_draw(self, call: InlineCall, game_id: str):
         if not await self._check_player(call, game_id): return
