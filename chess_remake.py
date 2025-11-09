@@ -149,9 +149,11 @@ class Chess(loader.Module):
         "time_btn": "⏱️ Time",
         "color_btn": "♟️ Host color",
         "style_btn": "🎛️ Board style",
-        "fwc": "Figures + colors",
-        "f": "Figures",
-        "l": "Letters",
+        "figures-with-circles": "Figures + colors",
+        "figures": "Figures",
+        "letters": "Letters",
+        "figures-with-comb-letters": "Figures + combined letters",
+        "figures-with-cyr-letters": "Figures + cyrillic letters",
         "back": "↩️ Back",
         "available": "Available",
         "not_available": "Not available",
@@ -218,9 +220,11 @@ It's <b>{}</b>'s turn
         "time_btn": "⏱️ Время",
         "color_btn": "♟️ Цвет (хоста)",
         "style_btn": "🎛️ Стиль доски",
-        "fwc": "Фигуры + цвета",
-        "f": "Фигуры",
-        "l": "Буквы",
+        "figures-with-circles": "Фигуры + цвета",
+        "figures": "Фигуры",
+        "letters": "Буквы",
+        "figures-with-comb-letters": "Фигуры + комбинированные буквы",
+        "figures-with-cyr-letters": "Фигуры + кириллические буквы",
         "back": "↩️ Назад",
         "available": "Доступно",
         "not_available": "Недоступно",
@@ -286,20 +290,35 @@ It's <b>{}</b>'s turn
     async def client_ready(self):
         self.styles = {
             "figures-with-circles": {
-            "r": "♖⚫", "n": "♘⚫", "b": "♗⚫", "q": "♕⚫", "k": "♔⚫", "p": "♙⚫",
-            "R": "♖⚪", "N": "♘⚪", "B": "♗⚪", "Q": "♕⚪", "K": "♔⚪", "P": "♙⚪",
-            "move": "●", "capture": "×", "promotion": "↻", "capture_promotion": "×↻",
+                "symbol": "[♔⚪] ",
+                "r": "♖⚫", "n": "♘⚫", "b": "♗⚫", "q": "♕⚫", "k": "♔⚫", "p": "♙⚫",
+                "R": "♖⚪", "N": "♘⚪", "B": "♗⚪", "Q": "♕⚪", "K": "♔⚪", "P": "♙⚪",
+                "move": "●", "capture": "×", "promotion": "↻", "capture_promotion": "×↻",
             },
             "figures": {
-            "r": "♜", "n": "♞", "b": "♝", "q": "𝗾", "k": "♚", "p": "♟",
-            "R": "♖", "N": "♘", "B": "♗", "Q": "𝗤", "K": "♔", "P": "♙",
-            "move": "●", "capture": "×", "promotion": "↻", "capture_promotion": "×↻",
+                "symbol": "[♔] ",
+                "r": "♜", "n": "♞", "b": "♝", "q": "𝗾", "k": "♚", "p": "♟",
+                "R": "♖", "N": "♘", "B": "♗", "Q": "𝗤", "K": "♔", "P": "♙",
+                "move": "●", "capture": "×", "promotion": "↻", "capture_promotion": "×↻",
             },
             "letters": {
-            "r": "𝗿", "n": "𝗻", "b": "𝗯", "q": "𝗾", "k": "𝗸", "p": "𝗽",
-            "R": "𝗥", "N": "𝗡", "B": "𝗕", "Q": "𝗤", "K": "𝗞", "P": "𝗣",
-            "move": "●", "capture": "×", "promotion": "↻", "capture_promotion": "×↻",
-            }
+                "symbol": "[𝗞] ",
+                "r": "𝗿", "n": "𝗻", "b": "𝗯", "q": "𝗾", "k": "𝗸", "p": "𝗽",
+                "R": "𝗥", "N": "𝗡", "B": "𝗕", "Q": "𝗤", "K": "𝗞", "P": "𝗣",
+                "move": "●", "capture": "×", "promotion": "↻", "capture_promotion": "×↻",
+            },
+            "figures-with-cyr-letters": {
+                "symbol": "[♔Б] ",
+                "r": "♖Ч", "n": "♘Ч", "b": "♗Ч", "q": "♕Ч", "k": "♔Ч", "p": "♙Ч",
+                "R": "♖Б", "N": "♘Б", "B": "♗Б", "Q": "♕Б", "K": "♔Б", "P": "♙Б",
+                "move": "●", "capture": "×", "promotion": "↻", "capture_promotion": "×↻",
+            },
+            "figures-with-comb-letters": {
+                "symbol": "[♔ⷱ] ",
+                "r": "♖ⷱ", "n": "♘ⷱ", "b": "♗ⷱ", "q": "♕ⷱ", "k": "♔ⷱ", "p": "♙ⷱ",
+                "R": "♖ⷠ", "N": "♘ⷠ", "B": "♗ⷠ", "Q": "♕ⷠ", "K": "♔ⷠ", "P": "♙ⷠ",
+                "move": "●", "capture": "×", "promotion": "↻", "capture_promotion": "×↻",
+            },
         }
         self.coords = {
             f"{col}{row}": "" for row in range(1, 9)
@@ -506,9 +525,8 @@ It's <b>{}</b>'s turn
             elif ruleset == "s":
                 text = "✏️"
                 reply_markup.extend([
-                    [{"text": "[♔⚪] " + self.strings["fwc"], "callback":self._settings, "args": (game_id, ['style', 'figures-with-circles'])}],
-                    [{"text": "[♔] " + self.strings["f"], "callback":self._settings, "args": (game_id, ['style', 'figures'])}],
-                    [{"text": "[𝗞] " + self.strings["l"], "callback":self._settings, "args": (game_id, ['style', 'letters'])}]
+                    [{"text": st["symbol"] + self.strings[name], "callback":self._settings, "args": (game_id, ["style", name])}]
+                    for name, st in self.styles.items()
                 ])
 
             reply_markup.append(
