@@ -621,7 +621,7 @@ It's <b>{}</b>'s turn
     @loader.loop(interval=1, autostart=True)
     async def main_loop(self):
         for game_id in self.games:
-            if not self.games["game_id"].get("backup", False) and self.games[game_id].get("Timer", {}).get("timer_loop", None) and not self.games[game_id]["Timer"].get("timer_is_set", False):
+            if not self.games[game_id].get("backup", False) and self.games[game_id].get("Timer", {}).get("timer_loop", None) and not self.games[game_id]["Timer"].get("timer_is_set", False):
                 async def timer_loop(game_id):
                     timer = self.games[game_id]["Timer"]["timer"]
                     await timer.start()
