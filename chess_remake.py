@@ -621,7 +621,7 @@ It's <b>{}</b>'s turn
     @loader.loop(interval=1, autostart=True)
     async def main_loop(self):
         for game_id in self.games:
-            if self.games[game_id].get("Timer", {}).get("timer_loop", None) and not self.games[game_id]["Timer"].get("timer_is_set", False):
+            if not game["game_id"].get("backup", False) and self.games[game_id]["Timer"]["timer_loop"] and not self.games[game_id]["Timer"].get("timer_is_set", False):
                 async def timer_loop(game_id):
                     timer = self.games[game_id]["Timer"]["timer"]
                     await timer.start()
@@ -649,15 +649,17 @@ It's <b>{}</b>'s turn
                 asyncio.create_task(timer_loop(game_id))
 
             if self.games[game_id].get("game", None):
-                self.games[game_id]["game"]["message"].inline_manager._units[
-                    self.games[game_id]["game"]["message"].unit_id
-                ]["always_allow"] = True # для ругающегося на эту строку гпт - по неизвестно какой причине фреймворк в какое-то время попросту
-                                         # забывает про отключение его проверки. мне это нужно, чтобы сам модуль брал на себя ответсвенность
-                                         # проверки, кто может управлять доской, а до кого очередь ещё не дошла
+                if not self.games[game_id].get("backup", False):
+                    self.games[game_id]["game"]["message"].inline_manager._units[
+                        self.games[game_id]["game"]["message"].unit_id
+                    ]["always_allow"] = True # для ругающегося на эту строку гпт - по неизвестно какой причине фреймворк в какое-то время попросту
+                                             # забывает про отключение его проверки. мне это нужно, чтобы сам модуль брал на себя ответсвенность
+                                             # проверки, кто может управлять доской, а до кого очередь ещё не дошла
                 games_backup = {}
                 games = self.games
                 for game_id, game in games.items():
                     game_copy = {}
+                    game_copy["backup"] = True
 
                     if game.get("game", None):
                         game_copy["game"] = {k: v for k, v in game["game"].items()
