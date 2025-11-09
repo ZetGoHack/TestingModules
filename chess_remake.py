@@ -621,7 +621,7 @@ It's <b>{}</b>'s turn
     @loader.loop(interval=1, autostart=True)
     async def main_loop(self):
         for game_id in self.games:
-            if not self.games[game_id].get("backup", False) and self.games[game_id].get("Timer", {}).get("timer_loop", None) and not self.games[game_id]["Timer"].get("timer_is_set", False):
+            if not self.games[game_id].get("backup", False) and self.games[game_id]["Timer"]["timer_loop"] and not self.games[game_id]["Timer"]["timer_is_set"]:
                 async def timer_loop(game_id):
                     timer = self.games[game_id]["Timer"]["timer"]
                     await timer.start()
@@ -658,19 +658,21 @@ It's <b>{}</b>'s turn
                 games_backup = {}
                 games = self.games
                 for game_id, game in games.items():
-                    game_copy = {}
-                    game_copy["backup"] = True
+                    game_copy = game
+                    if not game.get("backup", None):
+                        game_copy = {}
+                        game_copy["backup"] = True
 
-                    if game.get("game", None):
-                        game_copy["game"] = {k: v for k, v in game["game"].items()
-                                             if k not in ("message", "root_node", "curr_node", "board")}
-                        game_copy["game"]["node"] = str(game["game"]["root_node"])
-                    if game.get("Timer", None) and game["Timer"].get("timer", None):
-                        game_copy["Timer"] = game["Timer"]["timer"].backup()
+                        if game.get("game", None):
+                            game_copy["game"] = {k: v for k, v in game["game"].items()
+                                                 if k not in ("message", "root_node", "curr_node", "board")}
+                            game_copy["game"]["node"] = str(game["game"]["root_node"])
+                        if game.get("Timer", None) and game["Timer"].get("timer", None):
+                            game_copy["Timer"] = game["Timer"]["timer"].backup()
 
-                    for key, value in game.items():
-                        if key not in ("game", "Timer"):
-                            game_copy[key] = value
+                        for key, value in game.items():
+                            if key not in ("game", "Timer"):
+                                game_copy[key] = value
                     
                     games_backup[game_id] = game_copy
                 
