@@ -885,7 +885,7 @@ It's <b>{}</b>'s turn
             reply_markup.append(resign)
         return reply_markup
 
-    async def update_board(self, game_id: str, promotion: bool = False, resign_confirm: bool = False):
+    async def update_board(self, game_id: str, promotion: bool = False, resign_confirm: bool = False, draw_confirm: bool = False):
         game = self.games[game_id]
         is_end = game["game"]["state"] == "the_end"
         reason_of_ending = game["game"]["add_params"]["reason_of_ending"]
@@ -895,7 +895,7 @@ It's <b>{}</b>'s turn
         )
         loser, winner = self._get_loser_and_winner(game_id)
 
-        reply_markup = self._get_reply_markup(game_id, promotion, resign_confirm)
+        reply_markup = self._get_reply_markup(game_id, promotion, resign_confirm, draw_confirm)
 
         pgn = game["game"]["root_node"].accept(chess.pgn.StringExporter(columns=None, headers=False)).replace("*", "").rsplit(maxsplit=1)
         if pgn:
