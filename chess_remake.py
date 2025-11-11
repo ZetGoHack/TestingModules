@@ -157,6 +157,7 @@ class Chess(loader.Module):
         "letters": "Letters",
         "figures-with-comb-letters": "Figures + combined letters",
         "figures-with-cyr-letters": "Figures + cyrillic letters",
+        "figures-with-latin-letters": "Figures + latin letters",
         "back": "↩️ Back",
         "available": "Available",
         "not_available": "Not available",
@@ -182,7 +183,7 @@ class Chess(loader.Module):
         "reason_timer": "Time is out!",
         "start_timer": "⏱️ Start",
         "waiting_for_start": "🔁 Waiting for timer to start...",
-        "board": """\
+        "board": """Game <code>#{}</code>
 ♔ White - {}
 ♚ Black - {}
 
@@ -229,6 +230,7 @@ It's <b>{}</b>'s turn
         "letters": "Буквы",
         "figures-with-comb-letters": "Фигуры + комбинированные буквы",
         "figures-with-cyr-letters": "Фигуры + кириллические буквы",
+        "figures-with-latin-letters": "Фигуры + латинские буквы",
         "back": "↩️ Назад",
         "available": "Доступно",
         "not_available": "Недоступно",
@@ -254,7 +256,7 @@ It's <b>{}</b>'s turn
         "reason_timer": "Время вышло!",
         "start_timer": "⏱️ Начать",
         "waiting_for_start": "🔁 Ожидаю включения таймера...",
-        "board": """\
+        "board": """Партия <code>#{}</code>
 ♔ Белые - {}
 ♚ Чёрные - {}
 
@@ -316,6 +318,12 @@ It's <b>{}</b>'s turn
                 "symbol": "[♔Б] ",
                 "r": "♖Ч", "n": "♘Ч", "b": "♗Ч", "q": "♕Ч", "k": "♔Ч", "p": "♙Ч",
                 "R": "♖Б", "N": "♘Б", "B": "♗Б", "Q": "♕Б", "K": "♔Б", "P": "♙Б",
+                "move": "●", "capture": "×", "promotion": "↻", "capture_promotion": "×↻",
+            },
+            "figures-with-latin-letters": {
+                "symbol": "[♔W] ",
+                "r": "♖B", "n": "♘B", "b": "♗B", "q": "♕B", "k": "♔B", "p": "♙B",
+                "R": "♖W", "N": "♘W", "B": "♗W", "Q": "♕W", "K": "♔W", "P": "♙W",
                 "move": "●", "capture": "×", "promotion": "↻", "capture_promotion": "×↻",
             },
             "figures-with-comb-letters": {
@@ -574,6 +582,13 @@ It's <b>{}</b>'s turn
             style = self.gsettings['style']
         )
         await self._invite(message, game_id)
+    
+    @loader.command(ru_doc="посмотреть текущее состояние модуля и статистику своих партий")
+    async def chesstats(self, message: Message):
+        """view the current state of the module and statistics of your games"""
+        total_games = len(self.get("games_backup", {}))
+        await utils.answer(message, f"♟️ <b>{self.strings['name']}</b> ♟️\n\nTotal games played: <b>{total_games}</b>")
+        # TODO: добавить кнопки для просмотра состояния каждой партии; считать победы/поражения/ничьи и прочую бесполезную статистику; проверка на наличие исполняемого файла шахматного движка для возможности игры против ИИ; возможность экспорта партии в PGN; возможность продолжить сохранённую партию
 
     ############## Preparing all for game start... ##############
 
@@ -659,23 +674,26 @@ It's <b>{}</b>'s turn
                 games_backup = {}
                 games = self.games
                 for game_id, game in games.items():
-                    game_copy = game
-                    if not game.get("backup", None):
-                        game_copy = {}
-                        game_copy["backup"] = True
+                    if game.get("game", None):
+                        game_copy = game
+                        if not game.get("backup", None):
+                            game_copy = {}
+                            game_copy["backup"] = True
 
-                        if game.get("game", None):
-                            game_copy["game"] = {k: v for k, v in game["game"].items()
-                                                 if k not in ("message", "root_node", "curr_node", "board")}
+                            game_copy["game"] = {
+                                k: v for k, v in game["game"].items()
+                                if k not in ("message", "root_node", "curr_node", "board")
+                            }
                             game_copy["game"]["node"] = str(game["game"]["root_node"])
-                        if game.get("Timer", None) and game["Timer"].get("timer", None):
-                            game_copy["Timer"] = game["Timer"]["timer"].backup()
 
-                        for key, value in game.items():
-                            if key not in ("game", "Timer"):
-                                game_copy[key] = value
-                    
-                    games_backup[game_id] = game_copy
+                            if game.get("Timer", None) and game["Timer"].get("timer", None):
+                                game_copy["Timer"] = game["Timer"]["timer"].backup()
+
+                            for key, value in game.items():
+                                if key not in ("game", "Timer"):
+                                    game_copy[key] = value
+
+                        games_backup[game_id] = game_copy
                 
                 self.set("games_backup", games_backup)
 
@@ -696,6 +714,7 @@ It's <b>{}</b>'s turn
         pgn["Round"] = str(game_id)
         pgn["White"] = game["sender"]["name"] if game["sender"]["color"] else game["opponent"]["name"]
         pgn["Black"] = game["opponent"]["name"] if game["sender"]["color"] else game["sender"]["name"]
+        pgn["Result"] = "*"
         node.headers.update(pgn)
         game["game"] = {
             "board": chess.Board(),
