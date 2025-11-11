@@ -928,6 +928,7 @@ It's <b>{}</b>'s turn
         await utils.answer(
             game["game"]["message"],
             self.strings["board"].format(
+                game_id,
                 utils.escape_html(game["sender"]["name"] if game["sender"]["color"] else game["opponent"]["name"]),
                 utils.escape_html(game["opponent"]["name"] if game["sender"]["color"] else game["sender"]["name"]),
                 self.strings["white"] if game["game"]["board"].turn else self.strings["black"],
