@@ -107,7 +107,8 @@ class GameParams(TypedDict):
     chosen_figure_coord: str
     reason_of_ending: str
     promotion_move: str
-    winner_color: bool | None 
+    winner_color: bool | None
+    resigner_color: bool | None 
     draw_offerer: bool | None
 
 class Game(TypedDict):
@@ -707,6 +708,7 @@ It's <b>{}</b>'s turn
                 "reason_of_ending": "",
                 "promotion_move": "",
                 "winner_color": None,
+                "resigner_color": None,
                 "draw_offerer": None,
             }
         }
@@ -940,6 +942,10 @@ It's <b>{}</b>'s turn
         if not await self._check_player(call, game_id): return
         game = self.games[game_id]
         if not confirm:
+            game["game"]["add_params"]["resign_offerer"] = self._get_color_by_player(
+                game_id,
+                call.from_user.id
+            )
             return await self.update_board(game_id, resign_confirm=True)
         self.the_end(game_id, "resign", winner=not game["game"]["board"].turn)
         await self.update_board(game_id)
@@ -948,15 +954,21 @@ It's <b>{}</b>'s turn
         if not await self._check_player(call, game_id, skip_turn_check=True): return
         game = self.games[game_id]
         if accept:
-            if call.from_user.id != game["game"]["add_params"]["draw_offerer"]:
+            offerer_id = self._get_player_by_color(
+                self,
+                game_id,
+                game["game"]["add_params"]["draw_offerer"]
+            )["id"]
+
+            if call.from_user.id == offerer_id:
                 await call.answer(self.strings["draw_not_you"])
                 return
             self.the_end(game_id, "draw")
             return await self.update_board(game_id)
         
-        game["game"]["add_params"]["draw_offerer"] = (
-            game["sender"]["color"] if call.from_user.id == game["sender"]["id"]
-            else game["opponent"]["color"]
+        game["game"]["add_params"]["draw_offerer"] = self._get_color_by_player(
+            game_id,
+            call.from_user.id
         )
         return await self.update_board(game_id, draw_confirm=True)
     
@@ -1023,3 +1035,17 @@ It's <b>{}</b>'s turn
             await call.answer("ты игру сломал?")
             self.idle(game_id)
             return await self.update_board(game_id)
+
+
+
+    def _get_player_by_color(self, game_id: str, color: bool):
+        game = self.games[game_id]
+        return game["sender"] if game["sender"]["color"] == color else game["opponent"]
+    
+    def _get_color_by_player(self, game_id: str, player_id: int):
+        game = self.games[game_id]
+        if game["sender"]["id"] == player_id:
+            return game["sender"]["color"]
+        elif game["opponent"]["id"] == player_id:
+            return game["opponent"]["color"]
+        return None
