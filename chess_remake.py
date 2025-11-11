@@ -1,4 +1,4 @@
-__version__ = ("-beta", 2, 10) #######################
+__version__ = ("-beta", 2, 11) #######################
 #░░░███░███░███░███░███
 #░░░░░█░█░░░░█░░█░░░█░█
 #░░░░█░░███░░█░░█░█░█░█
@@ -975,7 +975,6 @@ It's <b>{}</b>'s turn
         game = self.games[game_id]
         if accept:
             offerer_id = self._get_player_by_color(
-                self,
                 game_id,
                 game["game"]["add_params"]["draw_offerer"]
             )["id"]
