@@ -1,5 +1,4 @@
 en:
-  name: "Chess"
   noargs: "<emoji document_id=5370724846936267183>🤔</emoji> You did not specify who to play with"
   whosthat: "<emoji document_id=5019523782004441717>❌</emoji> I cannot find such a user"
   not_a_user: "<emoji document_id=5019523782004441717>❌</emoji> This is not a user"
