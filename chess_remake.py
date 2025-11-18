@@ -1,4 +1,4 @@
-__version__ = ("-beta", 2, 11) #######################
+__version__ = ("-beta", 2, 12) #######################
 #░░░███░███░███░███░███
 #░░░░░█░█░░░░█░░█░░░█░█
 #░░░░█░░███░░█░░█░█░█░█
@@ -8,6 +8,7 @@ __version__ = ("-beta", 2, 11) #######################
 
 # meta developer: @nullmod
 # requires: python-chess
+# packurl: https://github.com/ZetGoHack/TestingModules/raw/main/chess.yml
 
 
 from .. import loader, utils
@@ -138,150 +139,6 @@ class Chess(loader.Module):
     strings = {
         "": "",
         "name": "Chess",
-        "noargs": "<emoji document_id=5370724846936267183>🤔</emoji> You did not specify who to play with",
-        "whosthat": "<emoji document_id=5019523782004441717>❌</emoji> I cannot find such a user",
-        "not_a_user": "<emoji document_id=5019523782004441717>❌</emoji> This is not a user",
-        "playing_with_yourself?": "<emoji document_id=5384398004172102616>😈</emoji> Playing with yourself? Sorry, you can't",
-        "invite": "{opponent} you have invited to play chess! Do you accept?\n\n",
-        "settings_text": "⚙️ Current settings: \n\n    🎛️ <b>Style:</b> {style}\n    ⏲️ <b>Timer:</b> {timer}\n    ♟️ <b>Host plays:</b> {color}",
-        "updated": "✅ Updated!",
-        "yes": "✅ Accept",
-        "no": "❌ No",
-        "declined": "❌ Invitation declined",
-        "settings": "⚙️ Settings",
-        "time_btn": "⏱️ Time",
-        "color_btn": "♟️ Host color",
-        "style_btn": "🎛️ Board style",
-        "figures-with-circles": "Figures + colors",
-        "figures": "Figures",
-        "letters": "Letters",
-        "figures-with-comb-letters": "Figures + combined letters",
-        "figures-with-cyr-letters": "Figures + cyrillic letters",
-        "figures-with-latin-letters": "Figures + latin letters",
-        "back": "↩️ Back",
-        "available": "Available",
-        "not_available": "Not available",
-        "not_you": "You cannot click here",
-        "opp_move": "Opponent's turn!",
-        "random": "🎲 Random",
-        "white": "⚪ White",
-        "black": "⚫ Black",
-        "timer": "{} min.",
-        "blitz_text": "⚡ Blitz",
-        "blitz_message": "Blitz-Blitz – speed without limits",
-        "rapid_text": "⏱️ Rapid",
-        "rapid_message": "Ponder your defeat",
-        "no_clock_text": "❌ No clock",
-        "step1": "🔁 [0%] Initialization... Creating board..",
-        "step2": "🔁 [25%] Initialization... Setting style..",
-        "step3": "🔁 [50%] Initialization... Choosing colors..",
-        "step4": "🔁 [75%] Initialization... Almost there...",
-        "step4.T": "🔁 [88%] Initialization... Connecting timer..",
-        "step5": "✅ [100%] Done!",
-        "timer_text": "♔ White: {}\n♚ Black: {}\n\n{}",
-        "reason": "",
-        "reason_timer": "Time is out!",
-        "start_timer": "⏱️ Start",
-        "waiting_for_start": "🔁 Waiting for timer to start...",
-        "board": """Game <code>#{}</code>
-♔ White - {}
-♚ Black - {}
-
-It's <b>{}</b>'s turn
-<b>{}</b>
-<blockquote>{}</blockquote>""",
-        "no_moves": "No moves for this piece!",
-        "check": "❗ Check!",
-        "checkmate": "🛑 Checkmate! {winner} wins!",
-        "time_is_up": "⌛ {loser}'s time is up! {winner} wins!",
-        "stalemate": "🤝 Stalemate!",
-        "insufficient_material": "🤝 Draw! Insufficient material to win!",
-        "seventyfive_moves": "🤝 Draw! 75-move rule!",
-        "fivefold_repetition": "🤝 Draw! Fivefold repetition!",
-        "resign": "🏳️ Player {loser} has resigned!",
-        "draw": "🤝 Players agreed to a draw!",
-        "can_not_move": "You cannot make moves right now!",
-        "choose_promotion": "Choose a piece for promotion!",
-        "resign_check": "Are you sure you want to resign?",
-        "resign_yes": "🏳️ Resign",
-        "resign_no": "❌ Cancel",
-        "draw_offer": "🤝 {} offer a draw!",
-        "draw_yes": "🤝 Accept",
-        "draw_not_you": "You cannot accept your own offer!",
-        "game_ended": "Game ended. You cannot make moves.",
-    }
-    strings_ru = {
-        "noargs": "<emoji document_id=5370724846936267183>🤔</emoji> Вы не указали с кем играть",
-        "whosthat": "<emoji document_id=5019523782004441717>❌</emoji> Я не нахожу такого пользователя",
-        "not_a_user": "<emoji document_id=5019523782004441717>❌</emoji> Это не пользователь",
-        "playing_with_yourself?": "<emoji document_id=5384398004172102616>😈</emoji> Одиночные шахматы? Простите, нет",
-        "invite": "{opponent}, вас пригласили сыграть партию шахмат! Примите?\n\n",
-        "settings_text": "⚙️ Текущие настройки: \n\n    🎛️ <b>Стиль доски:</b> <code>{style}</code>\n    ⏱️ <b>Таймер:</b> {timer}\n    ♟️ <b>Хост играет за:</b> {color}",
-        "updated": "✅ Обновлено!",
-        "yes": "✅ Принимаю",
-        "no": "❌ Нет",
-        "declined": "❌ Приглашение отклонено",
-        "settings": "⚙️ Настройки",
-        "time_btn": "⏱️ Время",
-        "color_btn": "♟️ Цвет (хоста)",
-        "style_btn": "🎛️ Стиль доски",
-        "figures-with-circles": "Фигуры + цвета",
-        "figures": "Фигуры",
-        "letters": "Буквы",
-        "figures-with-comb-letters": "Фигуры + комбинированные буквы",
-        "figures-with-cyr-letters": "Фигуры + кириллические буквы",
-        "figures-with-latin-letters": "Фигуры + латинские буквы",
-        "back": "↩️ Назад",
-        "available": "Доступно",
-        "not_available": "Недоступно",
-        "not_you": "Вы не можете нажать сюда!",
-        "opp_move": "Сейчас ход противника!",
-        "random": "🎲 Рандом",
-        "white": "⚪ Белые",
-        "black": "⚫ Чёрные",
-        "timer": "{} мин.",
-        "blitz_text": "⚡ Блиц",
-        "blitz_message": "Блиц-Блиц - скорость без границ",
-        "rapid_text": "⏱️ Рапид",
-        "rapid_message": "Обдумай своё поражение",
-        "no_clock_text": "❌ Нет часов",
-        "step1": "🔁 [0%] Инициализация... Создание доски..",
-        "step2": "🔁 [25%] Инициализация... Ставлю стиль..",
-        "step3": "🔁 [50%] Инициализация... Выбираю цвета",
-        "step4": "🔁 [75%] Инициализация... Почти...",
-        "step4.T": "🔁 [88%] Инициализация... Подключаю таймер..",
-        "step5": "✅ [100%] Готово!",
-        "timer_text": "♔ Белые: {}\n♚ Чёрные: {}\n\n{}",
-        "reason": "",
-        "reason_timer": "Время вышло!",
-        "start_timer": "⏱️ Начать",
-        "waiting_for_start": "🔁 Ожидаю включения таймера...",
-        "board": """Партия <code>#{}</code>
-♔ Белые - {}
-♚ Чёрные - {}
-
-Сейчас ходят <b>{}</b>
-<b>{}</b>
-<blockquote>{}</blockquote>""",
-        "no_moves": "Для этой фигуры нет ходов!",
-        "check": "❗ Шах!",
-        "checkmate": "🛑 Шах и мат! Победил(а) {winner}!",
-        "time_is_up": "⌛ Время у {loser} истекло! Победил(а) {winner}!",
-        "stalemate": "🤝 Пат!",
-        "insufficient_material": "🤝 Ничья! Недостаточно материала для победы!",
-        "seventyfive_moves": "🤝 Ничья! Правило 75 ходов!",
-        "fivefold_repetition": "🤝 Ничья! Пятикратное повторение ходов!",
-        "resign": "🏳️ Игрок {loser} сдался!",
-        "draw": "🤝 Игроки согласились на ничью!",
-        "can_not_move": "Вы не можете делать ходы в данный момент!",
-        "choose_promotion": "Выберите фигуру для превращения!",
-        "resign_check": "Вы действительно хотите сдаться?",
-        "resign_yes": "🏳️ Сдаться",
-        "resign_no": "❌ Отмена",
-        "draw_offer": "🤝 {} предлагают ничью!",
-        "draw_yes": "🤝 Согласиться",
-        "draw_not_you": "Вы не можете согласиться на своё предложение!",
-        "game_ended": "Игра завершена. Вы не можете делать ходы.",
     }
 
     def __init__(self):
