@@ -44,13 +44,7 @@ en:
   reason_timer: "Time is out!"
   start_timer: "⏱️ Start"
   waiting_for_start: "🔁 Waiting for timer to start..."
-  board: "Game <code>#{}</code>
-♔ White - {}
-♚ Black - {}
-
-It's <b>{}</b>'s turn
-<b>{}</b>
-<blockquote>{}</blockquote>"
+  board: "Game <code>#{}</code>\n♔ White - {}\n♚ Black - {}\n\nIt's <b>{}</b>'s turn\n<b>{}</b>\n<blockquote>{}</blockquote>"
   no_moves: "No moves for this piece!"
   check: "❗ Check!"
   checkmate: "🛑 Checkmate! {winner} wins!"
@@ -117,13 +111,7 @@ ru:
   reason_timer: "Время вышло!"
   start_timer: "⏱️ Начать"
   waiting_for_start: "🔁 Ожидаю включения таймера..."
-  board: "Партия <code>#{}</code>
-♔ Белые - {}
-♚ Чёрные - {}
-
-Сейчас ходят <b>{}</b>
-<b>{}</b>
-<blockquote>{}</blockquote>"
+  board: "Партия <code>#{}</code>\n♔ Белые - {}\n♚ Чёрные - {}\n\nСейчас ходят <b>{}</b>\n<b>{}</b>\n<blockquote>{}</blockquote>"
   no_moves: "Для этой фигуры нет ходов!"
   check: "❗ Шах!"
   checkmate: "🛑 Шах и мат! Победил(а) {winner}!"
