@@ -146,7 +146,7 @@ class Chess(loader.Module):
             loader.ConfigValue(
                 "play_self",
                 False,
-                "Jst playing with urself",
+                "Allows you to make moves without turn checks (also, you can play with yourself)",
                 validator=loader.validators.Boolean(),
             )
         )
@@ -440,11 +440,11 @@ class Chess(loader.Module):
         )
         await self._invite(message, game_id)
     
-    @loader.command(ru_doc="посмотреть текущее состояние модуля и статистику своих партий")
-    async def chesstats(self, message: Message):
-        """view the current state of the module and statistics of your games"""
-        total_games = len(self.get("games_backup", {}))
-        await utils.answer(message, f"♟️ <b>{self.strings['name']}</b> ♟️\n\nTotal games played: <b>{total_games}</b>")
+#    @loader.command(ru_doc="посмотреть текущее состояние модуля и статистику своих партий")
+#    async def chesstats(self, message: Message):
+#        """view the current state of the module and statistics of your games"""
+#        total_games = len(self.get("games_backup", {}))
+#        await utils.answer(message, f"♟️ <b>{self.strings['name']}</b> ♟️\n\nTotal games played: <b>{total_games}</b>")
         # TODO: добавить кнопки для просмотра состояния каждой партии; считать победы/поражения/ничьи и прочую бесполезную статистику; проверка на наличие исполняемого файла шахматного движка для возможности игры против ИИ; возможность экспорта партии в PGN; возможность продолжить сохранённую партию
 
     ############## Preparing all for game start... ##############
