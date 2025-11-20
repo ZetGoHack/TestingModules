@@ -10,23 +10,21 @@ __version__ = (2, 0, "1-beta") #######################
 # requires: python-chess
 # packurl: https://github.com/ZetGoHack/TestingModules/raw/main/chess.yml
 
-
-from .. import loader, utils
-from ..inline.types import BotInlineCall, InlineCall, InlineMessage
-
 import asyncio
-import chess
-import chess.pgn
 import copy
 # import logging
 # import os
 import random as r
 import time
 from datetime import datetime, timezone
-
-from telethon.tl.types import PeerUser, User, Message
 from typing import TypedDict
 
+import chess
+import chess.pgn
+from telethon.tl.types import PeerUser, User, Message
+
+from .. import loader, utils
+from ..inline.types import BotInlineCall, InlineCall, InlineMessage
 
 class Timer:
     def __init__(self, scnds):
