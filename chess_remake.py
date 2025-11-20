@@ -1,4 +1,4 @@
-__version__ = ("-beta", 2, 12) #######################
+__version__ = (2, 0, "1-beta") #######################
 #░░░███░███░███░███░███
 #░░░░░█░█░░░░█░░█░░░█░█
 #░░░░█░░███░░█░░█░█░█░█
@@ -18,6 +18,8 @@ import asyncio
 import chess
 import chess.pgn
 import copy
+# import logging
+# import os
 import random as r
 import time
 from datetime import datetime, timezone
@@ -133,6 +135,44 @@ class GameObj(TypedDict):
 
 GamesDict = dict[str, GameObj]
 
+# logger = logging.getLogger(__name__)
+
+# def install_stockfish():
+#     import platform
+#     import urllib.request
+#     import zipfile
+#     system = platform.system()
+#     if system == "Windows":
+#         url = "https://github.com/official-stockfish/Stockfish/releases/download/latest/stockfish-windows-x86-64.zip"
+#     elif system == "Linux":
+#         url = "https://github.com/official-stockfish/Stockfish/releases/download/latest/stockfish-ubuntu-x86-64.tar"
+#     else:
+#         return None
+#     file_name = url.split("/")[-1]
+#     path = os.path.abspath(os.path.join(os.path.dirname(__file__), "stockfish"))
+
+#     try:
+#         urllib.request.urlretrieve(url, file_name)
+#         if file_name.endswith(".zip"):
+#             with zipfile.ZipFile(file_name, 'r') as file:
+#                 file.extractall(path)
+#         elif file_name.endswith(".tar"):
+#             import tarfile
+#             with tarfile.open(file_name, 'r') as file:
+#                 file.extractall(path)
+#         os.remove(file_name)
+#         for root, _, files in os.walk(path):
+#             for file in files:
+#                 if "stockfish" in file.lower():
+#                     return os.path.join(root, file)
+#     except Exception:
+#         logger.exception("Failed to install Stockfish")
+#         return None
+
+# def check_path(path: str) -> bool:
+#     return os.path.isfile(path)
+
+
 @loader.tds
 class Chess(loader.Module):
     """A reworked version of the Chess module"""
@@ -148,7 +188,12 @@ class Chess(loader.Module):
                 False,
                 "Allows you to make moves without turn checks (also, you can play with yourself)",
                 validator=loader.validators.Boolean(),
-            )
+            ),
+            # loader.ConfigValue(
+            #     "stockfish_path",
+            #     None,
+            #     "Path to stockfish engine",
+            # ),
         )
     
     async def client_ready(self):
@@ -231,11 +276,23 @@ class Chess(loader.Module):
                     return False
         return True
     
-    async def get_players(self, message: Message):
+    # async def install_stockfish(self, call: InlineCall):
+    #     await utils.answer(call, self.strings["installing"])
+    #     path = install_stockfish()
+    #     if path:
+    #         self.config["stockfish_path"] = path
+    #         await utils.answer(call, self.strings["stockfish_installed"].format(path=path))
+    #     else:
+    #         await utils.answer(call, self.strings["stockfish_install_failed"])
+    
+    async def get_players(self, message: Message, sender_only: bool = False, opponent_only: bool = False):
         sender = {
             "id": message.from_id.user_id if isinstance(message.peer_id, PeerUser) else message.sender.id,
             "name": (await self.client.get_entity(message.from_id if isinstance(message.peer_id, PeerUser) else message.sender.id)).first_name
         }
+        if sender_only:
+            return sender
+
         if message.is_reply:
             r = await message.get_reply_message()
             opponent = r.sender
@@ -246,32 +303,41 @@ class Chess(loader.Module):
             opp_name = opponent.first_name
         else:
             args = utils.get_args(message)
+
             if len(args)==0:
                 await utils.answer(message, self.strings["noargs"])
                 return (None, None)
+
             opponent = args[0]
             try:
                 if opponent.isdigit():
                     opp_id = int(opponent)
                     opponent = await self.client.get_entity(opp_id)
+
                     if not isinstance(opponent, User):
                         await utils.answer(message, self.strings["not_a_user"])
                         return (None, None)
                     opp_name = opponent.first_name
                 else:
                     opponent = await self.client.get_entity(opponent)
+
                     if not isinstance(opponent, User):
                         await utils.answer(message, self.strings["not_a_user"])
                         return (None, None)
+
                     opp_name = opponent.first_name
                     opp_id = opponent.id
             except:
                 await utils.answer(message, self.strings["whosthat"])
                 return (None, None)
+
         opponent = {
             "id": opp_id,
             "name": opp_name
         }
+        if opponent_only:
+            return opponent
+
         return (sender, opponent)
 
     async def _invite(self, call: InlineCall, game_id: str):
@@ -422,7 +488,7 @@ class Chess(loader.Module):
             await utils.answer(message, self.strings["playing_with_yourself?"])
             return
         if self.games:
-            past_game =  next(reversed(self.games.values()))
+            past_game = next(reversed(self.games.values()))
             if not past_game.get("game", None):
                 self.games.pop(past_game['game_id'], None)
         if not self.games:
@@ -439,12 +505,54 @@ class Chess(loader.Module):
             style = self.gsettings['style']
         )
         await self._invite(message, game_id)
+
+    # @loader.command()
+    # async def stockfish(self, message: Message):
+    #     if not self.config["stockfish_path"] or not check_path(self.config["stockfish_path"]):
+    #         return await utils.answer(
+    #             message,
+    #             self.strings["stockfish_not_found"],
+    #             reply_markup={
+    #                 "text": self.strings["install_stockfish"],
+    #                 "callback": self.install_stockfish,
+    #             }
+    #         )
+
+    #     if message.is_reply:
+    #         player = self.get_players(message, opponent_only=True)
+    #     else:
+    #         player = self.get_players(message, sender_only=True)
+        
+    #     stockfish = {
+    #         "name": "Stockfish",
+    #         "id": -42,
+    #     }
+
+    #     if self.games:
+    #         past_game = next(reversed(self.games.values()))
+    #         if not past_game.get("game", None):
+    #             self.games.pop(past_game['game_id'], None)
+    #     if not self.games:
+    #         game_id = str(1)
+    #     else:
+    #         game_id = str(max(map(int, self.games.keys())) + 1)
+        
+    #     self.games[game_id] = GameObj(
+    #         game_id = game_id,
+    #         sender = player,
+    #         opponent = stockfish,
+    #         Timer = {"available": True if isinstance(message.peer_id, PeerUser) else False, "timer": None, "timer_loop": False},
+    #         time = int(time.time()),
+    #         host_plays = "r",
+    #         style = self.gsettings['style']
+    #     )
+    #     return # TODO
     
-#    @loader.command(ru_doc="посмотреть текущее состояние модуля и статистику своих партий")
-#    async def chesstats(self, message: Message):
-#        """view the current state of the module and statistics of your games"""
-#        total_games = len(self.get("games_backup", {}))
-#        await utils.answer(message, f"♟️ <b>{self.strings['name']}</b> ♟️\n\nTotal games played: <b>{total_games}</b>")
+    # @loader.command(ru_doc="посмотреть текущее состояние модуля и статистику своих партий")
+    # async def chesstats(self, message: Message):
+    #     """view the current state of the module and statistics of your games"""
+    #     total_games = len(self.get("games_backup", {}))
+    #     await utils.answer(message, f"♟️ <b>{self.strings['name']}</b> ♟️\n\nTotal games played: <b>{total_games}</b>")
         # TODO: добавить кнопки для просмотра состояния каждой партии; считать победы/поражения/ничьи и прочую бесполезную статистику; проверка на наличие исполняемого файла шахматного движка для возможности игры против ИИ; возможность экспорта партии в PGN; возможность продолжить сохранённую партию
 
     ############## Preparing all for game start... ##############
@@ -464,8 +572,8 @@ class Chess(loader.Module):
         await utils.answer(call, self.strings["step3"])
         if (turn := game.pop("host_plays")) == "r":
             turn = r.choice([True, False])
-        game["sender"]["color"] = True if turn else False
-        game["opponent"]["color"] = False if turn else True
+        game["sender"]["color"] = turn
+        game["opponent"]["color"] = not turn
         await asyncio.sleep(0.8)
         await utils.answer(call, self.strings["step4"])
         game["Timer"].pop("available", None)
@@ -673,6 +781,8 @@ class Chess(loader.Module):
     def _get_reply_markup(self, game_id: str, promotion: bool = False, resign_confirm: bool = False, draw_confirm: bool = False) -> list[list[dict]]:
         game = self.games[game_id]
         is_end = game["game"]["state"] == "the_end"
+        vs_stockfish = game["opponent"]["id"] == -42
+
         reply_markup = utils.chunks(
             [
                 {
@@ -754,12 +864,16 @@ class Chess(loader.Module):
                     "callback": self.resign,
                     "args": (game_id,),
                 },
-                {
-                    "text": "🤝",
-                    "callback": self.draw,
-                    "args": (game_id,),
-                }
             ]
+
+            if not vs_stockfish:
+                resign.append(
+                    {
+                        "text": "🤝",
+                        "callback": self.draw,
+                        "args": (game_id,),
+                    }
+                )
             reply_markup.append(resign)
         return reply_markup
 

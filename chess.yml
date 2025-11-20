@@ -1,4 +1,9 @@
 en:
+  stockfish_installed: "✅ Stockfish installed successfully! Path to binary: <code>{}</code>"
+  stockfish_install_failed: "❌ Stockfish installation failed. Check logs for more info"
+  stockfish_not_found: "❌ Stockfish binary not found. You can install it by clicking the button below"
+  install_stockfish: "⬇️ Install Stockfish"
+  installing: "🔁 Installing..."
   noargs: "<emoji document_id=5370724846936267183>🤔</emoji> You did not specify who to play with"
   whosthat: "<emoji document_id=5019523782004441717>❌</emoji> I cannot find such a user"
   not_a_user: "<emoji document_id=5019523782004441717>❌</emoji> This is not a user"
@@ -66,6 +71,11 @@ en:
   game_ended: "Game ended. You cannot make moves."
 
 ru:
+  stockfish_installed: "✅ Stockfish успешно установлен! Путь к бинарнику: <code>{}</code>"
+  stockfish_install_failed: "❌ Не удалось установить Stockfish. Смотрите логи"
+  stockfish_not_found: "❌ Бинарник Stockfish не найден. Вы можете установить его, нажав на кнопку ниже"
+  install_stockfish: "⬇️ Установить Stockfish"
+  installing: "🔁 Установка..."
   noargs: "<emoji document_id=5370724846936267183>🤔</emoji> Вы не указали с кем играть"
   whosthat: "<emoji document_id=5019523782004441717>❌</emoji> Я не нахожу такого пользователя"
   not_a_user: "<emoji document_id=5019523782004441717>❌</emoji> Это не пользователь"
