@@ -1,4 +1,4 @@
-__version__ = (2, 0, "1-beta") #######################
+__version__ = (2, 0, "2-beta") #######################
 #░░░███░███░███░███░███
 #░░░░░█░█░░░░█░░█░░░█░█
 #░░░░█░░███░░█░░█░█░█░█
@@ -285,7 +285,7 @@ class Chess(loader.Module):
     
     async def get_players(self, message: Message, sender_only: bool = False, opponent_only: bool = False):
         sender = {
-            "id": message.from_id.user_id if isinstance(message.peer_id, PeerUser) else message.sender.id,
+            "id": message.sender_id,
             "name": (await self.client.get_entity(message.from_id if isinstance(message.peer_id, PeerUser) else message.sender.id)).first_name
         }
         if sender_only:
@@ -338,14 +338,14 @@ class Chess(loader.Module):
 
         return (sender, opponent)
 
-    async def _invite(self, call: InlineCall, game_id: str):
+    async def _invite(self, call: InlineCall, game_id: str, vs_bot: bool = False):
         if not await self._check_player(call, game_id): return
         game  = self.games[game_id]
         timer = game['Timer']
 
         await utils.answer(
             call,
-            self.strings["invite"].format(
+            self.strings["invite_bot" if vs_bot else "invite"].format(
                 opponent=utils.escape_html(self.games[game_id]["opponent"]["name"])
             ) + self.strings['settings_text'].format(
                 style=game['style'],
@@ -361,7 +361,7 @@ class Chess(loader.Module):
             reply_markup = [
                 [
                     {
-                        "text": self.strings["yes"],
+                        "text": self.strings["bot_yes" if vs_bot else "yes"],
                         "callback": self._init_game,
                         "args": (game_id,)
                     },
@@ -475,7 +475,8 @@ class Chess(loader.Module):
         else:
             await call.answer("✅")
             if ruleset[0] == "style":
-                self.set('style', ruleset[1])
+                self.gsettings["style"] = ruleset[1]
+
             if ruleset[0] == "Timer" and isinstance(ruleset[1], int):
                 self.games[game_id]['Timer']['timer'] = Timer(ruleset[1]*60)
             else:
@@ -547,8 +548,8 @@ class Chess(loader.Module):
 
     #     self.games[game_id] = GameObj(
     #         game_id = game_id,
-    #         sender = player,
-    #         opponent = stockfish,
+    #         sender = stockfish,
+    #         opponent = player,
     #         Timer = {
     #             "available": isinstance(message.peer_id, PeerUser),
     #             "timer": None,
@@ -558,7 +559,7 @@ class Chess(loader.Module):
     #         host_plays = "r",
     #         style = self.gsettings['style']
     #     )
-    #     return # TODO
+    #     await self._invite(message, game_id, vs_bot=True)
 
     # @loader.command(ru_doc="посмотреть текущее состояние модуля и статистику своих партий")
     # async def chesstats(self, message: Message):
@@ -575,26 +576,27 @@ class Chess(loader.Module):
             self.games.pop(game_id, None)
             await utils.answer(call, self.strings["declined"])
             return
+        
+        await utils.answer(call, "🌒")
+
         game = self.games[game_id]
-        await utils.answer(call, self.strings["step1"])
-        await asyncio.sleep(0.8)
-        await utils.answer(call, self.strings["step2"])
         game["style"] = self.styles[game["style"]]
-        await asyncio.sleep(0.8)
-        await utils.answer(call, self.strings["step3"])
+
         if (turn := game.pop("host_plays")) == "r":
             turn = r.choice([True, False])
+
         game["sender"]["color"] = turn
         game["opponent"]["color"] = not turn
-        await asyncio.sleep(0.8)
-        await utils.answer(call, self.strings["step4"])
         game["Timer"].pop("available", None)
+
         await asyncio.sleep(0.8)
+
         if isinstance(self.games[game_id]["Timer"]["timer"], Timer):
             await utils.answer(call, self.strings["step4.T"])
             await self._set_timer(call, game_id, call._units[call.unit_id]['chat'])
             await asyncio.sleep(0.8)
             return await utils.answer(call, self.strings["waiting_for_start"])
+        
         await self._start_game(call, game_id)
 
     async def _set_timer(self, board_call: InlineCall, game_id: str, chat_id):
@@ -800,7 +802,7 @@ class Chess(loader.Module):
     def _get_reply_markup(self, game_id: str, promotion: bool = False, resign_confirm: bool = False, draw_confirm: bool = False) -> list[list[dict]]:
         game = self.games[game_id]
         is_end = game["game"]["state"] == "the_end"
-        vs_stockfish = game["opponent"]["id"] == -42
+        vs_stockfish = game["sender"]["id"] == -42
 
         reply_markup = utils.chunks(
             [
@@ -949,27 +951,35 @@ class Chess(loader.Module):
         await self.update_board(game_id)
 
     async def resign(self, call: InlineCall, game_id: str, confirm: bool = False):
-        if not await self._check_player(call, game_id): return
+        if not await self._check_player(call, game_id, skip_turn_check=True): return
         game = self.games[game_id]
         if not confirm:
-            game["game"]["add_params"]["resign_offerer"] = self._get_color_by_player(
+            game["game"]["add_params"]["resigner_color"] = self._get_color_by_player(
                 game_id,
                 call.from_user.id
             )
             return await self.update_board(game_id, resign_confirm=True)
-        self.the_end(game_id, "resign", winner=not game["game"]["board"].turn)
+        
+        resigner = self._get_player_by_color(
+            game_id, game["game"]["add_params"]["resigner_color"]
+        )
+
+        if call.from_user.id != resigner["id"]:
+            return await call.answer(self.strings["resign_not_you"])
+
+        self.the_end(game_id, "resign", winner=not resigner["color"])
         await self.update_board(game_id)
 
     async def draw(self, call: InlineCall, game_id: str, accept: bool = False):
         if not await self._check_player(call, game_id, skip_turn_check=True): return
         game = self.games[game_id]
         if accept:
-            offerer_id = self._get_player_by_color(
+            offerer = self._get_player_by_color(
                 game_id,
                 game["game"]["add_params"]["draw_offerer"]
-            )["id"]
+            )
 
-            if call.from_user.id == offerer_id:
+            if call.from_user.id == offerer["id"]:
                 await call.answer(self.strings["draw_not_you"])
                 return
             self.the_end(game_id, "draw")
