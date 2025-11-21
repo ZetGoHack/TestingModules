@@ -286,7 +286,7 @@ class Chess(loader.Module):
     async def get_players(self, message: Message, sender_only: bool = False, opponent_only: bool = False):
         sender = {
             "id": message.sender_id,
-            "name": (await self.client.get_entity(message.from_id if isinstance(message.peer_id, PeerUser) else message.sender.id)).first_name
+            "name": (await self.client.get_entity(message.sender_id)).first_name
         }
         if sender_only:
             return sender
