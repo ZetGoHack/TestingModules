@@ -1,4 +1,4 @@
-__version__ = (2, 0, "2-beta") #######################
+__version__ = (2, 0, "3-beta") #######################
 #░░░███░███░███░███░███
 #░░░░░█░█░░░░█░░█░░░█░█
 #░░░░█░░███░░█░░█░█░█░█
@@ -20,6 +20,7 @@ from datetime import datetime, timezone
 from typing import TypedDict
 
 import chess
+import chess.engine
 import chess.pgn
 from telethon.tl.types import PeerUser, User, Message
 
@@ -120,9 +121,12 @@ class Game(TypedDict):
     state: str
     reason: str
     add_params: GameParams
+    bot: chess.engine.SimpleEngine | None
 
 class GameObj(TypedDict):
     game_id: str
+    vs_bot: bool
+    bot_elo: int
     game: Game
     sender: Player
     opponent: Player
@@ -238,9 +242,6 @@ class Chess(loader.Module):
             for col in "hgfedcba"
         }
         self.games: GamesDict = self.get("games_backup", {})
-        self.gsettings = {
-            "style": "figures-with-circles",
-        }
         self.pgn = {
             'Event': "Chess Play In Module",
             'Site': "https://t.me/nullmod/",
@@ -475,7 +476,7 @@ class Chess(loader.Module):
         else:
             await call.answer("✅")
             if ruleset[0] == "style":
-                self.gsettings["style"] = ruleset[1]
+                self.set("style", ruleset[1])
 
             if ruleset[0] == "Timer" and isinstance(ruleset[1], int):
                 self.games[game_id]['Timer']['timer'] = Timer(ruleset[1]*60)
@@ -511,7 +512,7 @@ class Chess(loader.Module):
             },
             time = int(time.time()),
             host_plays = "r",
-            style = self.gsettings['style']
+            style = self.get("style", "figures-with-circles")
         )
         await self._invite(message, game_id)
 
@@ -550,6 +551,8 @@ class Chess(loader.Module):
     #         game_id = game_id,
     #         sender = stockfish,
     #         opponent = player,
+    #         vs_bot = True,
+    #         bot_elo = 3000,
     #         Timer = {
     #             "available": isinstance(message.peer_id, PeerUser),
     #             "timer": None,
@@ -557,7 +560,7 @@ class Chess(loader.Module):
     #         },
     #         time = int(time.time()),
     #         host_plays = "r",
-    #         style = self.gsettings['style']
+    #         style = self.get("style", "figures-with-circles"),
     #     )
     #     await self._invite(message, game_id, vs_bot=True)
 
@@ -668,7 +671,7 @@ class Chess(loader.Module):
 
                             game_copy["game"] = {
                                 k: v for k, v in game["game"].items()
-                                if k not in ("message", "root_node", "curr_node", "board")
+                                if k not in ("message", "root_node", "curr_node", "board", "bot")
                             }
                             game_copy["game"]["node"] = str(game["game"]["root_node"])
 
@@ -691,6 +694,14 @@ class Chess(loader.Module):
         timer["timer_loop"] = True
         await self._start_game(board_call, game_id)
 
+    def init_bot(self, game_id: str, params: dict):
+        if not self.games[game_id]["vs_bot"]: return
+
+        engine = chess.engine.SimpleEngine.popen_uci(self.config["stockfish_path"])
+        engine.configure({"UCI_LimitStrength": True, "UCI_Elo": params["elo"]})
+
+        self.games[game_id]["game"]["bot"] = engine
+
     async def _start_game(self, call: InlineCall, game_id: str):
         if not await self._check_player(call, game_id): return
         game = self.games[game_id]
@@ -702,21 +713,23 @@ class Chess(loader.Module):
         pgn["Black"] = game["opponent"]["name"] if game["sender"]["color"] else game["sender"]["name"]
         pgn["Result"] = "*"
         node.headers.update(pgn)
-        game["game"] = {
-            "board": chess.Board(),
-            "message": call,
-            "root_node": node,
-            "curr_node": node,
-            "state": "idle",
-            "add_params": {
-                "chosen_figure_coord": "",
-                "reason_of_ending": "",
-                "promotion_move": "",
-                "winner_color": None,
-                "resigner_color": None,
-                "draw_offerer": None,
-            }
-        }
+        game["game"] = Game(
+            board = chess.Board(),
+            message = call,
+            root_node = node,
+            curr_node = node,
+            state = "idle",
+            add_params =  GameParams(
+                chosen_figure_coord = "",
+                reason_of_ending = "",
+                promotion_move = "",
+                winner_color = None,
+                resigner_color = None,
+                draw_offerer = None,
+            ),
+            bot = None,
+        )
+        self.init_bot(game_id, {"elo": game["bot_elo"]})
         await self.update_board(game_id)
 
     def idle(self, game_id: str):
