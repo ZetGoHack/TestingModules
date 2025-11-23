@@ -1,4 +1,4 @@
-__version__ = (2, 0, "4-beta") #######################
+__version__ = (2, 0, "5-beta") #######################
 #░░░███░███░███░███░███
 #░░░░░█░█░░░░█░░█░░░█░█
 #░░░░█░░███░░█░░█░█░█░█
@@ -139,7 +139,7 @@ GamesDict = dict[str, GameObj]
 
 logger = logging.getLogger(__name__)
 
-def install_stockfish():
+def install_stockfish() -> str | None:
     import platform
     import gdown
     import zipfile
@@ -167,12 +167,11 @@ def install_stockfish():
         logger.exception("Failed to install Stockfish")
         return None
 
-def find_stfsh_exe() -> bool | str:
+def find_stfsh_exe() -> str | None:
     for root, _, files in os.walk("./stockfish"):
         for file in files:
             if "stockfish" in file.lower():
                 return os.path.join(root, file)
-    return False
 
 def check_path(path: str) -> bool:
     return os.path.isfile(path)
@@ -256,7 +255,7 @@ class Chess(loader.Module):
         if (path := find_stfsh_exe()):
             self.config["stockfish_path"] = path
         
-    async def _check_player(self, call: InlineCall, game_id: str, only_opponent: bool = False, skip_turn_check: bool = False) -> bool:
+    async def _check_player(self, call: InlineCall | Message | None, game_id: str, only_opponent: bool = False, skip_turn_check: bool = False) -> bool:
         if isinstance(call, (BotInlineCall, InlineCall, InlineMessage)):
             game = self.games[game_id]
             _from_id = call.from_user.id
@@ -434,17 +433,15 @@ class Chess(loader.Module):
         )
 
     async def _elo_validator(self, call: InlineCall, data, game_id: str):
-        reply_markup = (
-                [
-                    {"text": self.strings['back'], "callback": self._settings, "args": (game_id, "e")}
-                ]
-            )
+        reply_markup = {"text": self.strings['back'], "callback": self._settings, "args": (game_id, "e")}
+
         if not str(data).isdigit():
             return await utils.answer(call, self.strings["not_int_err"], reply_markup=reply_markup)
         if not 1400 <= int(data) <= 3200:
             return await utils.answer(call, self.strings["out_of_range_err"], reply_markup=reply_markup)
 
         self.games[game_id]["bot_elo"] = int(data)
+        self.set("bot_elo", int(data))
         await self._settings(call, game_id, "MARKASSUCCESS")
 
     async def _settings(self, call: InlineCall, game_id: str, page: str = "", param: str = "", value = None):
@@ -535,6 +532,7 @@ class Chess(loader.Module):
         self.games[game_id] = GameObj(
             game_id = game_id,
             vs_bot = False,
+            bot_elo = self.get("bot_elo", 3400),
             sender = sender,
             opponent = opponent,
             Timer = {
@@ -548,8 +546,9 @@ class Chess(loader.Module):
         )
         await self._invite(message, game_id)
 
-    @loader.command()
+    @loader.command(ru_doc="[reply/username/id] - предложить человеку сыграть партию против 🐟 Stockfish")
     async def stockfish(self, message: Message):
+        """[reply/username/id] - propose a person to play a game against a 🐟 Stockfish"""
         if not self.config["stockfish_path"] or not check_path(self.config["stockfish_path"]):
             return await utils.answer(
                 message,
@@ -584,7 +583,7 @@ class Chess(loader.Module):
             sender = stockfish,
             opponent = player,
             vs_bot = True,
-            bot_elo = 3000,
+            bot_elo = self.get("bot_elo", 3400),
             Timer = {
                 "available": isinstance(message.peer_id, PeerUser),
                 "timer": None,
@@ -726,7 +725,7 @@ class Chess(loader.Module):
         timer["timer_loop"] = True
         await self._start_game(board_call, game_id)
 
-    async def init_bot(self, game_id: str, params: dict):
+    async def _init_bot(self, game_id: str, params: dict):
         if not self.games[game_id]["vs_bot"]: return
 
         engine = chess.engine.SimpleEngine.popen_uci(self.config["stockfish_path"])
@@ -761,7 +760,7 @@ class Chess(loader.Module):
             ),
             bot = None,
         )
-        await self.init_bot(game_id, {"elo": game["bot_elo"]})
+        await self._init_bot(game_id, {"elo": game["bot_elo"]})
         await self.update_board(game_id)
 
     def idle(self, game_id: str):
@@ -795,6 +794,8 @@ class Chess(loader.Module):
             "0-1" if winner is False else
             "1/2-1/2"
         )
+        if self.games[game_id]["vs_bot"]:
+            game["bot"].quit()
 
     def _get_loser_and_winner(self, game_id: str) -> tuple[str, str]:
         game = self.games[game_id]
@@ -974,6 +975,30 @@ class Chess(loader.Module):
             ),
             reply_markup=reply_markup,
         )
+
+        if game["vs_bot"] and game["game"]["board"].turn == game["opponent"]["color"]:
+            await self._bot_process_board(game_id)
+
+    async def _bot_process_board(self, game_id: str):
+        if not (game := self.games[game_id])["vs_bot"]:
+            return
+
+        board = game["game"]["board"]
+        bot = game["game"]["bot"]
+
+        result = bot.play(board, limit=chess.engine.Limit(time=0.1))
+        move = result.move
+        from_coord = chess.square_name(result.move.from_square)
+        to_coord = chess.square_name(result.move.to_square)
+
+        await asyncio.sleep(r.randint(1, 10))
+        await self.choose_coord(None, game_id, from_coord)
+        await asyncio.sleep(0.7)
+        await self.choose_coord(None, game_id, to_coord)
+
+        if move.promotion:
+            await asyncio.sleep(0.7)
+            await self.pawn_promotion(None, game_id, chess.piece_symbol(move.promotion))
 
     def make_move(self, game_id: str, move: str):
         game = self.games[game_id]["game"]
