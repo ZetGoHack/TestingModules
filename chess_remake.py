@@ -344,14 +344,14 @@ class Chess(loader.Module):
 
         return (sender, opponent)
 
-    async def _invite(self, call: InlineCall, game_id: str, vs_bot: bool = False):
+    async def _invite(self, call: InlineCall, game_id: str):
         if not await self._check_player(call, game_id): return
         game  = self.games[game_id]
         timer = game['Timer']
 
         await utils.answer(
             call,
-            self.strings["invite_bot" if vs_bot else "invite"].format(
+            self.strings["invite_bot" if game["vs_bot"] else "invite"].format(
                 opponent=utils.escape_html(self.games[game_id]["opponent"]["name"])
             ) + self.strings['settings_text'].format(
                 style=game['style'],
@@ -368,7 +368,7 @@ class Chess(loader.Module):
             reply_markup = [
                 [
                     {
-                        "text": self.strings["bot_yes" if vs_bot else "yes"],
+                        "text": self.strings["bot_yes" if game["vs_bot"] else "yes"],
                         "callback": self._init_game,
                         "args": (game_id,)
                     },
@@ -528,6 +528,7 @@ class Chess(loader.Module):
             game_id = str(max(map(int, self.games.keys())) + 1)
         self.games[game_id] = GameObj(
             game_id = game_id,
+            vs_bot = False,
             sender = sender,
             opponent = opponent,
             Timer = {
@@ -587,7 +588,7 @@ class Chess(loader.Module):
             host_plays = "r",
             style = self.get("style", "figures-with-circles"),
         )
-        await self._invite(message, game_id, vs_bot=True)
+        await self._invite(message, game_id)
 
     # @loader.command(ru_doc="посмотреть текущее состояние модуля и статистику своих партий")
     # async def chesstats(self, message: Message):
