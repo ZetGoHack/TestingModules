@@ -726,7 +726,7 @@ class Chess(loader.Module):
         timer["timer_loop"] = True
         await self._start_game(board_call, game_id)
 
-    def init_bot(self, game_id: str, params: dict):
+    async def init_bot(self, game_id: str, params: dict):
         if not self.games[game_id]["vs_bot"]: return
 
         engine = chess.engine.SimpleEngine.popen_uci(self.config["stockfish_path"])
@@ -761,7 +761,7 @@ class Chess(loader.Module):
             ),
             bot = None,
         )
-        self.init_bot(game_id, {"elo": game["bot_elo"]})
+        await self.init_bot(game_id, {"elo": game["bot_elo"]})
         await self.update_board(game_id)
 
     def idle(self, game_id: str):
