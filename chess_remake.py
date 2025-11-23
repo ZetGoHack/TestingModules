@@ -141,35 +141,38 @@ logger = logging.getLogger(__name__)
 
 def install_stockfish():
     import platform
-    import urllib.request
+    import gdown
     import zipfile
     system = platform.system()
     if system == "Windows":
-        url = "https://github.com/official-stockfish/Stockfish/releases/download/latest/stockfish-windows-x86-64.zip"
+        url = "https://github.com/official-stockfish/Stockfish/releases/latest/download/stockfish-windows-x86-64.zip"
     elif system == "Linux":
-        url = "https://github.com/official-stockfish/Stockfish/releases/download/latest/stockfish-ubuntu-x86-64.tar"
+        url = "https://github.com/official-stockfish/Stockfish/releases/latest/download/stockfish-ubuntu-x86-64.tar"
     else:
         return None
     file_name = url.split("/")[-1]
-    path = os.path.abspath(os.path.join(os.path.dirname(__file__), "stockfish"))
-
     try:
-        urllib.request.urlretrieve(url, file_name)
+        gdown.download(url, file_name, quiet=True)
         if file_name.endswith(".zip"):
             with zipfile.ZipFile(file_name, 'r') as file:
-                file.extractall(path)
+                file.extractall()
         elif file_name.endswith(".tar"):
             import tarfile
             with tarfile.open(file_name, 'r') as file:
-                file.extractall(path)
+                file.extractall()
         os.remove(file_name)
-        for root, _, files in os.walk(path):
-            for file in files:
-                if "stockfish" in file.lower():
-                    return os.path.join(root, file)
+
+        return find_stfsh_exe()
     except Exception:
         logger.exception("Failed to install Stockfish")
         return None
+
+def find_stfsh_exe() -> bool | str:
+    for root, _, files in os.walk("./stockfish"):
+        for file in files:
+            if "stockfish" in file.lower():
+                return os.path.join(root, file)
+    return False
 
 def check_path(path: str) -> bool:
     return os.path.isfile(path)
@@ -250,6 +253,8 @@ class Chess(loader.Module):
             'White': "{player}",
             'Black': "{player}",
         }
+        if (path := find_stfsh_exe()):
+            self.config["stockfish_path"] = path
         
     async def _check_player(self, call: InlineCall, game_id: str, only_opponent: bool = False, skip_turn_check: bool = False) -> bool:
         if isinstance(call, (BotInlineCall, InlineCall, InlineMessage)):
