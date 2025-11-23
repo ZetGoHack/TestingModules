@@ -434,16 +434,22 @@ class Chess(loader.Module):
         )
 
     async def _elo_validator(self, call: InlineCall, data, game_id: str):
+        reply_markup = (
+                [
+                    {"text": self.strings['back'], "callback": self._settings, "args": (game_id, "e")}
+                ]
+            )
         if not str(data).isdigit():
-            return await call.answer(self.strings["not_int_err"])
+            return await utils.answer(call, self.strings["not_int_err"], reply_markup=reply_markup)
         if not 1400 <= int(data) <= 3200:
-            return await call.answer(self.strings["out_of_range_err"])
-        
-        await self._settings(call, game_id, param="bot_elo", value=int(data))
+            return await utils.answer(call, self.strings["out_of_range_err"], reply_markup=reply_markup)
+
+        self.games[game_id]["bot_elo"] = int(data)
+        await self._settings(call, game_id, "MARKASSUCCESS")
 
     async def _settings(self, call: InlineCall, game_id: str, page: str = "", param: str = "", value = None):
         reply_markup = []
-        text = "🍓"
+        text = "✅"
         if page:
             if page == "t":
                 text = "⏳"
