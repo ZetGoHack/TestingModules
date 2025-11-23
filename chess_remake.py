@@ -364,7 +364,7 @@ class Chess(loader.Module):
                 else self.strings['white'] if game['host_plays']
                 else self.strings['black']
             )
-            + ("\n    " + self.strings["bot_elo"] if game["vs_bot"] else ""),
+            + ("\n    " + self.strings["bot_elo"].format(elo=game["bot_elo"]) if game["vs_bot"] else ""),
             reply_markup = [
                 [
                     {
@@ -397,7 +397,7 @@ class Chess(loader.Module):
 
         if game["vs_bot"]:
             reply_markup.append([
-                {"text": self.strings["bot_elo_btn"], "callback": self._settings, "args": (game_id, "e")}
+                {"text": self.strings["bot_elo_btn"], "input": self._elo_validator, "args": (game_id,)}
             ])
 
         if game["Timer"]["available"]:
