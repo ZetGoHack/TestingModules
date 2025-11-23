@@ -389,17 +389,22 @@ class Chess(loader.Module):
         timer = game['Timer']
         reply_markup = []
 
+        if game["vs_bot"]:
+            reply_markup.append([
+                {"text": self.strings["bot_elo_btn"], "callback": self._settings, "args": (game_id, "e")}
+            ])
+
         if game["Timer"]["available"]:
             reply_markup.append([
-                {"text": self.strings["time_btn"], "callback": self._settings, "args": (game_id, "t", )}
+                {"text": self.strings["time_btn"], "callback": self._settings, "args": (game_id, "t",)}
             ])
 
         reply_markup.extend([
             [
-                {"text": self.strings["color_btn"], "callback": self._settings, "args": (game_id, "c", )}
+                {"text": self.strings["color_btn"], "callback": self._settings, "args": (game_id, "c",)}
             ],
             [
-                {"text": self.strings["style_btn"], "callback": self._settings, "args": (game_id, "s", )}
+                {"text": self.strings["style_btn"], "callback": self._settings, "args": (game_id, "s",)}
             ],
             [
                 {"text": self.strings['back'], "callback": self._invite, "args": (game_id,)}
@@ -421,11 +426,20 @@ class Chess(loader.Module):
             reply_markup=reply_markup,
             disable_security=True
         )
-    async def _settings(self, call: InlineCall, game_id: str, ruleset: str | list):
+
+    async def _elo_validator(self, call: InlineCall, data, game_id: str):
+        if not str(data).isdigit():
+            return await call.answer(self.strings["not_int_err"])
+        if not 1400 <= int(data) <= 3200:
+            return await call.answer(self.strings["out_of_range_err"])
+        
+        await self._settings(call, game_id, param="bot_elo", value=int(data))
+
+    async def _settings(self, call: InlineCall, game_id: str, page: str = "", param: str = "", value = None):
         reply_markup = []
         text = "🍓"
-        if isinstance(ruleset, str):
-            if ruleset == "t":
+        if page:
+            if page == "t":
                 text = "⏳"
                 reply_markup.extend([
                     [
@@ -448,7 +462,7 @@ class Chess(loader.Module):
                         {"text": self.strings['no_clock_text'], "callback":self._settings, "args": (game_id, ['Timer', True])}
                     ]
                 ])
-            elif ruleset == "c":
+            elif page == "c":
                 text = "♟️"
                 reply_markup.extend([
                     [
@@ -459,11 +473,16 @@ class Chess(loader.Module):
                         {"text": self.strings['random'], "callback":self._settings, "args": (game_id, ['host_plays', 'r'])}
                     ]
                 ])
-            elif ruleset == "s":
+            elif page == "s":
                 text = "✏️"
                 reply_markup.extend([
                     [{"text": st["symbol"] + self.strings[name], "callback":self._settings, "args": (game_id, ["style", name])}]
                     for name, st in self.styles.items()
+                ])
+            elif page == "e":
+                text = "🧠"
+                reply_markup.extend([
+                    [{"text": self.strings["set_btn"], "callback": self._settings, "args": (game_id,)}]
                 ])
 
             reply_markup.append(
@@ -475,13 +494,13 @@ class Chess(loader.Module):
             await utils.answer(call, text, reply_markup=reply_markup, disable_security=True)
         else:
             await call.answer("✅")
-            if ruleset[0] == "style":
-                self.set("style", ruleset[1])
+            if param == "style":
+                self.set("style", value)
 
-            if ruleset[0] == "Timer" and isinstance(ruleset[1], int):
-                self.games[game_id]['Timer']['timer'] = Timer(ruleset[1]*60)
+            if param == "Timer" and isinstance(value, int):
+                self.games[game_id]['Timer']['timer'] = Timer(value*60)
             else:
-                self.games[game_id][ruleset[0]] = ruleset[1]
+                self.games[game_id][param] = value
             await self.settings(call, game_id)
     
 
