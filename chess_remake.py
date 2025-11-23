@@ -12,8 +12,8 @@ __version__ = (2, 0, "3-beta") #######################
 
 import asyncio
 import copy
-# import logging
-# import os
+import logging
+import os
 import random as r
 import time
 from datetime import datetime, timezone
@@ -137,42 +137,42 @@ class GameObj(TypedDict):
 
 GamesDict = dict[str, GameObj]
 
-# logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
-# def install_stockfish():
-#     import platform
-#     import urllib.request
-#     import zipfile
-#     system = platform.system()
-#     if system == "Windows":
-#         url = "https://github.com/official-stockfish/Stockfish/releases/download/latest/stockfish-windows-x86-64.zip"
-#     elif system == "Linux":
-#         url = "https://github.com/official-stockfish/Stockfish/releases/download/latest/stockfish-ubuntu-x86-64.tar"
-#     else:
-#         return None
-#     file_name = url.split("/")[-1]
-#     path = os.path.abspath(os.path.join(os.path.dirname(__file__), "stockfish"))
+def install_stockfish():
+    import platform
+    import urllib.request
+    import zipfile
+    system = platform.system()
+    if system == "Windows":
+        url = "https://github.com/official-stockfish/Stockfish/releases/download/latest/stockfish-windows-x86-64.zip"
+    elif system == "Linux":
+        url = "https://github.com/official-stockfish/Stockfish/releases/download/latest/stockfish-ubuntu-x86-64.tar"
+    else:
+        return None
+    file_name = url.split("/")[-1]
+    path = os.path.abspath(os.path.join(os.path.dirname(__file__), "stockfish"))
 
-#     try:
-#         urllib.request.urlretrieve(url, file_name)
-#         if file_name.endswith(".zip"):
-#             with zipfile.ZipFile(file_name, 'r') as file:
-#                 file.extractall(path)
-#         elif file_name.endswith(".tar"):
-#             import tarfile
-#             with tarfile.open(file_name, 'r') as file:
-#                 file.extractall(path)
-#         os.remove(file_name)
-#         for root, _, files in os.walk(path):
-#             for file in files:
-#                 if "stockfish" in file.lower():
-#                     return os.path.join(root, file)
-#     except Exception:
-#         logger.exception("Failed to install Stockfish")
-#         return None
+    try:
+        urllib.request.urlretrieve(url, file_name)
+        if file_name.endswith(".zip"):
+            with zipfile.ZipFile(file_name, 'r') as file:
+                file.extractall(path)
+        elif file_name.endswith(".tar"):
+            import tarfile
+            with tarfile.open(file_name, 'r') as file:
+                file.extractall(path)
+        os.remove(file_name)
+        for root, _, files in os.walk(path):
+            for file in files:
+                if "stockfish" in file.lower():
+                    return os.path.join(root, file)
+    except Exception:
+        logger.exception("Failed to install Stockfish")
+        return None
 
-# def check_path(path: str) -> bool:
-#     return os.path.isfile(path)
+def check_path(path: str) -> bool:
+    return os.path.isfile(path)
 
 
 @loader.tds
@@ -191,11 +191,11 @@ class Chess(loader.Module):
                 "Allows you to make moves without turn checks (also, you can play with yourself)",
                 validator=loader.validators.Boolean(),
             ),
-            # loader.ConfigValue(
-            #     "stockfish_path",
-            #     None,
-            #     "Path to stockfish engine",
-            # ),
+            loader.ConfigValue(
+                "stockfish_path",
+                None,
+                "Path to stockfish engine",
+            ),
         )
     
     async def client_ready(self):
@@ -275,14 +275,14 @@ class Chess(loader.Module):
                     return False
         return True
     
-    # async def install_stockfish(self, call: InlineCall):
-    #     await utils.answer(call, self.strings["installing"])
-    #     path = install_stockfish()
-    #     if path:
-    #         self.config["stockfish_path"] = path
-    #         await utils.answer(call, self.strings["stockfish_installed"].format(path=path))
-    #     else:
-    #         await utils.answer(call, self.strings["stockfish_install_failed"])
+    async def install_stockfish(self, call: InlineCall):
+        await utils.answer(call, self.strings["installing"])
+        path = install_stockfish()
+        if path:
+            self.config["stockfish_path"] = path
+            await utils.answer(call, self.strings["stockfish_installed"].format(path=path))
+        else:
+            await utils.answer(call, self.strings["stockfish_install_failed"])
     
     async def get_players(self, message: Message, sender_only: bool = False, opponent_only: bool = False):
         sender = {
@@ -358,7 +358,8 @@ class Chess(loader.Module):
                 color=self.strings['random'] if game['host_plays'] == 'r'
                 else self.strings['white'] if game['host_plays']
                 else self.strings['black']
-            ),
+            )
+            + ("\n    " + self.strings["bot_elo"] if game["vs_bot"] else ""),
             reply_markup = [
                 [
                     {
@@ -535,53 +536,53 @@ class Chess(loader.Module):
         )
         await self._invite(message, game_id)
 
-    # @loader.command()
-    # async def stockfish(self, message: Message):
-    #     if not self.config["stockfish_path"] or not check_path(self.config["stockfish_path"]):
-    #         return await utils.answer(
-    #             message,
-    #             self.strings["stockfish_not_found"],
-    #             reply_markup={
-    #                 "text": self.strings["install_stockfish"],
-    #                 "callback": self.install_stockfish,
-    #             }
-    #         )
+    @loader.command()
+    async def stockfish(self, message: Message):
+        if not self.config["stockfish_path"] or not check_path(self.config["stockfish_path"]):
+            return await utils.answer(
+                message,
+                self.strings["stockfish_not_found"],
+                reply_markup={
+                    "text": self.strings["install_stockfish"],
+                    "callback": self.install_stockfish,
+                }
+            )
 
-    #     if message.is_reply:
-    #         player = self.get_players(message, opponent_only=True)
-    #     else:
-    #         player = self.get_players(message, sender_only=True)
+        if message.is_reply:
+            player = self.get_players(message, opponent_only=True)
+        else:
+            player = self.get_players(message, sender_only=True)
 
-    #     stockfish = {
-    #         "name": "Stockfish",
-    #         "id": -42,
-    #     }
+        stockfish = {
+            "name": "Stockfish",
+            "id": -42,
+        }
 
-    #     if self.games:
-    #         past_game = next(reversed(self.games.values()))
-    #         if not past_game.get("game", None):
-    #             self.games.pop(past_game['game_id'], None)
-    #     if not self.games:
-    #         game_id = str(1)
-    #     else:
-    #         game_id = str(max(map(int, self.games.keys())) + 1)
+        if self.games:
+            past_game = next(reversed(self.games.values()))
+            if not past_game.get("game", None):
+                self.games.pop(past_game['game_id'], None)
+        if not self.games:
+            game_id = str(1)
+        else:
+            game_id = str(max(map(int, self.games.keys())) + 1)
 
-    #     self.games[game_id] = GameObj(
-    #         game_id = game_id,
-    #         sender = stockfish,
-    #         opponent = player,
-    #         vs_bot = True,
-    #         bot_elo = 3000,
-    #         Timer = {
-    #             "available": isinstance(message.peer_id, PeerUser),
-    #             "timer": None,
-    #             "timer_loop": False
-    #         },
-    #         time = int(time.time()),
-    #         host_plays = "r",
-    #         style = self.get("style", "figures-with-circles"),
-    #     )
-    #     await self._invite(message, game_id, vs_bot=True)
+        self.games[game_id] = GameObj(
+            game_id = game_id,
+            sender = stockfish,
+            opponent = player,
+            vs_bot = True,
+            bot_elo = 3000,
+            Timer = {
+                "available": isinstance(message.peer_id, PeerUser),
+                "timer": None,
+                "timer_loop": False
+            },
+            time = int(time.time()),
+            host_plays = "r",
+            style = self.get("style", "figures-with-circles"),
+        )
+        await self._invite(message, game_id, vs_bot=True)
 
     # @loader.command(ru_doc="посмотреть текущее состояние модуля и статистику своих партий")
     # async def chesstats(self, message: Message):
