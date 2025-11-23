@@ -397,7 +397,7 @@ class Chess(loader.Module):
 
         if game["vs_bot"]:
             reply_markup.append([
-                {"text": self.strings["bot_elo_btn"], "input": self._elo_validator, "args": (game_id,)}
+                {"text": self.strings["bot_elo_btn"], "callback": self._settings, "args": (game_id, "e")}
             ])
 
         if game["Timer"]["available"]:
@@ -488,7 +488,7 @@ class Chess(loader.Module):
             elif page == "e":
                 text = "🧠"
                 reply_markup.extend([
-                    [{"text": self.strings["set_btn"], "callback": self._settings, "args": (game_id,)}]
+                    [{"text": self.strings["set_btn"], "input": self._elo_validator, "args": (game_id,)}]
                 ])
 
             reply_markup.append(
