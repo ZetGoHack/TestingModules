@@ -1,4 +1,6 @@
 en:
+  not_int_err: "❌ The value you entered is not a number"
+  out_of_range_err: "❌ The value you entered is out of range (1400-3200)"
   stockfish_installed: "✅ Stockfish installed successfully! Path to binary: <code>{}</code>"
   stockfish_install_failed: "❌ Stockfish installation failed. Check logs for more info"
   stockfish_not_found: "❌ Stockfish binary not found. You can install it by clicking the button below"
@@ -17,6 +19,7 @@ en:
   no: "❌ No"
   declined: "❌ Invitation declined"
   settings: "⚙️ Settings"
+  bot_elo_btn: "🧠 Bot ELO"
   time_btn: "⏱️ Time"
   color_btn: "♟️ Host color"
   style_btn: "🎛️ Board style"
@@ -27,6 +30,7 @@ en:
   figures-with-cyr-letters: "Figures + cyrillic letters"
   figures-with-latin-letters: "Figures + latin letters"
   back: "↩️ Back"
+  set_btn: "✍️ Set value"
   available: "Available"
   not_available: "Not available"
   not_you: "You cannot click here"
@@ -74,6 +78,8 @@ en:
   game_ended: "Game ended. You cannot make moves."
 
 ru:
+  not_int_err: "❌ Введённое значение - не число"
+  out_of_range_err: "❌ Введённое значение - вне диапазона (1400-3200)"
   stockfish_installed: "✅ Stockfish успешно установлен! Путь к бинарнику: <code>{}</code>"
   stockfish_install_failed: "❌ Не удалось установить Stockfish. Смотрите логи"
   stockfish_not_found: "❌ Бинарник Stockfish не найден. Вы можете установить его, нажав на кнопку ниже"
@@ -92,6 +98,7 @@ ru:
   no: "❌ Нет"
   declined: "❌ Приглашение отклонено"
   settings: "⚙️ Настройки"
+  bot_elo_btn: "🧠 Эло Бота"
   time_btn: "⏱️ Время"
   color_btn: "♟️ Цвет (хоста)"
   style_btn: "🎛️ Стиль доски"
@@ -102,6 +109,7 @@ ru:
   figures-with-cyr-letters: "Фигуры + кириллические буквы"
   figures-with-latin-letters: "Фигуры + латинские буквы"
   back: "↩️ Назад"
+  set_btn: "✍️ Установить"
   available: "Доступно"
   not_available: "Недоступно"
   not_you: "Вы не можете нажать сюда!"
