@@ -1,7 +1,7 @@
 en:
   not_int_err: "❌ The value you entered is not a number"
   out_of_range_err: "❌ The value you entered is out of range (1400-3200)"
-  stockfish_installed: "✅ Stockfish installed successfully! Path to binary: <code>{}</code>"
+  stockfish_installed: "✅ Stockfish installed successfully! Path to binary: <code>{path}</code>"
   stockfish_install_failed: "❌ Stockfish installation failed. Check logs for more info"
   stockfish_not_found: "❌ Stockfish binary not found. You can install it by clicking the button below"
   install_stockfish: "⬇️ Install Stockfish"
@@ -81,7 +81,7 @@ en:
 ru:
   not_int_err: "❌ Введённое значение - не число"
   out_of_range_err: "❌ Введённое значение - вне диапазона (1400-3200)"
-  stockfish_installed: "✅ Stockfish успешно установлен! Путь к бинарнику: <code>{}</code>"
+  stockfish_installed: "✅ Stockfish успешно установлен! Путь к бинарнику: <code>{path}</code>"
   stockfish_install_failed: "❌ Не удалось установить Stockfish. Смотрите логи"
   stockfish_not_found: "❌ Бинарник Stockfish не найден. Вы можете установить его, нажав на кнопку ниже"
   install_stockfish: "⬇️ Установить Stockfish"
