@@ -990,6 +990,7 @@ class Chess(loader.Module):
         move = result.move
         from_coord = chess.square_name(result.move.from_square)
         to_coord = chess.square_name(result.move.to_square)
+        logger.info(f"move: {move}, from: {from_coord}, to: {to_coord}")
 
         await asyncio.sleep(r.randint(1, 10))
         await self.choose_coord(None, game_id, from_coord)
