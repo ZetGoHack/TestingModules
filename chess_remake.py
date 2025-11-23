@@ -555,9 +555,9 @@ class Chess(loader.Module):
             )
 
         if message.is_reply:
-            player = self.get_players(message, opponent_only=True)
+            player = await self.get_players(message, opponent_only=True)
         else:
-            player = self.get_players(message, sender_only=True)
+            player = await self.get_players(message, sender_only=True)
 
         stockfish = {
             "name": "Stockfish",
