@@ -644,7 +644,8 @@ class Chess(loader.Module):
         game["sender"]["color"] = turn
         game["opponent"]["color"] = not turn
         game["Timer"].pop("available", None)
-        game.pop("alr_accepted")
+        if game.get("alr_accepted", None):
+            game.pop("alr_accepted")
 
         await asyncio.sleep(0.8)
 
