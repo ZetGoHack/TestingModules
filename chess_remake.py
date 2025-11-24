@@ -1001,7 +1001,7 @@ class Chess(loader.Module):
             reply_markup=reply_markup,
         )
 
-        if game["vs_bot"] and game["game"]["board"].turn == game["opponent"]["color"] and game["game"]["state"] == "idle":
+        if game["vs_bot"] and game["game"]["board"].turn == game["sender"]["color"] and game["game"]["state"] == "idle":
             await self._bot_process_board(game_id)
 
     async def _bot_process_board(self, game_id: str):
