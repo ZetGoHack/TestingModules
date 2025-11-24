@@ -267,8 +267,7 @@ class Chess(loader.Module):
             if game.get("game", None) and game["game"]["state"] == "the_end":
                 await call.answer(self.strings["game_ended"], show_alert=True)
                 return
-            if _from_id != game["sender"]["id"]:
-                if _from_id != game["opponent"]["id"]:
+            if _from_id != game["sender"]["id"] and _from_id != game["opponent"]["id"]:
                     await call.answer(self.strings["not_available"])
                     return False
             if _from_id == game["sender"]["id"] and only_opponent and not self.config["play_self"]:
@@ -554,7 +553,7 @@ class Chess(loader.Module):
             sender = sender,
             opponent = opponent,
             Timer = {
-                "available": isinstance(message.peer_id, PeerUser),
+                "available": isinstance(message, Message) and isinstance(message.peer_id, PeerUser),
                 "timer": None,
                 "timer_loop": False
             },
