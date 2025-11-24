@@ -533,7 +533,7 @@ class Chess(loader.Module):
                 message,
                 self.strings["is_someone_wanna_play"],
                 reply_markup=r_m,
-                disable_secutity=True,
+                disable_security=True,
             )
             return 
         if sender['id'] == opponent['id'] and not self.config["play_self"]:
