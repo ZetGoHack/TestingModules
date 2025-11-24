@@ -1,4 +1,4 @@
-__version__ = (2, 0, "5-beta") #######################
+__version__ = (2, 0, "6-beta") #######################
 #░░░███░███░███░███░███
 #░░░░░█░█░░░░█░░█░░░█░█
 #░░░░█░░███░░█░░█░█░█░█
@@ -7,7 +7,7 @@ __version__ = (2, 0, "5-beta") #######################
 #H:Mods Team [💎]
 
 # meta developer: @nullmod
-# requires: python-chess
+# requires: python-chess gdown
 # packurl: https://github.com/ZetGoHack/TestingModules/raw/main/chess.yml
 
 import asyncio
@@ -147,7 +147,10 @@ def install_stockfish() -> str | None:
     if system == "Windows":
         url = "https://github.com/official-stockfish/Stockfish/releases/latest/download/stockfish-windows-x86-64.zip"
     elif system == "Linux":
-        url = "https://github.com/official-stockfish/Stockfish/releases/latest/download/stockfish-ubuntu-x86-64.tar"
+        if platform.machine().lower() == "aarch64":
+            url = "https://github.com/official-stockfish/Stockfish/releases/latest/download/stockfish-android-armv8.tar"
+        else:
+            url = "https://github.com/official-stockfish/Stockfish/releases/latest/download/stockfish-ubuntu-x86-64.tar"
     else:
         return None
     file_name = url.split("/")[-1]
@@ -201,6 +204,7 @@ class Chess(loader.Module):
         )
     
     async def client_ready(self):
+        self._last_backup = 0
         self.styles = {
             "figures-with-circles": {
                 "symbol": "[♔⚪] ",
@@ -288,28 +292,32 @@ class Chess(loader.Module):
         else:
             await utils.answer(call, self.strings["stockfish_install_failed"])
     
-    async def get_players(self, message: Message, sender_only: bool = False, opponent_only: bool = False):
-        sender = {
-            "id": message.sender_id,
-            "name": (await self.client.get_entity(message.sender_id)).first_name
-        }
+    async def get_players(self, message: Message | InlineCall, sender: dict = {}, sender_only: bool = False, opponent_only: bool = False):
+        if not sender:
+            sender = {
+                "id": message.sender_id,
+                "name": (await self.client.get_entity(message.sender_id)).first_name
+            }
         if sender_only:
             return sender
+        
+        if isinstance(message, InlineCall):
+            opp_id = message.from_user.id
+            opp_name = message.from_user.first_name
 
-        if message.is_reply:
+        elif message.is_reply:
             r = await message.get_reply_message()
             opponent = r.sender
             if not isinstance(opponent, User):
                 await utils.answer(message, self.strings["not_a_user"])
-                return (None, None)
+                return (sender, None)
             opp_id = opponent.id
             opp_name = opponent.first_name
         else:
             args = utils.get_args(message)
 
             if len(args)==0:
-                await utils.answer(message, self.strings["noargs"])
-                return (None, None)
+                return (sender, None)
 
             opponent = args[0]
             try:
@@ -319,20 +327,20 @@ class Chess(loader.Module):
 
                     if not isinstance(opponent, User):
                         await utils.answer(message, self.strings["not_a_user"])
-                        return (None, None)
+                        return (sender, None)
                     opp_name = opponent.first_name
                 else:
                     opponent = await self.client.get_entity(opponent)
 
                     if not isinstance(opponent, User):
                         await utils.answer(message, self.strings["not_a_user"])
-                        return (None, None)
+                        return (sender, None)
 
                     opp_name = opponent.first_name
                     opp_id = opponent.id
             except ValueError:
                 await utils.answer(message, self.strings["whosthat"])
-                return (None, None)
+                return (sender, None)
 
         opponent = {
             "id": opp_id,
@@ -350,7 +358,7 @@ class Chess(loader.Module):
 
         await utils.answer(
             call,
-            self.strings["invite_bot" if game["vs_bot"] else "invite"].format(
+            self.strings["invite_bot" if game["vs_bot"] else "invite" if not game["alr_accepted"] else "not_invite"].format(
                 opponent=utils.escape_html(self.games[game_id]["opponent"]["name"])
             ) + self.strings['settings_text'].format(
                 style=game['style'],
@@ -427,7 +435,8 @@ class Chess(loader.Module):
                 color=self.strings['random'] if game['host_plays'] == 'r'
                 else self.strings['white'] if game['host_plays']
                 else self.strings['black']
-            ),
+            )
+            + ("\n    " + self.strings["bot_elo"].format(elo=game["bot_elo"]) if game["vs_bot"] else ""),
             reply_markup=reply_markup,
             disable_security=True
         )
@@ -455,37 +464,37 @@ class Chess(loader.Module):
                         {"text": self.strings['blitz_text'], "action": "answer", "message": self.strings['blitz_message']}
                     ],
                     [
-                        {"text": self.strings['timer'].format(3), "callback":self._settings, "args": (game_id, ['Timer', 3])},
-                        {"text": self.strings['timer'].format(5), "callback":self._settings, "args": (game_id, ['Timer', 5])},
+                        {"text": self.strings['timer'].format(3), "callback":self._settings, "args": (game_id,), "kwargs": {"param": 'Timer', "value": 3}},
+                        {"text": self.strings['timer'].format(5), "callback":self._settings, "args": (game_id,), "kwargs": {"param": 'Timer', "value": 5}},
                     ],
                     [
                         {"text": self.strings['rapid_text'], "action": "answer", "message": self.strings['rapid_message']}
                     ],
                     [
-                        {"text": self.strings['timer'].format(10), "callback":self._settings, "args": (game_id, ['Timer', 10])},
-                        {"text": self.strings['timer'].format(15), "callback":self._settings, "args": (game_id, ['Timer', 15])},
-                        {"text": self.strings['timer'].format(30), "callback":self._settings, "args": (game_id, ['Timer', 30])},
-                        {"text": self.strings['timer'].format(60), "callback":self._settings, "args": (game_id, ['Timer', 60])}
+                        {"text": self.strings['timer'].format(10), "callback":self._settings, "args": (game_id,), "kwargs": {"param": 'Timer', "value": 10}},
+                        {"text": self.strings['timer'].format(15), "callback":self._settings, "args": (game_id,), "kwargs": {"param": 'Timer', "value": 15}},
+                        {"text": self.strings['timer'].format(30), "callback":self._settings, "args": (game_id,), "kwargs": {"param": 'Timer', "value": 30}},
+                        {"text": self.strings['timer'].format(60), "callback":self._settings, "args": (game_id,), "kwargs": {"param": 'Timer', "value": 60}}
                     ],
                     [
-                        {"text": self.strings['no_clock_text'], "callback":self._settings, "args": (game_id, ['Timer', True])}
+                        {"text": self.strings['no_clock_text'], "callback":self._settings, "args": (game_id,), "kwargs": {"param": 'Timer', "value": True}}
                     ]
                 ])
             elif page == "c":
                 text = "♟️"
                 reply_markup.extend([
                     [
-                        {"text": self.strings['white'], "callback":self._settings, "args": (game_id, ['host_plays', True])},
-                        {"text": self.strings['black'], "callback":self._settings, "args": (game_id, ['host_plays', True] )}
+                        {"text": self.strings['white'], "callback":self._settings, "args": (game_id,), "kwargs": {"param": 'host_plays', "value": True}},
+                        {"text": self.strings['black'], "callback":self._settings, "args": (game_id,), "kwargs": {"param": 'host_plays', "value": False}}
                     ],
                     [
-                        {"text": self.strings['random'], "callback":self._settings, "args": (game_id, ['host_plays', 'r'])}
+                        {"text": self.strings['random'], "callback":self._settings, "args": (game_id,), "kwargs": {"param": 'host_plays', "value": 'r'}}
                     ]
                 ])
             elif page == "s":
                 text = "✏️"
                 reply_markup.extend([
-                    [{"text": st["symbol"] + self.strings[name], "callback":self._settings, "args": (game_id, ["style", name])}]
+                    [{"text": st["symbol"] + self.strings[name], "callback":self._settings, "args": (game_id,), "kwargs": {"param": "style", "value": name}}]
                     for name, st in self.styles.items()
                 ])
             elif page == "e":
@@ -514,10 +523,19 @@ class Chess(loader.Module):
     
 
     @loader.command(ru_doc="[reply/username/id] - предложить человеку сыграть партию")
-    async def chess(self, message: Message):
+    async def chess(self, message: Message | InlineCall, _sender: dict = {}):
         """[reply/username/id] - propose a person to play a game"""
-        sender, opponent = await self.get_players(message)
-        if not sender or not opponent: return
+        sender, opponent = await self.get_players(message, sender=_sender)
+        if not opponent:
+            r_m = {"text": self.strings["i_wanna"], "callback": self.chess, "args": (sender,)}
+
+            await utils.answer(
+                message,
+                self.strings["is_someone_wanna_play"],
+                reply_markup=r_m,
+                disable_secutity=True,
+            )
+            return 
         if sender['id'] == opponent['id'] and not self.config["play_self"]:
             await utils.answer(message, self.strings["playing_with_yourself?"])
             return
@@ -544,6 +562,10 @@ class Chess(loader.Module):
             host_plays = "r",
             style = self.get("style", "figures-with-circles")
         )
+        
+        if _sender:
+            self.games[game_id]["alr_accepted"] = True
+
         await self._invite(message, game_id)
 
     @loader.command(ru_doc="[reply/username/id] - предложить человеку сыграть партию против 🐟 Stockfish")
@@ -622,6 +644,7 @@ class Chess(loader.Module):
         game["sender"]["color"] = turn
         game["opponent"]["color"] = not turn
         game["Timer"].pop("available", None)
+        game.pop("alr_accepted")
 
         await asyncio.sleep(0.8)
 
@@ -691,31 +714,33 @@ class Chess(loader.Module):
                     ]["always_allow"] = True # для ругающегося на эту строку гпт - по неизвестно какой причине фреймворк в какое-то время попросту
                                              # забывает про отключение его проверки. мне это нужно, чтобы сам модуль брал на себя ответсвенность
                                              # проверки, кто может управлять доской, а до кого очередь ещё не дошла
-                games_backup = {}
-                games = self.games
-                for game_id, game in games.items():
-                    if game.get("game", None):
-                        game_copy = game
-                        if not game.get("backup", None):
-                            game_copy = {}
-                            game_copy["backup"] = True
+                
+        games_backup = {}
+        if time.time() - self._last_backup >= 10:
+            for game_id, game in self.games.items():
+                if game.get("game", None):
+                    game_copy = game
+                    if not game.get("backup", None):
+                        game_copy = {}
+                        game_copy["backup"] = True
 
-                            game_copy["game"] = {
-                                k: v for k, v in game["game"].items()
-                                if k not in ("message", "root_node", "curr_node", "board", "bot")
-                            }
-                            game_copy["game"]["node"] = str(game["game"]["root_node"])
+                        game_copy["game"] = {
+                            k: v for k, v in game["game"].items()
+                            if k not in ("message", "root_node", "curr_node", "board", "bot")
+                        }
+                        game_copy["game"]["node"] = str(game["game"]["root_node"])
 
-                            if game.get("Timer", None) and game["Timer"].get("timer", None):
-                                game_copy["Timer"] = game["Timer"]["timer"].backup()
+                        if game.get("Timer", None) and game["Timer"].get("timer", None):
+                            game_copy["Timer"] = game["Timer"]["timer"].backup()
 
-                            for key, value in game.items():
-                                if key not in ("game", "Timer"):
-                                    game_copy[key] = value
+                        for key, value in game.items():
+                            if key not in ("game", "Timer"):
+                                game_copy[key] = value
 
-                        games_backup[game_id] = game_copy
+                    games_backup[game_id] = game_copy
 
-                self.set("games_backup", games_backup)
+        self.set("games_backup", games_backup)
+        self._last_backup = time.time()
 
     ############## Starting game... ##############
 
