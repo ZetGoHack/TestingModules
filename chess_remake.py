@@ -357,7 +357,7 @@ class Chess(loader.Module):
 
         await utils.answer(
             call,
-            self.strings["invite_bot" if game["vs_bot"] else "invite" if not game["alr_accepted"] else "not_invite"].format(
+            self.strings["invite_bot" if game["vs_bot"] else "invite" if not game.get("alr_accepted", False) else "not_invite"].format(
                 opponent=utils.escape_html(self.games[game_id]["opponent"]["name"])
             ) + self.strings['settings_text'].format(
                 style=game['style'],
