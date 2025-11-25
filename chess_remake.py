@@ -739,8 +739,8 @@ class Chess(loader.Module):
 
                     games_backup[game_id] = game_copy
 
-        self.set("games_backup", games_backup)
-        self._last_backup = time.time()
+            self.set("games_backup", games_backup)
+            self._last_backup = time.time()
 
     ############## Starting game... ##############
 
