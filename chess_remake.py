@@ -754,7 +754,7 @@ class Chess(loader.Module):
         if not self.games[game_id]["vs_bot"]: return
 
         engine = chess.engine.SimpleEngine.popen_uci(self.config["stockfish_path"])
-        engine.configure({"UCI_LimitStrength": True, "UCI_Elo": params["elo"], "MultiPV": 34 - params["elo"] // 100})
+        engine.configure({"UCI_LimitStrength": True, "UCI_Elo": params["elo"])
 
         self.games[game_id]["game"]["bot"] = engine
 
@@ -1010,12 +1010,13 @@ class Chess(loader.Module):
 
         board = game["game"]["board"]
         bot = game["game"]["bot"]
+        pv = 34 - game["bot_elo"] // 100
 
-        result = bot.play(board, limit=chess.engine.Limit(time=0.1))
+        result = bot.play(board, limit=chess.engine.Limit(time=0.1, multipv=))
         move = result.move
         from_coord = chess.square_name(result.move.from_square)
         to_coord = chess.square_name(result.move.to_square)
-        logger.info(f"move: {move}, from: {from_coord}, to: {to_coord}")
+        #logger.info(f"move: {move}, from: {from_coord}, to: {to_coord}")
 
         await asyncio.sleep(r.randint(1, 3))
         await self.choose_coord(None, game_id, from_coord)
