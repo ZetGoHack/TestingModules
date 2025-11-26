@@ -754,7 +754,7 @@ class Chess(loader.Module):
         if not self.games[game_id]["vs_bot"]: return
 
         engine = chess.engine.SimpleEngine.popen_uci(self.config["stockfish_path"])
-        engine.configure({"UCI_LimitStrength": True, "UCI_Elo": params["elo"])
+        engine.configure({"UCI_LimitStrength": True, "UCI_Elo": params["elo"]})
 
         self.games[game_id]["game"]["bot"] = engine
 
