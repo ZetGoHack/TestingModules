@@ -1012,7 +1012,7 @@ class Chess(loader.Module):
         bot = game["game"]["bot"]
         pv = 34 - game["bot_elo"] // 100
 
-        result = bot.play(board, limit=chess.engine.Limit(time=0.1, multipv=pv))
+        result = bot.play(board, limit=chess.engine.Limit(time=0.1)) #multipv=pv))
         move = result.move
         from_coord = chess.square_name(result.move.from_square)
         to_coord = chess.square_name(result.move.to_square)
