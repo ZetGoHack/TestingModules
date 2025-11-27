@@ -162,7 +162,7 @@ def install_stockfish() -> str | None:
         elif file_name.endswith(".tar"):
             import tarfile
             with tarfile.open(file_name, 'r') as file:
-                file.extractall()  # noqa: S202
+                file.extractall()    # noqa: S202
         os.remove(file_name)
 
         return find_stfsh_exe()
@@ -727,6 +727,7 @@ class Chess(loader.Module):
                     ]["always_allow"] = True # для ругающегося на эту строку гпт - по неизвестно какой причине фреймворк в какое-то время попросту
                                              # забывает про отключение его проверки. мне это нужно, чтобы сам модуль брал на себя ответсвенность
                                              # проверки, кто может управлять доской, а до кого очередь ещё не дошла
+                                             # FIXME: оно, похоже, всё ещё забывает про always_allow, патч не помогает... нужно выйти на эту ошибку и посмотреть, прочему права пропадают
                 
         games_backup = {}
         if time.time() - self._last_backup >= 10:
