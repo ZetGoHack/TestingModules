@@ -291,7 +291,7 @@ class Chess(loader.Module):
         else:
             await utils.answer(call, self.strings["stockfish_install_failed"])
     
-    async def get_players(self, message: Message | InlineCall, sender: dict = {}, sender_only: bool = False, opponent_only: bool = False):
+    async def get_players(self, message: Message | InlineCall, sender: dict = dict(), sender_only: bool = False, opponent_only: bool = False):
         if not sender:
             sender = {
                 "id": message.sender_id,
@@ -353,24 +353,12 @@ class Chess(loader.Module):
     async def _invite(self, call: InlineCall, game_id: str):
         if not await self._check_player(call, game_id): return
         game  = self.games[game_id]
-        timer = game['Timer']
 
         await utils.answer(
             call,
             self.strings["invite_bot" if game["vs_bot"] else "invite" if not game.get("alr_accepted", False) else "not_invite"].format(
                 opponent=utils.escape_html(self.games[game_id]["opponent"]["name"])
-            ) + self.strings['settings_text'].format(
-                style=game['style'],
-
-                timer=self.strings['available'] if timer['available'] and not timer['timer']
-                else self.strings['timer'].format(timer['timer'].minutes()) if timer['timer']
-                else self.strings['not_available'],
-
-                color=self.strings['random'] if game['host_plays'] == 'r'
-                else self.strings['white'] if game['host_plays']
-                else self.strings['black']
-            )
-            + ("\n    " + self.strings["bot_elo"].format(elo=game["bot_elo"]) if game["vs_bot"] else ""),
+            ) + self._get_settings_text(game_id),
             reply_markup = [
                 [
                     {
@@ -424,18 +412,7 @@ class Chess(loader.Module):
         ])
         await utils.answer(
             call,
-            self.strings['settings_text'].format(
-                style=game['style'],
-
-                timer=self.strings['available'] if timer['available'] and not timer['timer']
-                else self.strings['timer'].format(timer['timer'].minutes()) if timer['timer']
-                else self.strings['not_available'],
-
-                color=self.strings['random'] if game['host_plays'] == 'r'
-                else self.strings['white'] if game['host_plays']
-                else self.strings['black']
-            )
-            + ("\n    " + self.strings["bot_elo"].format(elo=game["bot_elo"]) if game["vs_bot"] else ""),
+            self._get_settings_text(),
             reply_markup=reply_markup,
             disable_security=True
         )
@@ -519,10 +496,63 @@ class Chess(loader.Module):
             else:
                 self.games[game_id][param] = value
             await self.settings(call, game_id)
+
+    def _get_settings_text(self, game_id: str):
+        game = self.games[game_id]
+        timer = game['Timer']
+        return (
+            self.strings['settings_text'].format(
+                style=game['style'],
+
+                timer=self.strings['available'] if timer['available'] and not timer['timer']
+                else self.strings['timer'].format(timer['timer'].minutes()) if timer['timer']
+                else self.strings['not_available'],
+
+                color=self.strings['random'] if game['host_plays'] == 'r'
+                else self.strings['white'] if game['host_plays']
+                else self.strings['black']
+            )
+            + ("\n    " + self.strings["bot_elo"].format(elo=game["bot_elo"]) if game["vs_bot"] else "")
+        )
+
+
+    def _get_new_game_id(self):
+        if self.games:
+            past_game = next(reversed(self.games.values()))
+            if not past_game.get("game", None):
+                self.games.pop(past_game['game_id'], None)
+        if not self.games:
+            game_id = str(1)
+        else:
+            game_id = str(max(map(int, self.games.keys())) + 1)
+
+        return game_id
+
+    def _create_game(self, game_id: str, _params: dict = dict()):
+        params = {
+            "game_id": game_id,
+            "vs_bot": False,
+            "bot_elo": self.get("bot_elo", 3400),
+            "sender": None,
+            "opponent": None,
+            "Timer": {
+                "available": False,
+                "timer": None,
+                "timer_loop": False
+            },
+            "time": int(time.time()),
+            "host_plays": "r",
+            "style": self.get("style", "figures-with-circles")
+        }
+
+        if _params:
+            params.update(_params)
+        
+        self.games[game_id] = GameObj(**params)
     
 
     @loader.command(ru_doc="[reply/username/id] - предложить человеку сыграть партию")
-    async def chess(self, message: Message | InlineCall, _sender: dict = {}):
+    async def chess(self, message: Message | InlineCall, _sender: dict = dict()):
         """[reply/username/id] - propose a person to play a game"""
         sender, opponent = await self.get_players(message, sender=_sender)
         if not opponent:
@@ -538,29 +568,20 @@ class Chess(loader.Module):
         if sender['id'] == opponent['id'] and not self.config["play_self"]:
             await utils.answer(message, self.strings["playing_with_yourself?"])
             return
-        if self.games:
-            past_game = next(reversed(self.games.values()))
-            if not past_game.get("game", None):
-                self.games.pop(past_game['game_id'], None)
-        if not self.games:
-            game_id = str(1)
-        else:
-            game_id = str(max(map(int, self.games.keys())) + 1)
-        self.games[game_id] = GameObj(
-            game_id = game_id,
-            vs_bot = False,
-            bot_elo = self.get("bot_elo", 3400),
-            sender = sender,
-            opponent = opponent,
-            Timer = {
+
+        game_id = self._get_new_game_id()
+
+        mod_params = {
+            "sender": sender,
+            "opponent": opponent,
+            "Timer": {
                 "available": isinstance(message, Message) and isinstance(message.peer_id, PeerUser),
                 "timer": None,
                 "timer_loop": False
-            },
-            time = int(time.time()),
-            host_plays = "r",
-            style = self.get("style", "figures-with-circles")
-        )
+            }
+        }
+
+        self._create_game(game_id, mod_params)
         
         if _sender:
             self.games[game_id]["alr_accepted"] = True
@@ -590,30 +611,21 @@ class Chess(loader.Module):
             "id": -42,
         }
 
-        if self.games:
-            past_game = next(reversed(self.games.values()))
-            if not past_game.get("game", None):
-                self.games.pop(past_game['game_id'], None)
-        if not self.games:
-            game_id = str(1)
-        else:
-            game_id = str(max(map(int, self.games.keys())) + 1)
+        game_id = self._get_new_game_id()
 
-        self.games[game_id] = GameObj(
-            game_id = game_id,
-            sender = stockfish,
-            opponent = player,
-            vs_bot = True,
-            bot_elo = self.get("bot_elo", 3400),
-            Timer = {
-                "available": isinstance(message.peer_id, PeerUser),
+        mod_params = {
+            "vs_bot": True,
+            "sender": stockfish,
+            "opponent": player,
+            "Timer": {
+                "available": isinstance(message, Message) and isinstance(message.peer_id, PeerUser),
                 "timer": None,
                 "timer_loop": False
-            },
-            time = int(time.time()),
-            host_plays = "r",
-            style = self.get("style", "figures-with-circles"),
-        )
+            }
+        }
+
+        self._create_game(game_id, mod_params)
+
         await self._invite(message, game_id)
 
     # @loader.command(ru_doc="посмотреть текущее состояние модуля и статистику своих партий")
