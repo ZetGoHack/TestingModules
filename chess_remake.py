@@ -291,7 +291,7 @@ class Chess(loader.Module):
         else:
             await utils.answer(call, self.strings["stockfish_install_failed"])
     
-    async def get_players(self, message: Message | InlineCall, sender: dict = dict(), sender_only: bool = False, opponent_only: bool = False):
+    async def get_players(self, message: Message | InlineCall, sender: dict = None, sender_only: bool = False, opponent_only: bool = False):
         if not sender:
             sender = {
                 "id": message.sender_id,
@@ -386,7 +386,6 @@ class Chess(loader.Module):
     async def settings(self, call: InlineCall, game_id: str):
         if not await self._check_player(call, game_id): return
         game = self.games[game_id]
-        timer = game['Timer']
         reply_markup = []
 
         if game["vs_bot"]:
@@ -412,7 +411,7 @@ class Chess(loader.Module):
         ])
         await utils.answer(
             call,
-            self._get_settings_text(),
+            self._get_settings_text(game_id),
             reply_markup=reply_markup,
             disable_security=True
         )
@@ -528,7 +527,7 @@ class Chess(loader.Module):
 
         return game_id
 
-    def _create_game(self, game_id: str, _params: dict = dict()):
+    def _create_game(self, game_id: str, _params: dict = None):
         params = {
             "game_id": game_id,
             "vs_bot": False,
@@ -552,8 +551,10 @@ class Chess(loader.Module):
     
 
     @loader.command(ru_doc="[reply/username/id] - предложить человеку сыграть партию")
-    async def chess(self, message: Message | InlineCall, _sender: dict = dict()):
+    async def chess(self, message: Message | InlineCall, _sender: dict = None):
         """[reply/username/id] - propose a person to play a game"""
+        if _sender is None:
+            _sender = {}
         sender, opponent = await self.get_players(message, sender=_sender)
         if not opponent:
             r_m = {"text": self.strings["i_wanna"], "callback": self.chess, "args": (sender,)}
