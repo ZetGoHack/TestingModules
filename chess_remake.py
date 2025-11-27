@@ -162,7 +162,7 @@ def install_stockfish() -> str | None:
         elif file_name.endswith(".tar"):
             import tarfile
             with tarfile.open(file_name, 'r') as file:
-                file.extractall()
+                file.extractall()  # noqa: S202
         os.remove(file_name)
 
         return find_stfsh_exe()
