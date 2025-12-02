@@ -22,7 +22,7 @@ import time
 
 from telethon.tl.types import PeerUser, User, Message
 from datetime import datetime, timezone
-from typing import TypedDict
+from typing import TypedDict, Literal
 
 from .. import loader, utils
 from ..inline.types import BotInlineCall, InlineCall, InlineMessage
@@ -134,6 +134,14 @@ class GameObj(TypedDict):
     time: int
     host_plays: bool # True - white, False - black
     style: dict[str, str]
+
+    @staticmethod
+    async def restore(host, backup) -> "GameObj":
+        pass
+
+class GameBackup:
+    game_id: int
+    backup: Literal[True]
 
 GamesDict = dict[str, GameObj]
 
