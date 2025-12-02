@@ -11,18 +11,18 @@ __version__ = (2, 0, "6-beta") #######################
 # packurl: https://github.com/ZetGoHack/TestingModules/raw/main/chess.yml
 
 import asyncio
+import chess
+import chess.engine
+import chess.pgn
 import copy
 import logging
 import os
 import random as r
 import time
+
+from telethon.tl.types import PeerUser, User, Message
 from datetime import datetime, timezone
 from typing import TypedDict
-
-import chess
-import chess.engine
-import chess.pgn
-from telethon.tl.types import PeerUser, User, Message
 
 from .. import loader, utils
 from ..inline.types import BotInlineCall, InlineCall, InlineMessage
@@ -258,7 +258,7 @@ class Chess(loader.Module):
         }
         if (path := find_stfsh_exe()):
             self.config["stockfish_path"] = path
-        
+
     async def _check_player(self, call: InlineCall | Message | None, game_id: str, only_opponent: bool = False, skip_turn_check: bool = False) -> bool:
         if isinstance(call, (BotInlineCall, InlineCall, InlineMessage)):
             game = self.games[game_id]
@@ -281,7 +281,7 @@ class Chess(loader.Module):
                     await call.answer(self.strings["opp_move"])
                     return False
         return True
-    
+
     async def install_stockfish(self, call: InlineCall):
         await utils.answer(call, self.strings["installing"])
         path = install_stockfish()
@@ -290,7 +290,7 @@ class Chess(loader.Module):
             await utils.answer(call, self.strings["stockfish_installed"].format(path=path))
         else:
             await utils.answer(call, self.strings["stockfish_install_failed"])
-    
+
     async def get_players(self, message: Message | InlineCall, sender: dict = None, sender_only: bool = False, opponent_only: bool = False):
         if not sender:
             sender = {
@@ -299,7 +299,7 @@ class Chess(loader.Module):
             }
         if sender_only:
             return sender
-        
+
         if isinstance(message, InlineCall):
             opp_id = message.from_user.id
             opp_name = message.from_user.first_name
@@ -546,13 +546,13 @@ class Chess(loader.Module):
 
         if _params:
             params.update(_params)
-        
+
         self.games[game_id] = GameObj(**params)
-    
+
 
     @loader.command(ru_doc="[reply/username/id] - предложить человеку сыграть партию")
     async def chess(self, message: Message | InlineCall, _sender: dict = None):
-        """[reply/username/id] - propose a person to play a game"""
+        """[nothing/reply/username/id] - propose a person to play a game"""
         if _sender is None:
             _sender = {}
         sender, opponent = await self.get_players(message, sender=_sender)
@@ -583,7 +583,7 @@ class Chess(loader.Module):
         }
 
         self._create_game(game_id, mod_params)
-        
+
         if _sender:
             self.games[game_id]["alr_accepted"] = True
 
@@ -644,7 +644,7 @@ class Chess(loader.Module):
             self.games.pop(game_id, None)
             await utils.answer(call, self.strings["declined"])
             return
-        
+
         await utils.answer(call, "🌒")
 
         game = self.games[game_id]
@@ -666,7 +666,7 @@ class Chess(loader.Module):
             await self._set_timer(call, game_id, call._units[call.unit_id]['chat'])
             await asyncio.sleep(0.8)
             return await utils.answer(call, self.strings["waiting_for_start"])
-        
+
         await self._start_game(call, game_id)
 
     async def _set_timer(self, board_call: InlineCall, game_id: str, chat_id):
@@ -887,7 +887,6 @@ class Chess(loader.Module):
     def _get_reply_markup(self, game_id: str, promotion: bool = False, resign_confirm: bool = False, draw_confirm: bool = False) -> list[list[dict]]:
         game = self.games[game_id]
         is_end = game["game"]["state"] == "the_end"
-        vs_stockfish = game["sender"]["id"] == -42
 
         reply_markup = utils.chunks(
             [
@@ -972,7 +971,7 @@ class Chess(loader.Module):
                 },
             ]
 
-            if not vs_stockfish:
+            if not game["vs_bot"]:
                 resign.append(
                     {
                         "text": "🤝",
