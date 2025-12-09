@@ -94,7 +94,7 @@ class HikkaCommandsLoggerMod(loader.Module):
         user_link = (
             f"<a href='https://t.me/{sender.username}'>{utils.escape_html(sender.first_name if not is_channel else sender.title)}</a>"
             if sender.username
-            else f"<a href=tg://user?id={sender.id}>{utils.escape_html(sender.first_name if not is_channel else sender.title)}</a>"
+            else f"<a href='tg://user?id={sender.id}'>{utils.escape_html(sender.first_name if not is_channel else sender.title)}</a>"
         )
         chat_link = (
             f"<a href='https://t.me/{chat_username}'>{utils.escape_html(chat.title)}</a>"
