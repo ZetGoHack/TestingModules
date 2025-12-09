@@ -92,18 +92,18 @@ class HikkaCommandsLoggerMod(loader.Module):
         chat_username = getattr(chat, "username", None)
 
         user_link = (
-            f"<a href='https://t.me/{sender.username}'>{sender.first_name if not is_channel else sender.title}</a>"
+            f"<a href='https://t.me/{sender.username}'>{utils.escape_html(sender.first_name if not is_channel else sender.title)}</a>"
             if sender.username
-            else f"<a href=tg://user?id={sender.id}>{sender.first_name if not is_channel else sender.title}</a>"
+            else f"<a href=tg://user?id={sender.id}>{utils.escape_html(sender.first_name if not is_channel else sender.title)}</a>"
         )
         chat_link = (
-            f"<a href='https://t.me/{chat_username}'>{chat.title}</a>"
+            f"<a href='https://t.me/{chat_username}'>{utils.escape_html(chat.title)}</a>"
             if chat_username
             else chat.title
         ) if not is_pm else (
-            f"<a href='https://t.me/{chat.username}'>{chat.first_name}</a>"
+            f"<a href='https://t.me/{chat.username}'>{utils.escape_html(chat.first_name)}</a>"
             if chat.username
-            else f"<a href='tg://user?id={chat.id}'>{chat.first_name}</a>"
+            else f"<a href='tg://user?id={chat.id}'>{utils.escape_html(chat.first_name)}</a>"
         )
 
         async def send():
@@ -117,8 +117,8 @@ class HikkaCommandsLoggerMod(loader.Module):
                     else "log-groups"
                 ).format(
                     utils.escape_html(message.raw_text),
-                    utils.escape_html(user_link),
-                    utils.escape_html(chat_link),
+                    user_link,
+                    chat_link,
                     chat.id,
                     message.id,
                 ),
