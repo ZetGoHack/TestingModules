@@ -1,4 +1,4 @@
-__version__ = (2, 0, "6-beta") #######################
+__version__ = (2, 0, "7-beta") #######################
 #░░░███░███░███░███░███
 #░░░░░█░█░░░░█░░█░░░█░█
 #░░░░█░░███░░█░░█░█░█░█
@@ -995,7 +995,7 @@ class Chess(loader.Module):
                 utils.escape_html(game["sender"]["name"] if game["sender"]["color"] else game["opponent"]["name"]),
                 utils.escape_html(game["opponent"]["name"] if game["sender"]["color"] else game["sender"]["name"]),
                 self.strings["white"] if game["game"]["board"].turn else self.strings["black"],
-                status.format(loser=loser, winner=winner),
+                status.format(loser=utils.escape_html(loser), winner=utils.escape_html(winner)),
                 last_moves[-32:],
             ),
             reply_markup=reply_markup,
