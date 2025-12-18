@@ -21,7 +21,7 @@ $inline:
     <emoji document_id=5226512880362332956>📖</emoji> <b>Wogs:</b>
 
 
-    <pre><code cwass="language-logs">{}</code></pre>'
+    <pre><code class="language-logs">{}</code></pre>'
   keep_id: ⚠️ Do nyot wemove ID! {}
   no_inline_cmds: You have nyo avaiwabwe commands
   no_inline_cmds_msg: <b>😔 Thewe awe nyo avaiwabwe inwinye commands ow chu wack access
@@ -33,38 +33,38 @@ $inline:
   show_inline_cmds: 📄 Show aww avaiwabwe inwinye commands
 $validators:
   boolean: boowean
-  choice: 'onye of de fowwowing: {possibwe}'
+  choice: 'onye of de fowwowing: {possible}'
   digits: ' wid exactwy {digits} digits'
   each: ' (each must be {each})'
   emoji: emoji
-  emoji_fixed_len: '{wengd} emojis'
-  emoji_len_range: '{min_wen} two {max_wen} emojis'
-  emoji_max_len: nyo mowe dan {max_wen} emojis
-  emoji_min_len: at weast {min_wen} emoji
+  emoji_fixed_len: '{length} emojis'
+  emoji_len_range: '{min_len} two {max_len} emojis'
+  emoji_max_len: nyo mowe dan {max_len} emojis
+  emoji_min_len: at weast {min_len} emoji
   empty: empty vawue
   entity_like: wink two entity, usewnyame ow Tewegwam ID
-  fixed_len: ' (exactwy {fixed_wen} pcs.)'
+  fixed_len: ' (exactwy {fixed_len} pcs.)'
   float: '{sign}fwoat'
   float_max: '{sign}fwoat wess dan {maximum}'
-  float_min: '{sign}fwoat gweatew dan {minyimum}'
-  float_range: '{sign}fwoat fwom {minyimum} two {maximum}'
+  float_min: '{sign}fwoat gweatew dan {minimum}'
+  float_range: '{sign}fwoat fwom {minimum} two {maximum}'
   integer: '{sign}integew{digits}'
   integer_max: '{sign}integew wess dan {maximum}{digits}'
-  integer_min: '{sign}integew gweatew dan {minyimum}{digits}'
-  integer_range: '{sign}integew fwom {minyimum} two {maximum}{digits}'
-  len_range: ' (fwom {min_wen} two {max_wen} pcs.)'
+  integer_min: '{sign}integew gweatew dan {minimum}{digits}'
+  integer_range: '{sign}integew fwom {minimum} two {maximum}{digits}'
+  len_range: ' (fwom {min_len} two {max_len} pcs.)'
   link: wink
-  max_len: ' (up two {max_wen} pcs.)'
-  min_len: ' (at weast {min_wen} pcs.)'
-  multichoice: 'wist of vawues, whewe each onye must be onye of: {possibwe}'
+  max_len: ' (up two {max_len} pcs.)'
+  min_len: ' (at weast {min_len} pcs.)'
+  multichoice: 'wist of vawues, whewe each onye must be onye of: {possible}'
   positive: 'positive '
-  regex: stwing matching pattewn «{wegex}»
-  series: sewies of vawues{wen}{each}, sepawated wid «,»
+  regex: stwing matching pattewn «{regex}»
+  series: sewies of vawues{len}{each}, sepawated wid «,»
   string: stwing
-  string_fixed_len: stwing of wengd {wengd}
-  string_len_range: stwing of wengd fwom {min_wen} two {max_wen}
-  string_max_len: stwing of wengd up two {max_wen}
-  string_min_len: stwing of wengd at weast {min_wen}
+  string_fixed_len: stwing of wengd {length}
+  string_len_range: stwing of wengd fwom {min_len} two {max_len}
+  string_max_len: stwing of wengd up two {max_len}
+  string_min_len: stwing of wengd at weast {min_len}
   union: 'onye of de fowwowing:
 
     '
@@ -90,15 +90,9 @@ api_protection:
     moduwes
   btn_no: 🚫 No
   btn_yes: ✅ Yes
-  web_pin: 🔓 <b>Cwick de button bewow two show Wewkzeug debug PIN. Do nyot give it
-    two anyonye.</b>
-  web_pin_btn: 🐞 Show Wewkzeug PIN
   proxied_url: 🌐 Pwoxied UWW
   local_url: 🏠 Wocaw UWW
-  debugger_disabled: <emoji document_id=5210952531676504517>🚫</emoji> <b>Web debuggew
-    is disabwed, uww is nyot avaiwabwe</b>
   _cmd_doc_api_fw_protection: Toggwe API Watewimitew
-  _cmd_doc_debugger: Show de Wewkzeug PIN
   _cmd_doc_suspend_api_protect: <time in seconds> - Suspend API Watewimitew fow n
     seconds
   _cls_doc: Hewps usewbot avoid spamming Tewegwam API
@@ -128,13 +122,32 @@ eval:
     <emoji document_id=5197688912457245639>✅</emoji><b> Wesuwt:</b>
 
     <pre><code class="language-{}">{}</code></pre>'
+  eval_py: '<emoji document_id={}>💻</emoji><b> Code:</b>
+
+    <pre><code class="language-{}">{}</code></pre>'
+  eval_result: '
+
+
+    <emoji document_id=5197688912457245639>✅</emoji><b> Wesuwt:</b>
+
+    <pre><code class="language-{}">{}</code></pre>'
   name: Evawuatow
   no_compiler: <emoji document_id={}>💻</emoji> <b>{} compiwew is nyot instawwed on
     de system.</b>
+  print_outp: '
+
+
+    <emoji document_id=5118861066981344121>✅</emoji><b> Pwint Wesuwt:</b>
+
+    <pre><code class="language-{}">{}</code></pre>'
 help:
   all_header: <b>{} mods avaiwabwe, {} hidden:</b>
   core_notice: <emoji document_id=5355133243773435190>☝️</emoji> <b>This is a cowe
     moduwe. You can't unwoad it nyow wepwace</b>
+  help_lib: '<emoji document_id=5404553572727660202>❌</emoji> <b>Package</b> <code>{}</code>
+    <b>is a wibwawy.</b>
+
+    <emoji document_id=5404553572727660202>❌</emoji> <b>Wibwawies do nyot have descwiptions...</b>'
   hidden_shown: '<b>{} moduwes hidden, {} moduwes shown:</b>
 
     {}
@@ -144,10 +157,19 @@ help:
   no_mod: 🚫 <b>Specify moduwe two hide</b>
   not_exact: <emoji document_id=5355133243773435190>☝️</emoji> <b>No exact match occuwed,
     so de cwosest wesuwt is shown instead</b>
+  offchats: '<emoji document_id=6019130940012370273>❔</emoji> <a href="https://t.me/heroku_talks"><b>Suppowt
+    chat</b></a>
+
+
+    <emoji document_id=6019151079114021083>💬</emoji> <a href="https://t.me/heroku_offtop"><b>Offtop
+    chat</b></a>
+
+
+    <emoji document_id=6019094432790354513>📢</emoji> <a href="https://t.me/heroku_ub"><b>Officiaw
+    channyew</b></a>'
   partial_load: <emoji document_id=5355133243773435190>☝️</emoji> <b>Usewbot is nyot
     fuwwy woaded, so nyot aww moduwes awe shown</b>
   request_join: You wequested wink fow Hewoku suppowt chat
-  support: '{} <b>Wink two</b> <a hwef=''https://t.me/hewoku_tawks''>suppowt chat</a></b>'
   undoc: 🦥 No docs
 heroku_backup:
   _cls_doc: Pwocesses database and moduwe backups
@@ -156,8 +178,8 @@ heroku_backup:
   _cmd_doc_backupmods: Cweate a backup of mods [wiww be sent two PM]
   _cmd_doc_restoreall: Westowes a common backup (base + moduwes)
   _cmd_doc_restoredb: Westowe database fwom fiwe
-  _cmd_doc_restoremods: <wesponse two fiwe> - Westowe mods fwom backup
-  _cmd_doc_set_backup_period: <time in houws> - Set de fwequency of backups
+  _cmd_doc_restoremods: <response to file> - Westowe mods fwom backup
+  _cmd_doc_set_backup_period: <time in hours> - Set de fwequency of backups
   advice_converting: You can manyuawwy wepwace <a>'hikka.'</a> wid <a>'hewoku.'</a>
     in de backup content. This is nyecessawy fow woading it.
   all_restored: <emoji document_id=5774134533590880843>🔄</emoji> <b>Youw fuww backup
@@ -174,7 +196,7 @@ heroku_backup:
     <b>in wesponse two dis fiwe.</b>
   backupall_sent: <emoji document_id=5431736674147114227>🗂</emoji> <b>Backup of database
     and moduwes sent two saved messages</b>
-  db_converting: 🔄 Convewting...
+  converting_db: 🔄 Convewting...
   db_restored: <emoji document_id=5774134533590880843>🔄</emoji> <b>Database updated,
     westawting...</b>
   db_warning: '❗️ Hikka backup detected. If chu continyue, de usewbot wiww <b>twy</b>
@@ -192,6 +214,7 @@ heroku_backup:
 
     <pre><code class="language-hewoku">{}westowemods</code></pre>'
   never: ✅ I wiww nyot make automatic backups. Can be cancewwed using <code>{prefix}set_backup_pewiod</code>
+  never_bot: ✅ I wiww nyot make automatic backups. Can be cancewwed using {prefix}set_backup_pewiod
   period: '⌚️ <b>The unyit «AWPHA»</b> cweates weguwaw backups. These settings can
     be changed watew.
 
@@ -201,14 +224,19 @@ heroku_backup:
 
     <b>🚫 It is dus impossibwe two westowe moduwes downwoaded fwom fiwes wid de .wm
     command! Be cawefuw and do .backupmods befowe westowing.</b>'
+  probably_zip: <emoji document_id=5210952531676504517>❗️</emoji> <b>The backup fwom
+    de fiwe couwd nyot be westowed. You awe pwobabwy twying two westowe a fuww backup
+    (.zip ow .backup). In dat case, use</b> <code>{}westoweaww</code> <b>in wepwy
+    two de fiwe.</b>
   reply_to_file: <emoji document_id=5210952531676504517>🚫</emoji> <b>Wepwy wid .json
     ow .zip fiwe</b>
   saved: ✅ The pewiodicity is saved! It can be changed wid <code>{prefix}set_backup_pewiod</code>
+  saved_bot: ✅ The pewiodicity is saved! It can be changed wid {prefix}set_backup_pewiod
 heroku_config:
   _cls_doc: Intewactive configuwatow fow Hewoku Usewbot
   _cmd_doc_config: Configuwe moduwes
-  _cmd_doc_fconfig: <moduwe_nyame> <pwopewty_nyame> <config_vawue> - set de config
-    vawue fow de moduwe
+  _cmd_doc_fconfig: <module_name> <property_name> <config_value> - set de config vawue
+    fow de moduwe
   add_item_btn: ➕ Add item
   add_item_desc: ✍️ Entew item two add
   args: 🚫 <b>You specified incowwect awgs</b>
@@ -295,13 +323,13 @@ heroku_config:
 heroku_info:
   _cfg_banner: UWW two image bannyew
   _cfg_cst_btn: Custom button fow info. Weave empty two wemove button
-  _cfg_cst_msg: Custom message fow info. May contain {me}, {vewsion}, {buiwd}, {prefix},
-    {pwatfowm}, {upd}, {uptime}, {cpu_usage}, {wam_usage}, {bwanch}, {hostnyame},
-    {usew}, {os}, {kewnyew}, {cpu}, {ping} keywowds
+  _cfg_cst_msg: Custom message fow info. May contain {me}, {version}, {build}, {prefix},
+    {platform}, {upd}, {uptime}, {cpu_usage}, {ram_usage}, {branch}, {hostname}, {user},
+    {os}, {kernel}, {cpu}, {ping} keywowds
   _cls_doc: Show usewbot info
-  _cmd_doc_herokuinfo: Send info aka 'What is Hewoku?'
   _cmd_doc_info: Send usewbot info
   _cmd_doc_setinfo: <text> - Change text in .info
+  _cmd_doc_ubinfo: Send info aka 'What is Hewoku?'
   _ihandle_doc_info: Send usewbot info
   branch: Bwanch
   build: Buiwd
@@ -330,44 +358,57 @@ heroku_info:
 
     '
   description: ℹ This wiww nyot compwomise any sensitive info
+  font_installed: '<emoji document_id=5436040291507247633>🎉</emoji> <b>Font instawwed
+    successfuwwy!</b>
+
+    <emoji document_id=5436040291507247633>🎉</emoji> <i>You can nyow enjoy using it.</i>'
+  incorrect_format_font: '<emoji document_id=5465665476971471368>❌</emoji> <b>Invawid
+    font fowmat!</b>
+
+    <blockquote>Suppowted fowmats -> otf, ttf</blockquote>'
+  incorrect_img_format: '<emoji document_id=5465665476971471368>❌</emoji> <b>Invawid
+    image fowmat</b>
+
+    <blockquote>Suppowted fowmats -> jpg, jpeg, png, bmp, webp</blockquote>'
   name: HewokuInfo
+  no_font: <emoji document_id=5465665476971471368>❌</emoji> Whewe is de wink ow wepwy
+    two de font?
   non_detectable: <emoji document_id=5210952531676504517>❌</emoji> <b>This componyent
     cannyot be detected on uw sewvew!</b>
   owner: Ownyew
   ping_emoji: emoji fow ping in uw info
-  prefix: prefix
+  prefix: Pwefix
   ram_usage: WAM usage
   send_info: Send usewbot info
-  setinfo_no_args: <emoji document_id=5370881342659631698>😢</emoji> <b>You nyeed two
-    specify text two change info two</b>
-  setinfo_success: <emoji document_id=5436040291507247633>🎉</emoji> <b>Info changed
-    successfuwwy</b>
-  up-to-date: <emoji document_id=5370699111492229743>😌</emoji> <b>Up-two-date</b>
-  update_required: <emoji document_id=5424728541650494040>😕</emoji> <b>Update wequiwed</b>
-    <code>{prefix}update</code>
+  switchinfo_off: <emoji document_id=5118861066981344121>✅</emoji> Image Info tuwnyed
+    off successfuwwy
+  switchinfo_on: <emoji document_id=5118861066981344121>✅</emoji> Image Info tuwnyed
+    on successfuwwy
+  up-to-date: <b>Up-two-date</b>
+  update_required: <b>Update wequiwed</b> <code>{prefix}update</code>
   uptime: Uptime
   version: Vewsion
 heroku_security:
   _cls_doc: Contwow secuwity settings
-  _cmd_doc_delsgroup: <nyame> - Dewete secuwity gwoup
+  _cmd_doc_delsgroup: <name> - Dewete secuwity gwoup
   _cmd_doc_inlinesec: '[command] - Configuwe inwinye command''s secuwity settings'
-  _cmd_doc_newsgroup: <nyame> - Cweate nyew secuwity gwoup
-  _cmd_doc_owneradd: <usew> - Add usew two `ownyew`
+  _cmd_doc_newsgroup: <name> - Cweate nyew secuwity gwoup
+  _cmd_doc_owneradd: <user> - Add usew two `ownyew`
   _cmd_doc_ownerlist: Wist usews in `ownyew`
-  _cmd_doc_ownerrm: <usew> - Wemove usew fwom `ownyew`
+  _cmd_doc_ownerrm: <user> - Wemove usew fwom `ownyew`
   _cmd_doc_security: '[command] - Configuwe command''s secuwity settings'
-  _cmd_doc_sgroup: <nyame> - Show secuwity gwoup info
-  _cmd_doc_sgroupadd: <nyame> [usew ow wepwy] - Add usew two secuwity gwoup
-  _cmd_doc_sgroupdel: <nyame> [usew ow wepwy] - Wemove usew fwom secuwity gwoup
+  _cmd_doc_sgroup: <name> - Show secuwity gwoup info
+  _cmd_doc_sgroupadd: <name> [usew ow wepwy] - Add usew two secuwity gwoup
+  _cmd_doc_sgroupdel: <name> [usew ow wepwy] - Wemove usew fwom secuwity gwoup
   _cmd_doc_sgroups: Wist secuwity gwoups
-  _cmd_doc_tsec: '<"usew"/"chat"/"sgwoup"> [tawget usew ow chat] [wuwe (command/moduwe)]
+  _cmd_doc_tsec: '<"user"/"chat"/"sgroup"> [tawget usew ow chat] [wuwe (command/moduwe)]
     [time] - Add nyew tawgeted secuwity wuwe
 
     Fow exampwe: .tsec usew ban 1d, .tsec chat weadew 1h, .tsec usew HikawiChat'
-  _cmd_doc_tsecclr: '<"usew"/"chat"/"sgwoup"> - Cweaw tawgeted secuwity wuwes
+  _cmd_doc_tsecclr: '<"user"/"chat"/"sgroup"> - Cweaw tawgeted secuwity wuwes
 
     Fow exampwe: .tseccww usew, .tseccww chat'
-  _cmd_doc_tsecrm: '<"usew"/"chat"/"sgwoup"> <wuwe - command ow moduwe> - Wemove tawgeted
+  _cmd_doc_tsecrm: '<"user"/"chat"/"sgroup"> <rule - command or module> - Wemove tawgeted
     secuwity wuwe
 
     Fow exampwe: .tsecwm usew ban, .tsecwm chat HikawiChat'
@@ -379,7 +420,7 @@ heroku_security:
   command: command
   confirm: 👑 Confiwm
   confirm_btn: 👑 Confiwm
-  confirm_rule: 🔐 <b>Pwease, confiwm dat chu want two give {} <a hwef='{}'>{}</a>
+  confirm_rule: 🔐 <b>Pwease, confiwm dat chu want two give {} <a href='{}'>{}</a>
     a pewmission two use {}</b> <code>{}</code> <b>{}?</b>
   created_sgroup: <emoji document_id=5870704313440932932>🔒</emoji> <b>Secuwity gwoup</b>
     <code>{}</code> <b>cweated</b>
@@ -407,7 +448,7 @@ heroku_security:
   inline: inwinye command
   invalid_name: <emoji document_id=5210952531676504517>🚫</emoji> <b>Invawid secuwity
     gwoup nyame</b>
-  li: <emoji document_id=4974307891025543730>▫️</emoji> <b><a hwef="tg://usew?id={}">{}</a></b>
+  li: <emoji document_id=4974307891025543730>▫️</emoji> <b><a href="tg://user?id={}">{}</a></b>
   minute: minyute
   minutes: minyutes
   module: moduwe
@@ -433,14 +474,14 @@ heroku_security:
   not_a_user: <emoji document_id=5447644880824181073>⚠️</emoji> <b>Specified entity
     is nyot a usew</b>
   owner: 😎 Ownyew
-  owner_added: <emoji document_id="5386399931378440814">😎</emoji> <b><a hwef="tg://usew?id={}">{}</a>
+  owner_added: <emoji document_id="5386399931378440814">😎</emoji> <b><a href="tg://user?id={}">{}</a>
     added two gwoup</b> <code>ownyew</code>
   owner_list: '<emoji document_id=5386399931378440814>😎</emoji> <b>Usews in gwoup</b>
     <code>ownyew</code><b>:</b>
 
 
-    {}'
-  owner_removed: <emoji document_id="5386399931378440814">😎</emoji> <b><a hwef="tg://usew?id={}">{}</a>
+    <blockquote expandable>{}</blockquote>'
+  owner_removed: <emoji document_id="5386399931378440814">😎</emoji> <b><a href="tg://user?id={}">{}</a>
     wemoved fwom gwoup</b> <code>ownyew</code>
   owner_target: <emoji document_id=5447644880824181073>⚠️</emoji> <b>This usew is
     ownyew and can't be pwomoted by tawgeted secuwity</b>
@@ -451,16 +492,16 @@ heroku_security:
 
     '
   pm: 🤙 In PM
-  rule_added: 🔐 <b>You gave {} <a hwef='{}'>{}</a> a pewmission two use {}</b> <code>{}</code>
+  rule_added: 🔐 <b>You gave {} <a href='{}'>{}</a> a pewmission two use {}</b> <code>{}</code>
     <b>{}</b>
   rule_removed: <emoji document_id=5472308992514464048>🔐</emoji> <b>Tawgeted secuwity
-    wuwe fow <a hwef="{}">{}</a> (</b><code>{}</code><b>) wemoved</b>
+    wuwe fow <a href="{}">{}</a> (</b><code>{}</code><b>) wemoved</b>
   rules: '<emoji document_id=5472308992514464048>🔐</emoji> <b>Tawgeted secuwity wuwes:</b>
 
 
     {}'
   rules_removed: <emoji document_id=5472308992514464048>🔐</emoji> <b>Tawgeted secuwity
-    wuwes fow <a hwef="{}">{}</a> wemoved</b>
+    wuwes fow <a href="{}">{}</a> wemoved</b>
   second: second
   seconds: seconds
   self: <emoji document_id=5447644880824181073>⚠️</emoji> <b>You can't pwomote/demote
@@ -490,7 +531,7 @@ heroku_security:
     <code>{}</code> <b>added two secuwity gwoup</b> <code>{}</code>
   user_already_in_sgroup: <emoji document_id=5210952531676504517>🚫</emoji> <b>Usew</b>
     <code>{}</code> <b>awweady is in secuwity gwoup</b> <code>{}</code>
-  user_nn: 🔰 <b>NoNick fow <a hwef="tg://usew?id={}">{}</a> enyabwed</b>
+  user_nn: 🔰 <b>NoNick fow <a href="tg://user?id={}">{}</a> enyabwed</b>
   user_not_in_sgroup: <emoji document_id=5210952531676504517>🚫</emoji> <b>Usew</b>
     <code>{}</code> <b>is nyot in secuwity gwoup</b> <code>{}</code>
   user_removed_from_sgroup: <emoji document_id=5870704313440932932>🔒</emoji> <b>Usew</b>
@@ -500,7 +541,7 @@ heroku_security:
     {}
 
     '
-  warning: '⚠️ <b>Pwease, confiwm, dat chu want two add <a hwef="tg://usew?id={}">{}</a>
+  warning: '⚠️ <b>Pwease, confiwm, dat chu want two add <a href="tg://user?id={}">{}</a>
     two gwoup</b> <code>{}</code><b>!
 
     This action may weveaw pewsonyaw info and gwant fuww ow pawtiaw access two usewbot
@@ -509,7 +550,7 @@ heroku_security:
     de type of tawget as fiwst awgument (</b><code>usew</code> <b>ow</b> <code>chat</code><b>)</b>
 heroku_settings:
   _cls_doc: Advanced settings fow Hewoku Usewbot
-  _cmd_doc_invoke: <moduwe ow `cowe` fow buiwt-in medods> <medod> - Onwy fow debugging
+  _cmd_doc_invoke: <module or `core` for built-in methods> <method> - Onwy fow debugging
     puwposes. DO NOT USE IF YOU'WE NOT A DEVEWOPEW
   _cmd_doc_nonickchat: Awwow nyo nyicknyame in cewtain chat
   _cmd_doc_nonickchats: Wetuwns de wist of NoNick chats
@@ -519,7 +560,7 @@ heroku_settings:
   _cmd_doc_nonickusers: Wetuwns de wist of NoNick usews
   _cmd_doc_settings: Show settings menyu
   _cmd_doc_uninstall_heroku: Unyinstaww Hewoku
-  _cmd_doc_watcher: '<moduwe> - Toggwe gwobaw watchew wuwes
+  _cmd_doc_watcher: '<module> - Toggwe gwobaw watchew wuwes
 
     Awgs:
 
@@ -530,7 +571,7 @@ heroku_settings:
     [-o - onwy out]
 
     [-i - onwy incoming]'
-  _cmd_doc_watcherbl: <moduwe> - Toggwe watchew in cuwwent chat
+  _cmd_doc_watcherbl: <module> - Toggwe watchew in cuwwent chat
   _cmd_doc_watchers: Wist cuwwent watchews
   args: <emoji document_id=5210952531676504517>🚫</emoji> <b>You nyeed two specify
     watchew nyame</b>
@@ -542,7 +583,7 @@ heroku_settings:
     fow dese chats:</b>
 
 
-    {}'
+    <blockquote expandable>{}</blockquote>'
   close_menu: 😌 Cwose menyu
   cmd404: <emoji document_id=5469791106591890404>🪄</emoji> <b>Command nyot found</b>
   cmd_nn: <emoji document_id=5469791106591890404>🪄</emoji> <b>NoNick fow</b> <code>{}</code>
@@ -551,7 +592,7 @@ heroku_settings:
     fow dese commands:</b>
 
 
-    {}'
+    <blockquote expandable>{}</blockquote>'
   confirm_restart: 🔄 <b>Pwease, confiwm dat chu want two westawt</b>
   confirm_update: 🧭 <b>Pwease, confiwm dat chu want two update. Youw usewbot wiww
     be westawted</b>
@@ -600,13 +641,11 @@ heroku_settings:
   deauth_no_2: I'm uncewtain
   deauth_no_3: I'm stwuggwing two answew
   deauth_yes: I'm suwe
-  disable_debugger: ✅ Debuggew enyabwed
   disabled: <emoji document_id=5424885441100782420>👀</emoji> <b>Watchew {} is nyow
     <u>disabwed</u></b>
   do_not_suggest_fs: 🚫 Suggest FS fow moduwes
   do_not_suggest_subscribe: 🚫 Suggest subscwibe two channyew
   do_not_use_fs: 🚫 Awways use FS fow moduwes
-  enable_debugger: 🚫 Debuggew disabwed
   enabled: <emoji document_id=5424885441100782420>👀</emoji> <b>Watchew {} is nyow
     <u>enyabwed</u></b>
   inline_settings: ⚙️ <b>Hewe chu can configuwe uw Hewoku settings</b>
@@ -629,8 +668,8 @@ heroku_settings:
   no_cmd: <emoji document_id=5469791106591890404>🪄</emoji> <b>Pwease, specify command
     two toggwe NoNick fow</b>
   no_custom_emojis: 🚫 Custom emojis
-  nonick_warning: Wawnying! You enyabwed NoNick wid defauwt prefix! You may get muted
-    in Hewoku chats. Change prefix ow disabwe NoNick!
+  nonick_warning: Wawnying! You enyabwed NoNick wid defauwt pwefix! You may get muted
+    in Hewoku chats. Change pwefix ow disabwe NoNick!
   nothing: <emoji document_id=5427052514094619126>🤷‍♀️</emoji> <b>Noding two show...</b>
   private_not_allowed: <emoji document_id=5210952531676504517>🚫</emoji> <b>This command
     must be executed in chat</b>
@@ -648,32 +687,60 @@ heroku_settings:
     fow dese usews:</b>
 
 
-    {}'
+    <blockquote expandable>{}</blockquote>'
   watchers: '<emoji document_id=5424885441100782420>👀</emoji> <b>Watchews:</b>
 
 
-    <b>{}</b>'
+    <blockquote expandable><b>{}</b></blockquote>'
 heroku_web:
+  2fa_enabled: You have two-factow audentication enyabwed. Entew de passwowd.
   _cmd_doc_weburl: Opens web tunnyew two uw Hewoku web intewface
-  btn_no: 🔻 Cancew
-  btn_yes: 🚸 Open anyway
+  add_user_confirm: Do chu weawwy want two add an account {} ({})?
+  add_user_insecure: Do chu weawwy want two add an account {} ({})? Use de <code>{}addacc
+    {} fowce_insecuwe</code> command two confiwm.
+  btn_no: 🔻 Cwose
+  btn_yes: 🚸 Confiwm anyway
+  cant_add_self: You can't add youwsewf.
+  code_expired: The code has expiwed.
+  code_sent: The code has been sent. Entew it
+  enter_2fa: Entew 2FA passwowd
+  enter_code: Entew de code
+  enter_number: Entew de nyumbew
+  enter_number_format: 'Entew uw phonye nyumbew in de intewnyationyaw fowmat (fow
+    exampwe, +79212345678):'
+  floodwait_error: Too many attempts. Twy again in {} seconds.
+  host_denied: <emoji document_id=6037254263187443802>💬</emoji> Session addition commands
+    awe nyot avaiwabwe on uw hosting, pwease contact uw hosting adminyistwation.
+  incorrect_number: 'You entewed an incowwect phonye nyumbew.
+
+
+    '
+  invalid_code: Invawid code. Pwease twy again.
+  invalid_password: Invawid passwowd. Pwease twy again.
+  invalid_target: Wepwy two de message of de pewson chu want two add, ow specify deiw
+    cowwect @username/id.
   lavhost_web: '✌️ <b>This wink weads two uw Hewoku web intewface on wavHost</b>
 
 
     <i>💡 You''ww nyeed two audowize using wavHost cwedentiaws, specified on wegistwation</i>'
+  login_code: Youw wogin code
+  login_successful: 🎉 Successfuw wogin!
   opening_tunnel: 🔁 <b>Openying tunnyew two Hewoku web intewface...</b>
   privacy_leak: ⚠️ <b>This command gives access two uw Hewoku web intewface. It's
-    nyot wecommended two wun it in pubwic gwoup chats. Considew using it in <a hwef='tg://openmessage?usew_id={}'>Saved
+    nyot wecommended two wun it in pubwic gwoup chats. Considew using it in <a href='tg://openmessage?user_id={}'>Saved
     messages</a>. Type</b> <code>{}pwoxypass fowce_insecuwe</code> <b>two ignyowe
     dis wawnying</b>
   privacy_leak_nowarn: ⚠️ <b>This command gives access two uw Hewoku web intewface.
     It's nyot wecommended two wun it in pubwic gwoup chats. Considew using it in <a
-    hwef='tg://openmessage?usew_id={}'>Saved messages</a>.</b>
-  tunnel_opened: 🎉 <b>Tunnyew openyed. This wink is vawid fow about 1 houw</b>
+    href='tg://openmessage?user_id={}'>Saved messages</a>.</b>
+  request_code: 🔃 Wequest de code again
+  tunnel_opened: 🎉 <b>Tunnyew openyed. This wink is vawid fow about 20 minyutes</b>
   web_btn: 🌍 Web intewface
+  your_2fa: Youw two-factow audentication passwowd
+  your_phone_number: Youw phonye nyumbew
 inline_stuff:
   _cls_doc: Pwovides suppowt fow inwinye stuff
-  _cmd_doc_ch_heroku_bot: <usewnyame> - Change uw Hewoku inwinye bot usewnyame
+  _cmd_doc_ch_heroku_bot: <username> - Change uw Hewoku inwinye bot usewnyame
   bot_updated: <emoji document_id=6318792204118656433>🎉</emoji> <b>Config successfuwwy
     saved. Westawt usewbot two appwy changes</b>
   bot_username_invalid: <emoji document_id=5210952531676504517>🚫</emoji> <b>Specified
@@ -682,13 +749,25 @@ inline_stuff:
   bot_username_occupied: <emoji document_id=5210952531676504517>🚫</emoji> <b>This
     usewnyame is awweady occupied</b>
   name: InwinyeStuff
+  prefix_reset: 🔀 Pwefix weset!
+  profile_cmd: 'ℹ️ Usewbot Main Infowmation
+
+
+    <blockquote>• Pwefix: {prefix}
+
+    • WAM Usage: {ram_usage} MB
+
+    • CPU Usage: {cpu_usage}%
+
+    • Hosting: {host}</blockquote>'
+  restart: 🔄 Youw Hewoku is being westawted..
   this_is_heroku: '🪐 <b>Hi! This is Hewoku — powewfuw moduwaw Tewegwam usewbot. You
     can instaww it two uw account!</b>
 
 
-    <b>🌍 <a hwef="https://gidub.com/coddwago/Hewoku">GitHub</a></b>
+    <b>🌍 <a href="https://github.com/coddrago/Heroku">GitHub</a></b>
 
-    <b>👥 <a hwef="https://t.me/hewoku_tawks">Suppowt chat</a></b>'
+    <b>👥 <a href="https://t.me/heroku_talks">Suppowt chat</a></b>'
   token_invalid: <emoji document_id=5210952531676504517>🚫</emoji> <b>Specified bot
     token is invawid. It must contain 8-10 nyumbews, </b><code>:</code> <b>and 34-36
     symbows</b>
@@ -743,8 +822,8 @@ loader:
   inline_init_failed: '<emoji document_id=5454225457916420314>😖</emoji> <b>This moduwe
     wequiwes Hewoku inwinye featuwe and inyitiawization of InwinyeManyagew faiwed</b>
 
-    <i>Pwease, wemove onye of uw owd bots fwom @BotFather and westawt usewbot two woad
-    dis moduwe</i>'
+    <i>Pwease, wemove onye of uw owd bots fwom @BotFather and westawt usewbot two
+    woad dis moduwe</i>'
   installing: <emoji document_id=5325792861885570739>🕔</emoji> <b>Instawwing moduwe</b>
     <code>{}</code><b>...</b>
   link: '<emoji document_id=5256113064821926998>📁</emoji> <b>Fiwe of</b> {class_name}
@@ -755,7 +834,7 @@ loader:
 
 
     <emoji document_id=4916086774649848789>🔗</emoji> <code>{prefix}dwm {url}</code>
-    
+
 
     {not_exact}'
   load_failed: <emoji document_id=5210952531676504517>🚫</emoji> <b>Woading faiwed.
@@ -797,6 +876,14 @@ loader:
     <emoji document_id=6037284117505116849>🌐</emoji> <b>Wink:</b> <code>{}</code>'
   module_fs: 💿 <b>Wouwd chu wike two save dis moduwe two fiwesystem, so it won't get
     unwoaded aftew westawt?</b>
+  modules_not_unloaded: '<emoji document_id=5210952531676504517>🚫</emoji> <b>Faiwed
+    two unwoad {not_unloaded} moduwes.</b>
+
+    <blockquote expandable>{errors}</blockquote>'
+  modules_unloaded: '<emoji document_id=5784993237412351403>✅</emoji> <b>Unwoaded
+    {unloaded_num} moduwes:</b>
+
+    <blockquote expandable>{unloaded}</blockquote>'
   name: Woadew
   never_save: 🚫 Nevew save two fs
   no_class: <b>What cwass nyeeds two be unwoaded?</b>
@@ -836,11 +923,6 @@ loader:
     <b>is nyot added</b>
   requirements_failed: <emoji document_id=5210952531676504517>🚫</emoji> <b>Wequiwements
     instawwation faiwed</b>
-  requirements_failed_termux: '<emoji document_id=5407025283456835913>🕶</emoji> <b>Wequiwements
-    instawwation faiwed</b>
-
-    <b>The most common weason is dat Tewmux doesn''t suppowt many wibwawies. Don''t
-    wepowt it as bug, dis can''t be sowved.</b>'
   requirements_installing: '<emoji document_id=5328311576736833844>🚀</emoji> <b>Instawwing
     wequiwements:
 
@@ -848,6 +930,8 @@ loader:
     {}</b>'
   requirements_restart: <emoji document_id=5875145601682771643>🚀</emoji> <b>Wequiwements
     instawwed, but a westawt is wequiwed fow</b> <code>{}</code> <b>two appwy</b>
+  requirements_restarted: 🚀 <b>Youw usewbot is westawted, aftew westawt, instaww de
+    moduwe again.</b>
   save: 💿 Save
   save_for_all: 💽 Awways save two fs
   scam_module: '<emoji document_id=5454225457916420314>😖</emoji> <b>The moduwe</b>
@@ -871,20 +955,18 @@ loader:
     <emoji document_id=5472146462362048818>💡</emoji><i> Don''t wepowt it as bug. It''s
     a secuwity measuwe two pwevent wepwacing cowe moduwes wid some junk</i>'
   unloaded: '{} <b>Moduwe {} unwoaded.</b>'
-  modules_unloaded: "<emoji document_id=5784993237412351403>✅</emoji> <b>Unwoaded {unloaded_num} moduwes:</b>\n<blockquote expandable>{unloaded}</blockquote>"
-  modules_not_unloaded: "<emoji document_id=5210952531676504517>🚫</emoji> <b>Failed two unwoad {not_unloaded} moduwes.</b>\n<blockquote expandable>{errors}</blockquote>"
   version_incompatible: '<emoji document_id=5454225457916420314>😖</emoji> <b>This
     moduwe wequiwes Hewoku {}+
 
     Pwease, update wid</b> <code>.update</code>'
   wait_channel_approve: '<emoji document_id=5469741319330996757>💫</emoji> <b>Moduwe</b>
-    <code>{}</code> <b>wequests pewmission two join channyew <a hwef="https://t.me/{}">{}</a>.
+    <code>{}</code> <b>wequests pewmission two join channyew <a href="https://t.me/{}">{}</a>.
 
 
     <b><emoji document_id="5467666648263564704">❓</emoji> Weason: {}</b>
 
 
-    <i>Waiting fow <a hwef="https://t.me/{}">appwovaw</a>...</i>'
+    <i>Waiting fow <a href="https://t.me/{}">appwovaw</a>...</i>'
   will_save_fs: 💽 Now aww moduwes, woaded wid .woadmod wiww be saved two fiwesystem
 presets:
   _chat_desc: The cowwection of toows which wiww hewp two modewate uw gwoup chat —
@@ -929,7 +1011,7 @@ quickstart:
   base: '🪐 <b>Hewwo.</b> Youw <b>Hewoku</b> usewbot is nyow instawwed.
 
 
-    ❓ <b>Need hewp?</b> Join <a hwef="https://t.me/hewoku_tawks">ouw suppowt chat</a>.
+    ❓ <b>Need hewp?</b> Join <a href="https://t.me/heroku_talks">ouw suppowt chat</a>.
     We hewp <b>evewyonye</b>.
 
 
@@ -951,19 +1033,19 @@ quickstart:
     moduwe</b>
 
 
-    💡 <b>Hewoku suppowts moduwes fwom Hewoku, Fwiendwy-Tewegwam, and GeekTG, as weww
+    💡 <b>Hewoku suppowts moduwes fwom Hikka, Fwiendwy-Tewegwam, and GeekTG, as weww
     as its own.</b>
 
     '
   btn_support: 🥷 Suppowt chat
   language: 🇬🇧 Engwish
   language_saved: 🇬🇧 Wanguage saved!
-  lavhost: ✌️ <b>Youw usewbot is instawwed on wavHost</b>. Make suwe two join @wavhost
+  lavhost: ✌️ <b>Youw usewbot is instawwed on wavHost</b>. Make suwe two join @lavhost
     fow impowtant nyotifications and updates. Aww questions wegawding de pwatfowm
-    shouwd be asked in @wavhostchat.
+    shouwd be asked in @lavhostchat.
   name: Quickstawt
 settings:
-  _cfg_nonstandart_prefixes: Awwow nyon-standawt prefixes wike fwags ow mowe dan onye
+  _cfg_nonstandart_prefixes: Awwow nyon-standawt pwefixes wike fwags ow mowe dan onye
     symbow
   _cls_doc: Contwow cowe usewbot settings
   _cmd_doc_addalias: Set an awias fow a command
@@ -973,7 +1055,7 @@ settings:
   _cmd_doc_cleardb: Cweaw de entiwe database, effectivewy pewfowming a factowy weset
   _cmd_doc_delalias: Wemove an awias fow a command
   _cmd_doc_heroku: Get Hewoku vewsion
-  _cmd_doc_setprefix: <prefix> - Sets command prefix
+  _cmd_doc_setprefix: <prefix> [ownyew] - Sets command pwefix
   _cmd_doc_unblacklist: <chat_id> - Unbwackwist de bot fwom opewating somewhewe
   _cmd_doc_unblacklistuser: '[usew_id] - Awwow dis usew two wun pewmitted commands'
   alias_args: <emoji document_id=5210952531676504517>🚫</emoji> <b>You must pwovide
@@ -995,76 +1077,64 @@ settings:
   db_cleared: <emoji document_id=5197474765387864959>👍</emoji> <b>Database cweawed</b>
   delalias_args: <emoji document_id=5210952531676504517>🚫</emoji> <b>You must pwovide
     de awias nyame</b>
+  entity_prefix_set: '{} <b>Command pwefix updated fow {entity_name}. Use de fowwowing
+    command two change it back:</b>
+
+    <pre><code class="language-hewoku">{newprefix}setpwefix {oldprefix} {entity_id}</code></pre>'
   heroku: '{} <b>{}.{}.{}</b> <i>{}</i>
 
 
     <b><emoji document_id=5289608677244811430>📁</emoji> <b>hewoku-tw:</b> <i>{}</i>
 
 
-    <emoji document_id=5228879218363872764>⌨</emoji> <b>Devewopew: t.me/codwago</b>
-
-    <emoji document_id=5375368793209972850>🖋</emoji> <b>Designyew: t.me/tw4mq</b>'
-  installation: '<emoji document_id=5363805650327450240>▪️</emoji> The instawwation
-    is vewy easy! Just entew de fowwowing in uw sewvews tewminyaw:
-
-    <pre><code class="language-bash">sudo apt update &amp;&amp; sudo apt upgwade -y
-    &amp;&amp; sudo apt instaww git &amp;&amp; sudo apt instaww pydon3-pip &amp;&amp;
-    git cwonye https://gidub.com/coddwago/Hewoku &amp;&amp; cd Hewoku &amp;&amp; pip
-    instaww -w wequiwements.txt &amp;&amp; pydon3 -m hewoku</code></pre>
-
-    <emoji document_id=5299027123913105700>😐</emoji> If chu dont have sudo access,
-    simpwy wemove de inyitiaw steps.
+    <emoji document_id=5228879218363872764>⌨</emoji> <b>Devewopews: <a href="t.me/codrago">@codrago</a>,
+    <a href="t.me/zetgo">@zetgo</a></b>'
+  hikkahost: 🌼 HikkaHost
+  hikkahost_install: '<b>🌘 How two instaww Hewoku on HikkaHost?</b>
 
 
-    <emoji document_id=5300777464820145682>🥳</emoji> Wets go ovew a few awguments:
+    1. Go two @hikkahost_bot
+
+    2. Sewect "Instaww"
+
+    3. Sewect "🪐 Hewoku"
 
 
-    <emoji document_id=5787313834012184077>🔐</emoji> The <code>--woot</code> awgument
-    awwows chu two wun Hewoku as a <b>woot usew</b>.
+    And continyue wid de instawwation.
 
 
-    <emoji document_id=5785209342986817408>🌎</emoji> The <code>--nyo-web</code> awgument
-    enyabwes wogin two uw account <b>diwectwy in de tewminyaw, wadew dan dwough a
-    wink</b> <code>{}.whw.wife</code>.
-
-
-    <emoji document_id=5471895949804575096>🤲</emoji> Howevew, if chu want two migwate
-    fwom hikawiatama Hewoku, downwoad dis moduwe:
-
-    <pre><code class="language-hewoku">{prefix}dwm https://mods.codwago.top/SwitchToHewoku.py</code></pre>
-
-    It compwetewy safe and wiww hewp chu upgwade two Hewoku automaticawwy'
+    <b>Aftew dat, chu wiww weceive a wink, open it and wog into uw account.</b>'
+  id_not_found_scgroup: <emoji document_id=5210952531676504517>🚫</emoji> This entity
+    does nyot exist in any secuwity gwoup. Thewefowe, adding a pwefix fow it is pointwess
+  invalid_id_or_username: <emoji document_id=5210952531676504517>🚫</emoji> Invawid
+    id/usewnyame was given
   jamhost: 🧃 JamHost
   jamhost_install: '🪐 <b>Instawwation on 🧃 JamHost:</b>
 
 
     <b>Pwoceed two @jamhostbot, type </b><code>/pay</code><b> and fowwow its instwuctions.</b>'
+  lavhost: ✌️ wavHost
+  lavhost_install: '⬇️ To instaww, simpwy go two @lavhostbot and fowwow dese steps:
+
+
+    • Entew de /buy command, sewect and pay de invoice
+
+    • If nyecessawy, send de payment weceipt
+
+    • Aftew payment confiwmation, entew /instaww and sewect Hewoku
+
+    • Fowwow de bot''s instwuctions'
   name: Settings
   no_alias: <emoji document_id=5210952531676504517>🚫</emoji> <b>Awias</b> <code>{}</code>
     <b>does nyot exist</b>
   no_command: <emoji document_id=5210952531676504517>🚫</emoji> <b>Command</b> <code>{}</code>
     <b>does nyot exist</b>
-  prefix_incorrect: <emoji document_id=5210952531676504517>🚫</emoji> <b>prefix must
+  prefix_incorrect: <emoji document_id=5210952531676504517>🚫</emoji> <b>Pwefix must
     be onye symbow in wengd</b>
-  prefix_set: '{} <b>Command prefix updated. Use de fowwowing command two change it
+  prefix_set: '{} <b>Command pwefix updated. Use de fowwowing command two change it
     back:</b>
 
-    <pre><code class="language-hewoku">{newprefix}setprefix {oldprefix}</code></pre>'
-  railway: 🚂 WaiwWay
-  termux: 🕶 Tewmux
-  termux_install: "\U0001FA90 <b>Instawwation on \U0001F576 Tewmux:</b>\n\n⬜️ <b>Downwoad\
-    \ Tewmux fwom</b> <a hwef=\"https://f-dwoid.owg/wepo/com.tewmux_118.apk\"><b>de\
-    \ wink</b></a><b>. ⚠️ The vewsion fwom Pway Mawket wiww nyot wowk!</b>\n<b>⬜️\
-    \ Copy de command into it:</b> \n<pre><code cwass=\"wanguage-bash\">tewmux-wake-wock\
-    \ &amp;&amp; expowt AIOHTTP_NO_EXTENSIONS=1 &amp;&amp; pkg upgw -y &amp;&amp;\
-    \ pkg instaww tuw-wepo &amp;&amp; pkg update &amp;&amp; pkg instaww pydon3.10\
-    \ &amp;&amp; pkg i wget ncuwses-utiws pydon3.10 -y &amp;&amp; pkg update &amp;&amp;\
-    \ pkg instaww openssw -y &amp;&amp; pkg instaww git &amp;&amp; cweaw &amp;&amp;\
-    \ git cwonye https://gidub.com/coddwago/Hewoku &amp;&amp; cd Hewoku &amp;&amp;\
-    \ pip instaww -w wequiwements.txt &amp;&amp; pydon3.10 -m hewoku --nyo-web</code></pre>\n\
-    \n⬜️ <b>Answew \"y\" two evewyding de scwipt asks</b>\n⬜️ <b>Fowwow de instwuctions\
-    \ in de scwipt.</b>\n\n⬜️ <b>Whewe two get API_ID and API_HASH?</b> \U0001F3AC\
-    \ <a hwef=\"https://youtu.be/DcqDA249Whg?t=24\">Video</a>"
+    <pre><code class="language-hewoku">{newprefix}setpwefix {oldprefix}</code></pre>'
   too_many_args: <emoji document_id=5210952531676504517>🚫</emoji> <b>Too many awgs</b>
   unblacklisted: <emoji document_id=5197474765387864959>👍</emoji> <b>Chat {} unbwackwisted
     fwom usewbot</b>
@@ -1078,20 +1148,16 @@ settings:
   user_unblacklisted: <emoji document_id=5197474765387864959>👍</emoji> <b>Usew {}
     unbwackwisted fwom usewbot</b>
   userland: 🐧 UsewWand
-  userland_install: '<b>🪐 Instawwation on 🐧 UsewWAnd:
+  userland_install: '<b>Instaww UsewWAnd fwom dis</b> <a href="https://play.google.com/store/apps/details?id=tech.ula">wink</a>
 
 
-    Instaww UsewWAnd fwom</b> <a hwef="https://pway.googwe.com/stowe/apps/detaiws?id=tech.uwa">de
-    wink</a>
-
-
-    <b>Open it, choose Ubuntu —&gt; Minyimaw —&gt; Tewminyaw</b>
+    <b>Open it, sewect Ubuntu —&gt; Minyimaw —&gt; Tewminyaw</b>
 
 
     <b>Wait fow de distwibution two instaww, chu can pouw some tea</b>
 
 
-    <b>Aftew successfuw instawwation, a tewminyaw wiww open in fwont of chu, wwite
+    <b>Aftew successfuw instawwation, a tewminyaw wiww open in fwont of chu, type
     dewe:</b>
 
     <pre><code class="language-bash">sudo apt update &amp;&amp; sudo apt upgwade -y
@@ -1104,19 +1170,38 @@ settings:
     detaiws two wog in.
 
 
-    Voiwa! You have instawwed Hewoku on UsewWAnd.</b>'
+    Voiwà! You have instawwed Hewoku on UsewWAnd.</b>'
   vds: 💎 VDS
-  vds_install: '🪐 <b>Instawwation on 💎 VDS:</b>
+  vds_install: '<emoji document_id=5471952986970267163>💎</emoji> The instawwation
+    pwocess on a VDS is donye wid a singwe command:
 
-    <pre><code class="language-bash">sudo apt update &amp;&amp; sudo apt upgwade -y
-    &amp;&amp; sudo apt instaww git &amp;&amp; sudo apt instaww pydon3-pip &amp;&amp;
-    git cwonye https://gidub.com/coddwago/Hewoku &amp;&amp; cd Hewoku &amp;&amp; pip
-    instaww -w wequiwements.txt &amp;&amp; pydon3 -m hewoku</code></pre>'
+    <pre><code class="language-shell">sudo apt update &amp;&amp; sudo apt upgwade
+    -y &amp;&amp; sudo apt instaww git pydon3-pip &amp;&amp; git cwonye https://gidub.com/coddwago/Hewoku
+    &amp;&amp; cd Hewoku &amp;&amp; pip instaww -w wequiwements.txt &amp;&amp; pydon3
+    -m hewoku</code></pre>
+
+    <i>Note: If chu do nyot have sudo pwiviweges, omit de cowwesponding pawt of de
+    command.</i>'
   what_prefix: <emoji document_id=5382187118216879236>❓</emoji> <b>What shouwd de
-    prefix be set two?</b>
+    pwefix be set two?</b>
   who_to_blacklist: <emoji document_id=5382187118216879236>❓</emoji> <b>Who two bwackwist?</b>
   who_to_unblacklist: <emoji document_id=5382187118216879236>❓</emoji> <b>Who two
     unbwackwist?</b>
+  wsl: 💻 WSW
+  wsl_install: "<b>Downwoad WSW.</b> To do dis, open PowewSheww as adminyistwatow\
+    \ and type <code>wsw --instaww -d Ubuntu-22.04</code> \n⚠️ <i>To instaww WSW,\
+    \ chu nyeed Windows 10 buiwd 2004 ow Windows 11 of any vewsion and a PC wid viwtuawization\
+    \ suppowt. Fow instawwation on eawwiew vewsions of de OS, wefew two</i> <a href=\"\
+    https://learn.microsoft.com/ru-ru/windows/wsl/install-manual\">dis page</a>\n\n\
+    ⬜️ <b>Westawt uw PC and waunch de Ubuntu 22.04.x appwication</b> \n\n⬜️ <b>Paste\
+    \ de command into it (WMB):</b> <code>cuww -Ss https://bootstwap.pypa.io/get-pip.py\
+    \ | pydon3</code> \n⚠️ <i>If yewwow wawnyings appeaw, type</i> <code>expowt PATH=\"\
+    /home/usewnyame/.wocaw/bin:$PATH\"</code> <i>wepwacing /home/usewnyame/.wocaw/bin\
+    \ wid de pad mentionyed in de message</i>\n\n⬜️ <b>Paste de command (WMB):</b>\
+    \ \n<pre><code class=\"language-bash\">cweaw &amp;&amp; git cwonye https://gidub.com/coddwago/Hewoku\
+    \ &amp;&amp; cd Hewoku &amp;&amp; pip instaww -w wequiwements.txt &amp;&amp; pydon3\
+    \ -m hewoku</code></pre>\n\U0001F517 <b>Whewe two get API_ID and API_HASH?</b>:\
+    \ <a href=\"https://youtu.be/DcqDA249Lhg?t=24\">Video</a>"
 terminal:
   _cls_doc: Wuns commands
   _cmd_doc_apt: Showdand fow '.tewminyaw apt'
@@ -1128,9 +1213,15 @@ terminal:
     pwease twy again watew</b>
   auth_msg: <emoji document_id=5472308992514464048>🔐</emoji> <b>Pwease edit dis message
     two de passwowd fow</b> <code>{}</code> <b>two wun</b> <code>{}</code>
-  auth_needed: <emoji document_id=5472308992514464048>🔐</emoji><a hwef="tg://usew?id={}">
+  auth_needed: <emoji document_id=5472308992514464048>🔐</emoji><a href="tg://user?id={}">
     Intewactive audentication wequiwed</a>
   auth_ongoing: <emoji document_id=5213452215527677338>⏳</emoji> <b>Audenticating...</b>
+  dangerous_command: '<emoji document_id=5454225457916420314>😖</emoji> <b>The execution
+    of dis command (<code>{}</code>) was cancewwed fow uw safety.</b>
+
+
+    <emoji document_id=5472146462362048818>💡</emoji><i>This is nyot an ewwow, but
+    a safety measuwe. Do nyot wepowt it in de suppowt chat.</i>'
   done: <emoji document_id=5314250708508220914>✅</emoji> <b>Donye</b>
   end: </code></pre>
   finished: '
@@ -1148,7 +1239,7 @@ terminal:
 
     <b><emoji document_id=5210952531676504517>🚫</emoji> Stdeww:</b>
 
-    <pre><code class="language-stdeww">'
+    <pre><code class="language-stderr">'
   stdout: '
 
     <b>📼 Stdout:</b>
@@ -1163,11 +1254,12 @@ test:
 
     You wiww be abwe two twack changes in weaw-time'
   _cmd_doc_dump: Use in wepwy two get a dump of a message
-  _cmd_doc_logs: <wevew> - Dump wogs
+  _cmd_doc_logs: <level> - Dump wogs
   _cmd_doc_ping: Test uw usewbot ping
   _cmd_doc_suspend: <time> - Suspends de bot fow N seconds
+  back: ↩️ Back
   bad_module: <emoji document_id=5355133243773435190>🚫</emoji> <b>Moduwe nyot found</b>
-  banner_url: 'Image fow uw ping, fow exampwe: https://imguw.com/a/dsh7Fvb.png'
+  banner_url: 'Image fow uw ping, fow exampwe: https://waw.gidubusewcontent.com/coddwago/assets/wefs/heads/main/hewoku/ping_cmd.png'
   cancel: 🚫 Cancew
   choose_loglevel: 💁‍♂️ <b>Choose wog wevew</b>
   confidential: ⚠️ <b>Wog wevew</b> <code>{}</code> <b>may weveaw uw confidentiaw
@@ -1179,7 +1271,7 @@ test:
   configping: 'Youw custom text. You can use pwacehowdews: {ping} - That''s uw ping.
     {uptime} - It''s uw uptime. {ping_hint} - This is de same hint as in de hewoku
     moduwe, it is chosen wid wandom chance, awso chu can specify dis hint in de config.
-    You can use de {hostnyame} pwacehowdew if chu nyeed de hostnyame of uw sewvew'
+    You can use de {hostname} pwacehowdew if chu nyeed de hostnyame of uw sewvew'
   debugging_disabled: <emoji document_id=5332533929020761310>✅</emoji> <b>Debugging
     disabwed</b>
   debugging_enabled: '<emoji document_id=5332533929020761310>✅</emoji> <b>Debugging
@@ -1213,6 +1305,9 @@ translate:
   language: en
   name: Twanswatow
   no_args: <emoji document_id=5210952531676504517>❌</emoji> <b>No awguments pwovided</b>
+  translated_text: '<emoji document_id=5787344001862471785>🔁</emoji> Twanswated text:
+
+    <blockquote>{tr_text}</blockquote>'
 translations:
   _cls_doc: Pwocesses intewnyaw twanswations
   _cmd_doc_dllangpack: '[wink two a wangpack | empty two wemove] - Change Hewoku twanswate
@@ -1235,7 +1330,7 @@ translations:
     is nyot officiawwy suppowted</b>
   pack_saved: <emoji document_id=5197474765387864959>👍</emoji> <b>Twanswate pack saved!</b>
   requested_join: '💫 <b>Moduwe</b> <code>{}</code> <b>wequested two join channyew
-    <a hwef=''https://t.me/{}''>{}</a></b>
+    <a href=''https://t.me/{}''>{}</a></b>
 
 
     <b>❓ Weason:</b> <i>{}</i>'
@@ -1244,6 +1339,7 @@ translations:
   too_long: <emoji document_id=5341492148468465410>📁</emoji> <b>Command output seems
     two be too wong, so it's sent in fiwe.</b>
 updater:
+  _cfg_doc_autoupdate: 💫 Automatic updates fow uw Hewoku
   _cfg_doc_disable_notifications: Disabwe update nyotifications
   _cls_doc: Updates itsewf, twacks watest Hewoku weweases, and nyotifies chu, if update
     is wequiwed
@@ -1251,6 +1347,31 @@ updater:
   _cmd_doc_rollback: Wowwbacks usewbot updates
   _cmd_doc_source: Winks de souwce code of dis pwoject
   _cmd_doc_update: Downwoads usewbot updates
+  autoupdate: '🛡 Unyit Awpha awso awwows chu two ignyowe updates and <b>do it automaticawwy</b>!
+
+
+    💫 Howevew, majow updates such as changing de gwobaw vewsion (1.x.x -> 2.x.x) wiww
+    be ignyowed fow automatic updates and chu wiww have two update manyuawwy'
+  autoupdate_notifier: '🆕 New Hewoku update!
+
+
+    🔮 New Hewoku vewsion #{} is avaiwabwe
+
+
+    <i>Update changewog</i>:
+
+    <blockquote expandable>{}</blockquote>
+
+    {}
+
+
+    <b>Updating...</b>'
+  autoupdate_off: '❌ Automatic updates <b>have been disabwed!</b>
+
+    To enyabwe dem, use de command <code>{prefix}autoupdate</code>'
+  autoupdate_on: '🎆 Automatic updates <b>have been enyabwed!
+
+    Enjoy using it!</b>'
   btn_restart: 🔄 Westawt
   btn_update: 🧭 Update
   cancel: 🚫 Cancew
@@ -1287,18 +1408,19 @@ updater:
     <i>Westawt took {}s</i>'
   secure_boot_confirm: ❓ <b>Awe chu suwe chu want two westawt in secuwe boot mode?</b>
   source: <emoji document_id=5208634061085492935>📖</emoji> <b>Wead de souwce code
-    fwom</b> <a hwef='{}'>hewe</a>
+    fwom</b> <a href='{}'>hewe</a>
   success: '<emoji document_id=5208661316947955396>⏱</emoji> <b>Westawt successfuw!
     {}</b>
 
     <i>But stiww woading moduwes...</i>
 
     <i>Westawt took {}s</i>'
+  ub_stop: Youw {emoji} has been stopped
   update: 🔄 Update
   update_confirm: '❓ <b>Awe chu suwe chu want two update?
 
 
-    <a hwef="https://gidub.com/coddwago/Hewoku/commit/{}">{}</a> ⤑ <a hwef="https://gidub.com/coddwago/Hewoku/commit/{}">{}</a></b>'
+    <a href="https://github.com/coddrago/Heroku/commit/{}">{}</a> ⤑ <a href="https://github.com/coddrago/Heroku/commit/{}">{}</a></b>'
   update_required: '🆕 <b>Hewoku Update avaiwabwe!</b>
 
 
