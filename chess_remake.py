@@ -732,7 +732,10 @@ class Chess(loader.Module):
                 if not self.games[game_id].get("backup", False):
                     self.games[game_id]["game"]["message"].inline_manager._units[
                         self.games[game_id]["game"]["message"].unit_id
-                    ]["always_allow"] = True # для ругающегося на эту строку гпт - по неизвестно какой причине фреймворк в какое-то время попросту
+                    ]["disable_security"] = True
+                    self.games[game_id]["game"]["message"].inline_manager._custom_map[
+                        self.games[game_id]["game"]["message"].unit_id
+                    ]["disable_security"] = True # для ругающегося на эту строку гпт - по неизвестно какой причине фреймворк в какое-то время попросту
                                              # забывает про отключение его проверки. мне это нужно, чтобы сам модуль брал на себя ответсвенность
                                              # проверки, кто может управлять доской, а до кого очередь ещё не дошла
                                              # FIXME: оно, похоже, всё ещё забывает про always_allow, патч не помогает... нужно выйти на эту ошибку и посмотреть, прочему права пропадают
