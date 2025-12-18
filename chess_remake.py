@@ -1012,18 +1012,19 @@ class Chess(loader.Module):
             pgn = ["<b>|</b>"]
         last_moves = " ".join(pgn)
 
-        await utils.answer(
-            game["game"]["message"],
-            self.strings["board"].format(
-                game_id,
-                utils.escape_html(game["sender"]["name"] if game["sender"]["color"] else game["opponent"]["name"]),
-                utils.escape_html(game["opponent"]["name"] if game["sender"]["color"] else game["sender"]["name"]),
-                self.strings["white"] if game["game"]["board"].turn else self.strings["black"],
-                status.format(loser=utils.escape_html(loser), winner=utils.escape_html(winner)),
-                last_moves[-32:],
-            ),
-            reply_markup=reply_markup,
-        )
+        while not res:
+            res = game["game"]["message"].edit(
+                self.strings["board"].format(
+                    game_id,
+                    utils.escape_html(game["sender"]["name"] if game["sender"]["color"] else game["opponent"]["name"]),
+                    utils.escape_html(game["opponent"]["name"] if game["sender"]["color"] else game["sender"]["name"]),
+                    self.strings["white"] if game["game"]["board"].turn else self.strings["black"],
+                    status.format(loser=utils.escape_html(loser), winner=utils.escape_html(winner)),
+                    last_moves[-32:],
+                ),
+                reply_markup=reply_markup,
+            )
+            await asyncio.sleep(0.3)
 
         if game["vs_bot"] and game["game"]["board"].turn == game["sender"]["color"] and game["game"]["state"] == "idle":
             await self._bot_process_board(game_id)
