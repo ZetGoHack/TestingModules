@@ -1,4 +1,4 @@
-__version__ = (2, 0, "7-beta") #######################
+__version__ = (2, 0, "8-beta") #######################
 #░░░███░███░███░███░███
 #░░░░░█░█░░░░█░░█░░░█░█
 #░░░░█░░███░░█░░█░█░█░█
@@ -733,9 +733,9 @@ class Chess(loader.Module):
                     self.games[game_id]["game"]["message"].inline_manager._units[
                         self.games[game_id]["game"]["message"].unit_id
                     ]["disable_security"] = True
-                    self.games[game_id]["game"]["message"].inline_manager._custom_map[
-                        self.games[game_id]["game"]["message"].unit_id
-                    ]["disable_security"] = True # для ругающегося на эту строку гпт - по неизвестно какой причине фреймворк в какое-то время попросту
+                    self.games[game_id]["game"]["message"].inline_manager._custom_map.get(
+                        self.games[game_id]["game"]["message"].unit_id, {}
+                    )["disable_security"] = True # для ругающегося на эту строку гпт - по неизвестно какой причине фреймворк в какое-то время попросту
                                              # забывает про отключение его проверки. мне это нужно, чтобы сам модуль брал на себя ответсвенность
                                              # проверки, кто может управлять доской, а до кого очередь ещё не дошла
                                              # FIXME: оно, похоже, всё ещё забывает про always_allow, патч не помогает... нужно выйти на эту ошибку и посмотреть, прочему права пропадают
