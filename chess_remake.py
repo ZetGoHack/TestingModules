@@ -1012,6 +1012,8 @@ class Chess(loader.Module):
             pgn = ["<b>|</b>"]
         last_moves = " ".join(pgn)
 
+        res = False
+
         while not res:
             res = game["game"]["message"].edit(
                 self.strings["board"].format(
