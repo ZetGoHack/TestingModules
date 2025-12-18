@@ -1,4 +1,4 @@
-__version__ = (2, 0, "7-beta") #######################
+__version__ = (2, 0, "8-beta") #######################
 #░░░███░███░███░███░███
 #░░░░░█░█░░░░█░░█░░░█░█
 #░░░░█░░███░░█░░█░█░█░█
@@ -732,7 +732,10 @@ class Chess(loader.Module):
                 if not self.games[game_id].get("backup", False):
                     self.games[game_id]["game"]["message"].inline_manager._units[
                         self.games[game_id]["game"]["message"].unit_id
-                    ]["always_allow"] = True # для ругающегося на эту строку гпт - по неизвестно какой причине фреймворк в какое-то время попросту
+                    ]["disable_security"] = True
+                    self.games[game_id]["game"]["message"].inline_manager._custom_map.get(
+                        self.games[game_id]["game"]["message"].unit_id, {}
+                    )["disable_security"] = True # для ругающегося на эту строку гпт - по неизвестно какой причине фреймворк в какое-то время попросту
                                              # забывает про отключение его проверки. мне это нужно, чтобы сам модуль брал на себя ответсвенность
                                              # проверки, кто может управлять доской, а до кого очередь ещё не дошла
                                              # FIXME: оно, похоже, всё ещё забывает про always_allow, патч не помогает... нужно выйти на эту ошибку и посмотреть, прочему права пропадают
@@ -1009,18 +1012,21 @@ class Chess(loader.Module):
             pgn = ["<b>|</b>"]
         last_moves = " ".join(pgn)
 
-        await utils.answer(
-            game["game"]["message"],
-            self.strings["board"].format(
-                game_id,
-                utils.escape_html(game["sender"]["name"] if game["sender"]["color"] else game["opponent"]["name"]),
-                utils.escape_html(game["opponent"]["name"] if game["sender"]["color"] else game["sender"]["name"]),
-                self.strings["white"] if game["game"]["board"].turn else self.strings["black"],
-                status.format(loser=utils.escape_html(loser), winner=utils.escape_html(winner)),
-                last_moves[-32:],
-            ),
-            reply_markup=reply_markup,
-        )
+        res = False
+
+        while not res:
+            res = game["game"]["message"].edit(
+                self.strings["board"].format(
+                    game_id,
+                    utils.escape_html(game["sender"]["name"] if game["sender"]["color"] else game["opponent"]["name"]),
+                    utils.escape_html(game["opponent"]["name"] if game["sender"]["color"] else game["sender"]["name"]),
+                    self.strings["white"] if game["game"]["board"].turn else self.strings["black"],
+                    status.format(loser=utils.escape_html(loser), winner=utils.escape_html(winner)),
+                    last_moves[-32:],
+                ),
+                reply_markup=reply_markup,
+            )
+            await asyncio.sleep(0.3)
 
         if game["vs_bot"] and game["game"]["board"].turn == game["sender"]["color"] and game["game"]["state"] == "idle":
             await self._bot_process_board(game_id)
