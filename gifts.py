@@ -4,7 +4,7 @@
 #░░░█░░░█░░░░█░░█░█░█░█
 #░░░███░███░░█░░███░███
 #H:Mods Team [💎]
-v = ("ooooo", "kaaa", "kkkk")
+v = ("ooooo", "kaaaa", "kkkk")
 # meta developer: @nullmod & @codermasochist
 # scope: heroku_min 1.7.2
 # scope: hikka_min 1.7.2
@@ -78,7 +78,7 @@ class Gifts(loader.Module):
         # / .gifts command
         "not_available": "<i>Not available</i>",
         "nft": "<a href='t.me/nft/{}'>\u200f</a>",
-        "docerror": "I can't show it (Invalid document ID).\nReport this message to @gitneko.\n{}",
+        "docerror": "I can't show it (Invalid document ID).\nPlease, report this message and the message above to @gitneko.\n{}",
     }
     strings_ru = {
         "toomany": "<emoji document_id=5019523782004441717>❌</emoji> Слишком много аргументов",
@@ -187,11 +187,12 @@ class Gifts(loader.Module):
             try:
                 await utils.answer(message, text)
             except DocumentInvalidError:
-                await utils.answer(message, self.strings["docerror"].format(
+                await message.respond(self.strings["docerror"].format(
                         "Limit: " + str(self.config["gift_limit"]) + "\n"
                         + "Peer: " + str(id)
                     )
                 )
+                await utils.answer(message, utils.html_escape(text))
         else:
             await utils.answer(message, self.strings["doesnthave"].format(name))
 
@@ -239,7 +240,7 @@ class Gifts(loader.Module):
                     })
                 elif isinstance(gift.gift, StarGift):
                     gifts_count += 1
-                    st_id = str(gift.gift.sticker.id).replace("5231003994519794860", "5253982443215547954").replace("5465502401358226185", "5298801741209299033").replace("5384540360863150750", "5413732008033543033").replace("5256041592271157291", "5296769534483523552") # < - jst dumpfix to avoid DocumentInvalidError
+                    st_id = str(gift.gift.sticker.id).replace("5231003994519794860", "5253982443215547954").replace("5465502401358226185", "5298801741209299033").replace("5384540360863150750", "5413732008033543033").replace("5291741351845587729", "5296769534483523552") # < - jst dumpfix to avoid DocumentInvalidError
                     gift_exists = False
                     for gft in gifts[0]["gifts"]:
                         if st_id in gft["emoji"]:
