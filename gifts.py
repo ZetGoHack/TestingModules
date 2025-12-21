@@ -4,7 +4,7 @@
 #░░░█░░░█░░░░█░░█░█░█░█
 #░░░███░███░░█░░███░███
 #H:Mods Team [💎]
-v = ("oooo", "kaaa", "kkkk")
+v = ("ooooo", "kaaa", "kkkk")
 # meta developer: @nullmod & @codermasochist
 # scope: heroku_min 1.7.2
 # scope: hikka_min 1.7.2
@@ -188,7 +188,7 @@ class Gifts(loader.Module):
                 await utils.answer(message, text)
             except DocumentInvalidError:
                 await utils.answer(message, self.strings["docerror"].format(
-                        "Limit: " + str(self.config["limit"]) + "\n"
+                        "Limit: " + str(self.config["gift_limit"]) + "\n"
                         + "Peer: " + str(id)
                     )
                 )
@@ -239,7 +239,7 @@ class Gifts(loader.Module):
                     })
                 elif isinstance(gift.gift, StarGift):
                     gifts_count += 1
-                    st_id = str(gift.gift.sticker.id).replace("5231003994519794860", "5253982443215547954").replace("5465502401358226185", "5298801741209299033").replace("5384540360863150750", "5413732008033543033") # < - jst dumpfix to avoid DocumentInvalidError
+                    st_id = str(gift.gift.sticker.id).replace("5231003994519794860", "5253982443215547954").replace("5465502401358226185", "5298801741209299033").replace("5384540360863150750", "5413732008033543033").replace("5256041592271157291", "5296769534483523552") # < - jst dumpfix to avoid DocumentInvalidError
                     gift_exists = False
                     for gft in gifts[0]["gifts"]:
                         if st_id in gft["emoji"]:
