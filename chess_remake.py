@@ -1015,7 +1015,7 @@ class Chess(loader.Module):
         res = False
 
         while not res:
-            res = game["game"]["message"].edit(
+            res = await game["game"]["message"].edit(
                 self.strings["board"].format(
                     game_id,
                     utils.escape_html(game["sender"]["name"] if game["sender"]["color"] else game["opponent"]["name"]),
