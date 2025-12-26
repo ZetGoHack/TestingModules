@@ -29,9 +29,14 @@ class ChessAnalyzer(loader.Module):
     strings = {"name": "ChessAnalyzer"}
 
     def client_ready(self):
-        if not self.lookup("Chess").games:
-            logger.warning("You don't have a main Chess module. This module requires it for for better interaction with Module. The analyzer will (most likely) have more capabilities than just analysis :)")
-        return
+        if not self.lookup("Chess"):
+            raise loader.SelfUnload(
+                "You don't have a main Chess module. "
+                "Analyser requires it for for better "
+                "interaction with Chess module. "
+                "The analyzer will (most likely) have more "
+                "capabilities than just analysis :)"
+            )
 
     @loader.command()
     async def gameslist(self, message: Message):
