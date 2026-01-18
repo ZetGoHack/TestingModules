@@ -65,7 +65,7 @@ class SafeBase(loader.Module):
                 "msg_count",
                 10,
                 "Сколько сообщений должно быть у человека, чтобы учитывать его в getlist?",
-                validator=loader.validators.Int(),
+                validator=loader.validators.Integer(),
             ),
             loader.ConfigValue(
                 "send_scam_chat",
