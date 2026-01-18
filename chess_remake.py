@@ -593,7 +593,7 @@ class Chess(loader.Module):
 
         if not str(data).isdigit():
             return await utils.answer(call, self.strings["not_int_err"], reply_markup=reply_markup)
-        if not 1400 <= int(data) <= 3200:
+        if not 1400 <= int(data) <= 3190:
             return await utils.answer(call, self.strings["out_of_range_err"], reply_markup=reply_markup)
 
         self.games[game_id]["bot_elo"] = int(data)
@@ -703,7 +703,7 @@ class Chess(loader.Module):
         params = {
             "game_id": game_id,
             "vs_bot": False,
-            "bot_elo": self.get("bot_elo", 3400),
+            "bot_elo": self.get("bot_elo", 3190),
             "sender": None,
             "opponent": None,
             "Timer": {
