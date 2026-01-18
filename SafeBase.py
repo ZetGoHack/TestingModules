@@ -5,10 +5,14 @@
 #░░░███░███░░█░░███░███
 
 # meta developer: @ZetGo
-__version__ = (1,0,3)
-import asyncio, herokutl, math, io
+__version__ = (1,0,4)
+import asyncio, math, io
+
+from collections import defaultdict
+
 from herokutl.tl.types import MessageService
 from herokutl.tl.functions.channels import GetFullChannelRequest
+
 from .. import loader, utils
 
 CHECK_DELAY = 0.7
@@ -58,6 +62,12 @@ class SafeBase(loader.Module):
                 validator=loader.validators.Integer(),
             ),
             loader.ConfigValue(
+                "msg_count",
+                10,
+                "Сколько сообщений должно быть у человека, чтобы учитывать его в getlist?",
+                validator=loader.validators.Int(),
+            ),
+            loader.ConfigValue(
                 "send_scam_chat",
                 7246450592,
                 "Чат, куда будут отправлены команды для заноса человека в базу",
@@ -97,39 +107,40 @@ class SafeBase(loader.Module):
         group, output = args[:2]
         group = group.replace("@", "")
         group = int(group) if group.isdigit() else group
-        self.client: herokutl.TelegramClient
         entity = await self.client(GetFullChannelRequest(group))
 
-        all_users = [u for u in (await self.client.get_participants(group))]
         ids = set()
+        msg_count = defaultdict(int)
 
-        helper = await message.reply("Opening form...")
+        # helper = await message.reply("Opening form...")
         self.getlist_c = True
-        form = await utils.answer(
-            helper,
-            self.strings["stop_cycle"],
-            reply_markup={
-                "text": self.strings["stop"],
-                "callback": self._stop_getlist,
-            }
-        )
+        # form = await utils.answer(
+        #     helper,
+        #     self.strings["stop_cycle"],
+        #     reply_markup={
+        #         "text": self.strings["stop"],
+        #         "callback": self._stop_getlist,
+        #     }
+        # )
 
         await utils.answer(message, self.strings["part_collect"])
-        if len(all_users) != entity.full_chat.participants_count:
-            limit = min(self.config["msgs_limit"], (await self.client.get_messages(group, 0, search="+")).total)
-            await utils.answer(message, self.strings["additional"].format(
-                    self.config["msgs_limit"],
-                    self.get_messages_time(self.config["msgs_limit"])
-                )
-            )
-            for msg in (await self.client.get_messages(group, limit=limit)):
-                if self.getlist_c:
-                    if msg.sender and not getattr(msg.sender, "bot", True):
-                        ids.add(msg.sender.id)
-                else:
-                    return await message.delete()
 
-        ids |= {us.id for us in all_users if not us.bot}
+        limit = min(self.config["msgs_limit"], (await self.client.get_messages(group, 0, search="+")).total)
+        await utils.answer(message, self.strings["additional"].format(
+                self.config["msgs_limit"],
+                self.get_messages_time(self.config["msgs_limit"])
+            )
+        )
+        for msg in (await self.client.get_messages(group, limit=limit)):
+            if not msg.sender or not getattr(msg.sender, "bot", True):
+                continue
+
+            if msg_count[msg.sender.id] < self.config["msg_count"]:
+                msg_count[msg.sender.id] += 1
+
+            if msg_count[msg.sender.id] >= self.config["msg_count"]:
+                ids.add(msg.sender.id)
+                del msg_count[msg.sender.id]
 
         ids.discard(self.client.tg_id)
 
@@ -150,9 +161,9 @@ class SafeBase(loader.Module):
                 return await message.delete()
 
         text = "\n".join(map(str, ids))
-        try:
-            await form.delete()
-        except: pass
+        # try:
+        #     await form.delete()
+        # except: pass
 
         if output == "message":
             await utils.answer(message, self.strings["part_list"].format(
