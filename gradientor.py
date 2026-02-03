@@ -179,6 +179,8 @@ class Gradientor(loader.Module):
                 color_variant,
                 ((28, 28, 28), (28, 28, 28))
             )
+        else:
+            color1, color2 = (28, 28, 28), (28, 28, 28)
         
         await utils.answer(message, self.strings["gradient_creating"])
 
