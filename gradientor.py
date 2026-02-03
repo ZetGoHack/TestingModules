@@ -120,6 +120,7 @@ def set_shape(im: io.BytesIO, shape: str) -> io.BytesIO:
 @loader.translatable_docstring
 class Gradientor(loader.Module):
     strings = {
+        "name": "Gradientor",
         "_cls_doc": "A module to create your profile picture with a background from your profile (primarily - the background from NFT gift)",
         "_cmd_doc_makepp": "[photo/reply] - create a profile picture with a gradient from profile color\n"
                             "--update-cache - update profile cache if you just changed profile background",
