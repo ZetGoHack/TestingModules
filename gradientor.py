@@ -6,7 +6,7 @@
 
 # meta developer: @ZetGo
 
-__version__ = (0, 0, 4)
+__version__ = (0, 0, 5)
 
 import io
 import math
@@ -110,13 +110,13 @@ def crop_by_bbox(img):
 def hex_to_rgb(value: int):
     return ((value >> 16) & 255, (value >> 8) & 255, value & 255)
 
-def hexes_to_rgbs(value: list | int):
-    if isinstance(value, list):
+def hexes_to_rgbs(value: list):
+    if len(value) > 1:
         res = list()
         for i in value:
             res.append(hex_to_rgb(i))
 
-        return res
+        return tuple(res)
     else:
         res = hex_to_rgb(value)
         return (res, res)
