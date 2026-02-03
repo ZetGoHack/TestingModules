@@ -6,7 +6,7 @@
 
 # meta developer: @ZetGo
 
-__version__ = (0, 0, 2)
+__version__ = (0, 0, 3)
 
 import io
 import math
@@ -14,7 +14,15 @@ import math
 from PIL import Image, ImageDraw
 
 from herokutl.tl.custom import Message
-from herokutl.tl.types import EmojiStatusCollectible
+from herokutl.tl.functions.help import (
+    GetPeerProfileColorsRequest
+)
+from herokutl.tl.types import (
+    EmojiStatusCollectible
+)
+from herokutl.tl.types.help import (
+    PeerColorProfileSet, PeerColorOption
+)
 
 from .. import loader, utils
 
@@ -89,32 +97,25 @@ def set_gradient(im: io.BytesIO, gradient: Image.Image) -> io.BytesIO:
     buffer.seek(0)
     return buffer
 
-PROFILE_COLORS = {
-  0:  ((156, 71, 0), (156, 71, 0)),
-  1:  ((148, 120, 252), (148, 120, 252)),
-  2:  ((113, 96, 73), (113, 96, 73)),
-  3:  ((51, 101, 123), (51, 101, 123)),
-  4:  ((56, 89, 39), (56, 89, 39)),
-  5:  ((71, 113, 148), (71, 113, 148)),
-  6:  ((148, 127, 43), (148, 127, 43)),
-  7:  ((67, 6, 97), (67, 6, 97)),
-  8:  ((153, 16, 11), (171, 47, 94)),
-  9:  ((143, 92, 63), (160, 160, 50)),
-  10: ((99, 70, 129), (146, 112, 82)),
-  11: ((41, 54, 59), (95, 95, 100)),
-  12: ((48, 41, 84), (62, 67, 90)),
-  13: ((56, 71, 60), (69, 114, 33)),
-  14: ((136, 119, 0), (165, 165, 57)),
-  15: ((83, 96, 110), (56, 70, 84)),
+
+
+def hex_to_rgb(value: int):
+    return ((value >> 16) & 255, (value >> 8) & 255, value & 255)
+
+def hexes_to_rgbs(value: list | int):
+    if isinstance(value, list):
+        res = list()
+        for i in value:
+            res.append(hex_to_rgb(i))
+
+        return res
+    else:
+        res = hex_to_rgb(value)
+        return (res, res)
+
+SHAPES = {
+ # TODO: фигуры для создания масок на авы
 }
-
-shapes = {
-
-}
-
-def set_shape(im: io.BytesIO, shape: str) -> io.BytesIO:
-
-    return im
 
 
 @loader.translatable_docstring
@@ -134,6 +135,17 @@ class Gradientor(loader.Module):
         "gradient_creating": "<tg-emoji emoji-id=5886667040432853038>🔁</tg-emoji> Создание градиента...",
         "gradient_created": "<tg-emoji emoji-id=5818804345247894731>✅</tg-emoji> Градиент создан!",
     }
+
+    async def client_ready(self):
+        self.colors = self.get("PROFILE_COLORS", None)
+        if not self.colors:
+            raw_colors = (await self.client(GetPeerProfileColorsRequest(0))).colors
+            self.colors = {
+                col.color_id: hexes_to_rgbs(col.dark_colors.bg_colors) for col
+                in raw_colors
+            }
+
+            self.set("PROFILE_COLORS", self.colors)
 
     @loader.command()
     async def makepp(self, message: Message):
@@ -163,19 +175,19 @@ class Gradientor(loader.Module):
         if not user.premium:
             color1, color2 = (28, 28, 28), (28, 28, 28)
         
-        elif user.status and isinstance(user.status, EmojiStatusCollectible):
+        elif user.emoji_status and isinstance(user.emoji_status, EmojiStatusCollectible):
             color1, color2 = (
-                user.status.edge_color, user.status.center_color
+                user.emoji_status.edge_color, user.emoji_status.center_color
             )
-            color1 = ((color1 >> 16) & 255, (color1 >> 8) & 255, color1 & 255)
-            color2 = ((color2 >> 16) & 255, (color2 >> 8) & 255, color2 & 255)
+            color1 = hex_to_rgb(color1)
+            color2 = hex_to_rgb(color2)
 
             emoji = True
 
         elif user.profile_color:
             color_variant = user.profile_color.color
 
-            color1, color2 = PROFILE_COLORS.get(
+            color1, color2 = self.colors.get(
                 color_variant,
                 ((28, 28, 28), (28, 28, 28))
             )
