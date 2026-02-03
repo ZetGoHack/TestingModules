@@ -6,7 +6,7 @@
 
 # meta developer: @ZetGo
 
-__version__ = (0, 0, 6)
+__version__ = (0, 0, 7)
 
 import io
 import math
@@ -179,6 +179,8 @@ class Gradientor(loader.Module):
         else:
             force_radial = False
 
+        user = None
+
         if args:
             user = await self.client.get_entity(args[0])
 
@@ -188,11 +190,9 @@ class Gradientor(loader.Module):
 
         if not user:
             if upd_cache:
-                if not reply:
-                    user = self.client.hikka_me = await self.client.get_me()
-                else:
-                    user = await self.client.get_entity(reply.from_user)
-
+                user = self.client.hikka_me = await self.client.get_me()
+            elif reply:
+                user = await self.client.get_entity(reply.from_user)
             else:
                 user = self.client.hikka_me
 
