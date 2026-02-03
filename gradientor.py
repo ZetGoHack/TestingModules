@@ -118,7 +118,7 @@ def hexes_to_rgbs(value: list):
 
         return tuple(res)
     else:
-        res = hex_to_rgb(value)
+        res = hex_to_rgb(value[0])
         return (res, res)
 
 SHAPES = {
