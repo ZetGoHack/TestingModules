@@ -157,6 +157,12 @@ class Gradientor(loader.Module):
             args.remove("--update-cache")
         else:
             upd_cache = False
+        
+        if "--radial" in args:
+            force_radial = True
+            args.remove("--radial")
+        else:
+            force_radial = False
 
         photo_source = (message if not reply or not reply.photo else reply)
         if not photo_source.photo:
@@ -196,7 +202,7 @@ class Gradientor(loader.Module):
         
         await utils.answer(message, self.strings["gradient_creating"])
 
-        gradient = get_gradient((512, 512), color1, color2, "radial" if emoji else "linear")
+        gradient = get_gradient((1024, 1024), color1, color2, "radial" if emoji or force_radial else "linear")
 
         if not background_only:
             p_b = await photo_source.download_media(bytes)
