@@ -155,7 +155,7 @@ class Gradientor(loader.Module):
                 await self.client.get_me()
                 if not reply
                 else await self.client.get_entity(reply.from_id)
-            ) if not upd_cache else self.client.hikka_me
+            ) if upd_cache else self.client.hikka_me
         )
 
         emoji = False
