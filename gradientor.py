@@ -6,7 +6,7 @@
 
 # meta developer: @ZetGo
 
-__version__ = (0, 0, 5)
+__version__ = (0, 0, 6)
 
 import io
 import math
@@ -98,9 +98,9 @@ def crop_by_bbox(img):
     img_w, img_h = img.size
     x, y, w, h = BBOX_NORM
 
-    left   = int(round(x * img_w))
-    top    = int(round(y * img_h))
-    right  = int(round((x + w) * img_w))
+    left = int(round(x * img_w))
+    top = int(round(y * img_h))
+    right = int(round((x + w) * img_w))
     bottom = int(round((y + h) * img_h))
 
     return img.crop((left, top, right, bottom))
@@ -179,17 +179,22 @@ class Gradientor(loader.Module):
         else:
             force_radial = False
 
+        if args:
+            user = await self.client.get_entity(args[0])
+
         photo_source = (message if not reply or not reply.photo else reply)
         if not photo_source.photo:
             background_only = True
 
-        user = self.client.hikka_me = (
-            (
-                await self.client.get_me()
-                if not reply
-                else await self.client.get_entity(reply.from_id)
-            ) if upd_cache else self.client.hikka_me
-        )
+        if not user:
+            if upd_cache:
+                if not reply:
+                    user = self.client.hikka_me = await self.client.get_me()
+                else:
+                    user = await self.client.get_entity(reply.from_user)
+
+            else:
+                user = self.client.hikka_me
 
         emoji = False
         
