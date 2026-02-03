@@ -135,6 +135,7 @@ class Gradientor(loader.Module):
         "gradient_created": "<tg-emoji emoji-id=5818804345247894731>✅</tg-emoji> Градиент создан!",
     }
 
+    @loader.command()
     async def makepp(self, message: Message):
         reply: Message = await message.get_reply_message()
         args = utils.get_args(message)
