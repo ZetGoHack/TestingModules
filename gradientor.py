@@ -6,7 +6,7 @@
 
 # meta developer: @ZetGo
 
-__version__ = (0, 0, 3)
+__version__ = (0, 0, 4)
 
 import io
 import math
@@ -19,9 +19,6 @@ from herokutl.tl.functions.help import (
 )
 from herokutl.tl.types import (
     EmojiStatusCollectible
-)
-from herokutl.tl.types.help import (
-    PeerColorProfileSet, PeerColorOption
 )
 
 from .. import loader, utils
@@ -97,6 +94,17 @@ def set_gradient(im: io.BytesIO, gradient: Image.Image) -> io.BytesIO:
     buffer.seek(0)
     return buffer
 
+def crop_by_bbox(img):
+    img_w, img_h = img.size
+    x, y, w, h = BBOX_NORM
+
+    left   = int(round(x * img_w))
+    top    = int(round(y * img_h))
+    right  = int(round((x + w) * img_w))
+    bottom = int(round((y + h) * img_h))
+
+    return img.crop((left, top, right, bottom))
+
 
 
 def hex_to_rgb(value: int):
@@ -116,6 +124,13 @@ def hexes_to_rgbs(value: list | int):
 SHAPES = {
  # TODO: фигуры для создания масок на авы
 }
+
+BBOX_NORM = (
+    2894 / 8268,
+    1260 / 8268,
+    2504 / 8268,
+    2504 / 8268,
+)
 
 
 @loader.translatable_docstring
@@ -203,6 +218,7 @@ class Gradientor(loader.Module):
         await utils.answer(message, self.strings["gradient_creating"])
 
         gradient = get_gradient((1024, 1024), color1, color2, "radial" if emoji or force_radial else "linear")
+        gradient = crop_by_bbox(gradient)
 
         if not background_only:
             p_b = await photo_source.download_media(bytes)
