@@ -6,7 +6,7 @@
 
 # meta developer: @ZetGo
 
-__version__ = (0, 0, 12)
+__version__ = (1, 0, 0)
 
 import io
 import math
@@ -35,64 +35,49 @@ def resize_image(image: Image.Image, max_size: int = 1280) -> Image.Image:
         return image.resize((new_w, new_h), Image.LANCZOS)
 
 # Source: https://gist.github.com/weihanglo/1e754ec47fdd683a42fdf6a272904535#file-draw_gradient_pillow-py
-def get_linear_gradient(size: tuple, top_color: tuple, bottom_color: tuple) -> Image.Image:
-    def interpolate(f_co, t_co, interval):
-        if interval <= 1:
-            yield list(t_co)
-            return
-
-        det_co = [(t - f) / (interval - 1) for f, t in zip(f_co, t_co)]
-        for i in range(interval):
-            yield [round(f + det * i) for f, det in zip(f_co, det_co)]
-
-    gradient = Image.new('RGB', size, color=(0, 0, 0))
-    draw = ImageDraw.Draw(gradient)
-    
-    for y, color in enumerate(interpolate(top_color, bottom_color, max(1, size[1]))):
-        draw.line([(0, y), (size[0], y)], fill=tuple(color), width=1)
-
-    return gradient
-
-def get_radial_gradient(size: tuple, center_color: tuple, edge_color: tuple) -> Image.Image:
-    def interpolate(f_co, t_co, interval):
-        if interval <= 1:
-            yield list(t_co)
-            return
-
-        det_co = [(t - f) / (interval - 1) for f, t in zip(f_co, t_co)]
-        for i in range(interval):
-            yield [round(f + det * i) for f, det in zip(f_co, det_co)]
-
-    gradient = Image.new('RGB', size, color=(0, 0, 0))
-    draw = ImageDraw.Draw(gradient)
-
-    max_radius = math.hypot(size[0], size[1]) / 2.0
-    interval = max(1, int(math.ceil(max_radius)) + 1)
-
-    colors = list(interpolate(center_color, edge_color, interval))
-
-    cx = size[0] / 2
-    cy = size[1] / 2
-
-    for r_index, color in enumerate(colors):
-        r = interval - 1 - r_index
-        if r < 0:
-            continue
-        bbox = [
-            int(round(cx - r)),
-            int(round(cy - r)),
-            int(round(cx + r)),
-            int(round(cy + r))
-        ]
-        draw.ellipse(bbox, fill=tuple(color))
-
-    return gradient
-
 def get_gradient(size: tuple, color1: tuple, color2: tuple, gradient_type: str = "linear") -> Image.Image:
+    def interpolate(f_co, t_co, interval):
+        if interval <= 1:
+            yield list(t_co)
+            return
+
+        det_co = [(t - f) / (interval - 1) for f, t in zip(f_co, t_co)]
+        for i in range(interval):
+            yield [round(f + det * i) for f, det in zip(f_co, det_co)]
+
+    gradient = Image.new('RGB', size, color=(0, 0, 0))
+    draw = ImageDraw.Draw(gradient)
+
     if gradient_type == "linear":
-        return get_linear_gradient(size, color1, color2)
+        top_color, bottom_color = color1, color2
+
+        for y, color in enumerate(interpolate(top_color, bottom_color, max(1, size[1]))):
+            draw.line([(0, y), (size[0], y)], fill=tuple(color), width=1)
+
     elif gradient_type == "radial":
-        return get_radial_gradient(size, color1, color2)
+        center_color, edge_color = color1, color2
+
+        max_radius = math.hypot(size[0], size[1]) / 2.0
+        interval = max(1, int(math.ceil(max_radius)) + 1)
+
+        colors = list(interpolate(center_color, edge_color, interval))
+
+        cx = size[0] / 2
+        cy = size[1] / 2
+
+        for r_index, color in enumerate(colors):
+            r = interval - 1 - r_index
+            if r < 0:
+                continue
+            bbox = [
+                int(round(cx - r)),
+                int(round(cy - r)),
+                int(round(cx + r)),
+                int(round(cy + r))
+            ]
+            draw.ellipse(bbox, fill=tuple(color))
+
+    return gradient
 
 def set_gradient(im: io.BytesIO, gradient: Image.Image) -> io.BytesIO:
     img = resize_image(Image.open(im).convert('RGBA'))
@@ -151,18 +136,12 @@ BBOX_TGA_TGD = (
 class Gradientor(loader.Module):
     strings = {
         "name": "Gradientor",
-        "_cls_doc": "A module to create your profile picture with a background from your profile (primarily - the background from NFT gift)",
-        "_cmd_doc_makepp": "[photo/reply] - create a profile picture with a gradient from profile color\n"
-                            "--update-cache - update profile cache if you just changed profile background\n"
-                            "--linear - use linear gradient",
+        "_cls_doc": "A module to create your profile picture with a background from your profile",
         "gradient_creating": "<tg-emoji emoji-id=5886667040432853038>🔁</tg-emoji> Creating gradient...",
         "gradient_created": "<tg-emoji emoji-id=5818804345247894731>✅</tg-emoji> Gradient created!",
     }
     strings_ru = {
-        "_cls_doc": "Модуль для создания вашей аватарки на фоне из вашего профиля (в первую очередь - фон от NFT-подарка)",
-        "_cmd_doc_makepp": "[фотография/reply] - создать аватарку с градиентом из цвета профиля\n"
-                            "--update-cache - обновить кеш профиля, если вы только что сменили фон профиля\n"
-                            "--linear - использовать линейный градиент",
+        "_cls_doc": "Модуль для создания вашей аватарки на фоне из вашего профиля",
         "gradient_creating": "<tg-emoji emoji-id=5886667040432853038>🔁</tg-emoji> Создание градиента...",
         "gradient_created": "<tg-emoji emoji-id=5818804345247894731>✅</tg-emoji> Градиент создан!",
     }
@@ -178,8 +157,15 @@ class Gradientor(loader.Module):
 
             self.set("PROFILE_COLORS", self.colors)
 
-    @loader.command()
+    @loader.command(
+            ru_doc="[фотография/reply] - создать аватарку с градиентом из цвета профиля\n"
+                    "--update-cache - обновить кеш профиля, если вы только что сменили фон профиля\n"
+                    "--linear - использовать линейный градиент"
+    )
     async def makepp(self, message: Message):
+        """[photo/reply] - create a profile picture with a gradient from profile color\n
+            --update-cache - update profile cache if you just changed profile background\n
+            --linear - use linear gradient"""
         reply: Message = await message.get_reply_message()
         args = utils.get_args(message)
 
@@ -199,7 +185,7 @@ class Gradientor(loader.Module):
         background_only = False
 
         if args:
-            user = await self.client.get_entity(args[0])
+            user = await self.client.get_entity(int(args[0]) if args[0].isdigit() else args[0])
 
         photo_source = (
             message
@@ -216,8 +202,6 @@ class Gradientor(loader.Module):
                 user = reply.sender
             else:
                 user = self.client.hikka_me
-
-        emoji = True
         
         if not user.premium:
             color1, color2 = (28, 28, 28), (28, 28, 28)
