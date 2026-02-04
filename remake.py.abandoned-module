@@ -161,6 +161,7 @@ class debugger(loader.Module):
 
     async def _module(self, call, item, is_installed, page=0):
         # TODO(мб): крч чтобы не носить в каждой функе значение страницы буду использовать их хранилище. Будет айди с рандом хешем и внутри номера страниц [1,2,3] по степени вложенности
+        # ^ этот бро реально верил в модуль ес че
         await utils.answer(call, self.strings['module'], reply_markup=self._generate_module_list(item, is_installed, page))
 
     async def _vars(self, call, item, page=0):

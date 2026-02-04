@@ -1,5 +1,4 @@
-from .. import loader, utils
-import asyncio
+from .. import loader
 @loader.tds
 class Test(loader.Module):
     """A"""
@@ -11,14 +10,14 @@ class Test(loader.Module):
             await conv.send_message("сюда")
             try:
                 r = await conv.get_response()
-            except:
+            except TimeoutError:
                 nn = 1
                 while True:
                     nn += 1
                     await msg.edit(f"nn{nn}")
                     try:
                         r = await conv.get_response()
-                    except:
+                    except TimeoutError:
                         continue
                     if r:
                         break
