@@ -6,7 +6,7 @@
 
 # meta developer: @ZetGo
 
-__version__ = (0, 0, 8)
+__version__ = (0, 0, 9)
 
 import io
 import math
@@ -84,15 +84,19 @@ def get_gradient(size: tuple, color1: tuple, color2: tuple, gradient_type: str =
         return get_radial_gradient(size, color1, color2)
 
 def set_gradient(im: io.BytesIO, gradient: Image.Image) -> io.BytesIO:
-    im: Image.Image = Image.open(im)
+    im = Image.open(im).convert('RGBA')
 
-    im_composite = Image.alpha_composite(im.convert('RGBA'), gradient.convert('RGBA'))
+    max_size = max(im.width, im.height)
+    gradient = gradient.resize((max_size, max_size), Image.LANCZOS).convert('RGBA')
+    left = (max_size - im.width) // 2
+    top = (max_size - im.height) // 2
+    gradient.paste(im, (left, top))
     buffer = io.BytesIO()
 
-    im_composite.save(buffer, format='PNG')
+    gradient.save(buffer, format='PNG')
 
-    buffer.seek(0)
-    return buffer
+    buf.seek(0)
+    return buf
 
 def crop_by_bbox(img):
     img_w, img_h = img.size
