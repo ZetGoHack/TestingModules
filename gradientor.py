@@ -158,7 +158,7 @@ class Gradientor(loader.Module):
         if not self.colors:
             raw_colors = (await self.client(GetPeerProfileColorsRequest(0))).colors
             self.colors = {
-                col.color_id: hexes_to_rgbs(col.dark_colors.bg_colors) for col
+                str(col.color_id): hexes_to_rgbs(col.dark_colors.bg_colors) for col
                 in raw_colors
             }
 
@@ -216,7 +216,7 @@ class Gradientor(loader.Module):
             color_variant = user.profile_color.color
 
             color1, color2 = self.colors.get(
-                color_variant,
+                str(color_variant),
                 ((28, 28, 28), (28, 28, 28))
             )
         else:
