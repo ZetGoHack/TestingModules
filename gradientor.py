@@ -186,13 +186,14 @@ class Gradientor(loader.Module):
             force_radial = False
 
         user = None
+        background_only = False
 
         if args:
             user = await self.client.get_entity(args[0])
 
         photo_source = (
             message
-            if (not reply or not (reply.photo or reply.document and "image/" not in getattr(reply.document, "mime_type", "")))
+            if (not reply or not (reply.photo or reply.document and "image/" in getattr(reply.document, "mime_type", "")))
             else reply
         )
         if not (photo_source.photo or photo_source.document and "image/" in getattr(photo_source.document, "mime_type", "")):
