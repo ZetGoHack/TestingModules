@@ -6,7 +6,7 @@
 
 # meta developer: @ZetGo
 
-__version__ = (0, 0, 7)
+__version__ = (0, 0, 8)
 
 import io
 import math
@@ -139,7 +139,7 @@ class Gradientor(loader.Module):
         "name": "Gradientor",
         "_cls_doc": "A module to create your profile picture with a background from your profile (primarily - the background from NFT gift)",
         "_cmd_doc_makepp": "[photo/reply] - create a profile picture with a gradient from profile color\n"
-                            "--update-cache - update profile cache if you just changed profile background"
+                            "--update-cache - update profile cache if you just changed profile background\n"
                             "--radial - use radial gradient",
         "gradient_creating": "<tg-emoji emoji-id=5886667040432853038>🔁</tg-emoji> Creating gradient...",
         "gradient_created": "<tg-emoji emoji-id=5818804345247894731>✅</tg-emoji> Gradient created!",
@@ -147,7 +147,7 @@ class Gradientor(loader.Module):
     strings_ru = {
         "_cls_doc": "Модуль для создания вашей аватарки на фоне из вашего профиля (в первую очередь - фон от NFT-подарка)",
         "_cmd_doc_makepp": "[фотография/reply] - создать аватарку с градиентом из цвета профиля\n"
-                            "--update-cache - обновить кеш профиля, если вы только что сменили фон профиля"
+                            "--update-cache - обновить кеш профиля, если вы только что сменили фон профиля\n"
                             "--radial - использовать радиальный градиент",
         "gradient_creating": "<tg-emoji emoji-id=5886667040432853038>🔁</tg-emoji> Создание градиента...",
         "gradient_created": "<tg-emoji emoji-id=5818804345247894731>✅</tg-emoji> Градиент создан!",
@@ -194,7 +194,7 @@ class Gradientor(loader.Module):
             if upd_cache:
                 user = self.client.hikka_me = await self.client.get_me()
             elif reply:
-                user = await self.client.get_entity(reply.from_user)
+                user = reply.sender
             else:
                 user = self.client.hikka_me
 
