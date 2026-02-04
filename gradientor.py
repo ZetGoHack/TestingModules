@@ -195,7 +195,7 @@ class Gradientor(loader.Module):
             if (not reply or not (reply.photo or "image/" not in getattr(reply.media, "mime_type", "")))
             else reply
         )
-        if not photo_source.photo and not "image/" in getattr(photo_source.media, "mime_type"):
+        if not photo_source.photo and not "image/" in getattr(photo_source.media, "mime_type", ""):
             background_only = True
 
         if not user:
