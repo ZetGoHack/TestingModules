@@ -6,7 +6,7 @@
 
 # meta developer: @ZetGo
 
-__version__ = (0, 0, 11)
+__version__ = (0, 0, 12)
 
 import io
 import math
@@ -22,6 +22,17 @@ from herokutl.tl.types import (
 )
 
 from .. import loader, utils
+
+def resize_image(image: Image.Image, max_size: int = 1280) -> Image.Image:
+    w, h = image.size
+    if max(w, h) <= max_size:
+        return image
+    else:
+        scale = max_size / max(w, h)
+        new_w = int(w * scale)
+        new_h = int(h * scale)
+
+        return image.resize((new_w, new_h), Image.LANCZOS)
 
 # Source: https://gist.github.com/weihanglo/1e754ec47fdd683a42fdf6a272904535#file-draw_gradient_pillow-py
 def get_linear_gradient(size: tuple, top_color: tuple, bottom_color: tuple) -> Image.Image:
@@ -84,23 +95,23 @@ def get_gradient(size: tuple, color1: tuple, color2: tuple, gradient_type: str =
         return get_radial_gradient(size, color1, color2)
 
 def set_gradient(im: io.BytesIO, gradient: Image.Image) -> io.BytesIO:
-    im = Image.open(im).convert('RGBA')
+    img = resize_image(Image.open(im).convert('RGBA'))
 
-    max_size = max(im.width, im.height)
+    max_size = max(img.width, img.height)
     gradient = gradient.resize((max_size, max_size), Image.LANCZOS).convert('RGBA')
-    left = (max_size - im.width) // 2
-    top = (max_size - im.height) // 2
-    gradient.paste(im, (left, top))
+    left = (max_size - img.width) // 2
+    top = (max_size - img.height) // 2
+    gradient.paste(img, (left, top), img)
     buffer = io.BytesIO()
 
     gradient.save(buffer, format='PNG')
 
-    buf.seek(0)
-    return buf
+    buffer.seek(0)
+    return buffer
 
-def crop_by_bbox(img):
+def crop_by_bbox(img: Image.Image):
     img_w, img_h = img.size
-    x, y, w, h = BBOX_NORM
+    x, y, w, h = BBOX_TGA_TGD
 
     left = int(round(x * img_w))
     top = int(round(y * img_h))
@@ -108,7 +119,6 @@ def crop_by_bbox(img):
     bottom = int(round((y + h) * img_h))
 
     return img.crop((left, top, right, bottom))
-
 
 
 def hex_to_rgb(value: int):
@@ -129,7 +139,7 @@ SHAPES = {
  # TODO: фигуры для создания масок на авы
 }
 
-BBOX_NORM = (
+BBOX_TGA_TGD = (
     2894 / 8268,
     1260 / 8268,
     2504 / 8268,
@@ -144,7 +154,7 @@ class Gradientor(loader.Module):
         "_cls_doc": "A module to create your profile picture with a background from your profile (primarily - the background from NFT gift)",
         "_cmd_doc_makepp": "[photo/reply] - create a profile picture with a gradient from profile color\n"
                             "--update-cache - update profile cache if you just changed profile background\n"
-                            "--radial - use radial gradient",
+                            "--linear - use linear gradient",
         "gradient_creating": "<tg-emoji emoji-id=5886667040432853038>🔁</tg-emoji> Creating gradient...",
         "gradient_created": "<tg-emoji emoji-id=5818804345247894731>✅</tg-emoji> Gradient created!",
     }
@@ -152,7 +162,7 @@ class Gradientor(loader.Module):
         "_cls_doc": "Модуль для создания вашей аватарки на фоне из вашего профиля (в первую очередь - фон от NFT-подарка)",
         "_cmd_doc_makepp": "[фотография/reply] - создать аватарку с градиентом из цвета профиля\n"
                             "--update-cache - обновить кеш профиля, если вы только что сменили фон профиля\n"
-                            "--radial - использовать радиальный градиент",
+                            "--linear - использовать линейный градиент",
         "gradient_creating": "<tg-emoji emoji-id=5886667040432853038>🔁</tg-emoji> Создание градиента...",
         "gradient_created": "<tg-emoji emoji-id=5818804345247894731>✅</tg-emoji> Градиент создан!",
     }
@@ -179,11 +189,11 @@ class Gradientor(loader.Module):
         else:
             upd_cache = False
         
-        if "--radial" in args:
-            force_radial = True
-            args.remove("--radial")
+        if "--linear" in args:
+            force_linear = True
+            args.remove("--linear")
         else:
-            force_radial = False
+            force_linear = False
 
         user = None
         background_only = False
@@ -219,8 +229,6 @@ class Gradientor(loader.Module):
             color1 = hex_to_rgb(color1)
             color2 = hex_to_rgb(color2)
 
-            emoji = True
-
         elif user.profile_color:
             color_variant = user.profile_color.color
 
@@ -233,7 +241,7 @@ class Gradientor(loader.Module):
         
         await utils.answer(message, self.strings["gradient_creating"])
 
-        gradient = get_gradient((1024, 1024), color1, color2, "radial" if emoji or force_radial else "linear")
+        gradient = get_gradient((1280, 1280), color1, color2, "linear" if force_linear else "radial")
         gradient = crop_by_bbox(gradient)
 
         if not background_only:
