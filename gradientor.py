@@ -6,7 +6,7 @@
 
 # meta developer: @ZetGo
 
-__version__ = (0, 0, 9)
+__version__ = (0, 0, 10)
 
 import io
 import math
@@ -190,8 +190,8 @@ class Gradientor(loader.Module):
         if args:
             user = await self.client.get_entity(args[0])
 
-        photo_source = (message if not reply or not reply.photo else reply)
-        if not photo_source.photo:
+        photo_source = (message if not reply or not (reply.photo or "image/" not in getattr(reply.media, "mime_type", "") else reply)
+        if not photo_source.photo and not "image/" in getattr(photo_source.media, "mime_type"):
             background_only = True
 
         if not user:
