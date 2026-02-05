@@ -158,9 +158,9 @@ class Gradientor(loader.Module):
             self.set("PROFILE_COLORS", self.colors)
 
     @loader.command(
-            ru_doc="[фотография/reply] - создать аватарку с градиентом из цвета профиля\n"
-                    "--update-cache - обновить кеш профиля, если вы только что сменили фон профиля\n"
-                    "--linear - использовать линейный градиент"
+        ru_doc="[фотография/reply] - создать аватарку с градиентом из цвета профиля\n"
+                "--update-cache - обновить кеш профиля, если вы только что сменили фон профиля\n"
+                "--linear - использовать линейный градиент"
     )
     async def makepp(self, message: Message):
         """[photo/reply] - create a profile picture with a gradient from profile color\n
@@ -220,6 +220,7 @@ class Gradientor(loader.Module):
                 str(color_variant),
                 ((28, 28, 28), (28, 28, 28))
             )
+
         else:
             color1, color2 = (28, 28, 28), (28, 28, 28)
         
@@ -234,6 +235,7 @@ class Gradientor(loader.Module):
             p_b_io.seek(0)
 
             result = set_gradient(p_b_io, gradient)
+
         else:
             result = io.BytesIO()
             gradient.save(result, format='PNG')
