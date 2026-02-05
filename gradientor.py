@@ -6,7 +6,7 @@
 
 # meta developer: @ZetGo
 
-__version__ = (1, 0, 0)
+__version__ = (1, 0, 1)
 
 import io
 import math
@@ -94,9 +94,9 @@ def set_gradient(im: io.BytesIO, gradient: Image.Image) -> io.BytesIO:
     buffer.seek(0)
     return buffer
 
-def crop_by_bbox(img: Image.Image):
+def crop_by_bbox(img: Image.Image, bbox: tuple = None):
     img_w, img_h = img.size
-    x, y, w, h = BBOX_TGA_TGD
+    x, y, w, h = bbox or BBOX_TGA_TGD
 
     left = int(round(x * img_w))
     top = int(round(y * img_h))
@@ -148,11 +148,17 @@ class Gradientor(loader.Module):
 
     async def client_ready(self):
         self.colors = self.get("PROFILE_COLORS", None)
-        if not self.colors:
+        if not self.colors or not self.colors.get("light", None):
             raw_colors = (await self.client(GetPeerProfileColorsRequest(0))).colors
             self.colors = {
-                str(col.color_id): hexes_to_rgbs(col.dark_colors.bg_colors) for col
-                in raw_colors
+                "dark": {
+                    str(col.color_id): hexes_to_rgbs(col.dark_colors.bg_colors) for col
+                    in raw_colors
+                },
+                "light": {
+                    str(col.color_id): hexes_to_rgbs(col.colors.bg_colors) for col
+                    in raw_colors
+                },
             }
 
             self.set("PROFILE_COLORS", self.colors)
@@ -160,12 +166,14 @@ class Gradientor(loader.Module):
     @loader.command(
         ru_doc="[фотография/reply] - создать аватарку с градиентом из цвета профиля\n"
                 "--update-cache - обновить кеш профиля, если вы только что сменили фон профиля\n"
-                "--linear - использовать линейный градиент"
+                "--linear - использовать линейный градиент\n"
+                "--light - использовать светлую тему"
     )
     async def makepp(self, message: Message):
         """[photo/reply] - create a profile picture with a gradient from profile color\n
             --update-cache - update profile cache if you just changed profile background\n
-            --linear - use linear gradient"""
+            --linear - use linear gradient\n
+            --light - use light theme"""
         reply: Message = await message.get_reply_message()
         args = utils.get_args(message)
 
@@ -180,6 +188,18 @@ class Gradientor(loader.Module):
             args.remove("--linear")
         else:
             force_linear = False
+        
+        if "--light" in args:
+            theme = "light"
+            args.remove("--light")
+        else:
+            theme = "dark"
+
+        if "--full" in args:
+            _full = True
+            args.remove("--full")
+        else:
+            _full = False
 
         user = None
         background_only = False
@@ -216,7 +236,7 @@ class Gradientor(loader.Module):
         elif user.profile_color:
             color_variant = user.profile_color.color
 
-            color1, color2 = self.colors.get(
+            color1, color2 = self.colors.get(theme).get(
                 str(color_variant),
                 ((28, 28, 28), (28, 28, 28))
             )
@@ -227,9 +247,10 @@ class Gradientor(loader.Module):
         await utils.answer(message, self.strings["gradient_creating"])
 
         gradient = get_gradient((1280, 1280), color1, color2, "linear" if force_linear else "radial")
-        gradient = crop_by_bbox(gradient)
+        if not _full:
+            gradient = crop_by_bbox(gradient)
 
-        if not background_only:
+        if not background_only and not _full:
             p_b = await photo_source.download_media(bytes)
             p_b_io = io.BytesIO(p_b)
             p_b_io.seek(0)
