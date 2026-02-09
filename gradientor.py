@@ -49,7 +49,7 @@ def get_gradient(size: tuple, color1: tuple, color2: tuple, gradient_type: str =
     draw = ImageDraw.Draw(gradient)
 
     if gradient_type == "linear":
-        top_color, bottom_color = color1, color2
+        bottom_color, top_color = color1, color2
 
         for y, color in enumerate(interpolate(top_color, bottom_color, max(1, size[1]))):
             draw.line([(0, y), (size[0], y)], fill=tuple(color), width=1)
