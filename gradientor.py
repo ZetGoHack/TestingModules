@@ -207,12 +207,15 @@ class Gradientor(loader.Module):
         if args:
             user = await self.client.get_entity(int(args[0]) if args[0].isdigit() else args[0])
 
+        def _has_photo(m: Message):
+            return m.photo or (m.document and "image/" in getattr(m.document, "mime_type", ""))
+
         photo_source = (
             message
-            if (not reply or not (reply.photo or reply.document and "image/" in getattr(reply.document, "mime_type", "")))
+            if not _has_photo(message)
             else reply
         )
-        if not (photo_source.photo or photo_source.document and "image/" in getattr(photo_source.document, "mime_type", "")):
+        if not _has_photo(photo_source):
             background_only = True
 
         if not user:
