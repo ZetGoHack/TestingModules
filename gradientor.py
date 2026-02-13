@@ -6,7 +6,7 @@
 
 # meta developer: @ZetGo
 
-__version__ = (1, 0, 1)
+__version__ = (1, 0, 2)
 
 import io
 import math
@@ -210,11 +210,12 @@ class Gradientor(loader.Module):
         def _has_photo(m: Message):
             return m.photo or (m.document and "image/" in getattr(m.document, "mime_type", ""))
 
-        photo_source = (
-            message
-            if not _has_photo(message)
-            else reply
+        photo_source = photo_source = (
+            reply
+            if reply and _has_photo(reply)
+            else message
         )
+
         if not _has_photo(photo_source):
             background_only = True
 
