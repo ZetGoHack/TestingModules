@@ -6,7 +6,7 @@
 
 # meta developer: @ZetGo
 
-__version__ = (1, 2, 0)
+__version__ = (1, 2, 2)
 
 import io
 import math
@@ -152,7 +152,7 @@ class Gradientor(loader.Module):
         "gradient_creating": "<tg-emoji emoji-id=5886667040432853038>🔁</tg-emoji> Creating gradient...",
         "gradient_created": "<tg-emoji emoji-id=5818804345247894731>✅</tg-emoji> Gradient created!",
         "nft_done": (
-            "<tg-emoji emoji-id=5818804345247894731>✅</tg-emoji> Gradient created from"
+            "<tg-emoji emoji-id=5818804345247894731>✅</tg-emoji> Gradient created from "
             "<a href=\"https://t.me/nft/{}\">gift</a> background!"
         ),
         "noargs": "<tg-emoji emoji-id=5778527486270770928>❌</tg-emoji> No arguments provided!",
@@ -166,7 +166,7 @@ class Gradientor(loader.Module):
         "gradient_creating": "<tg-emoji emoji-id=5886667040432853038>🔁</tg-emoji> Создание градиента...",
         "gradient_created": "<tg-emoji emoji-id=5818804345247894731>✅</tg-emoji> Градиент создан!",
         "nft_done": (
-            "<tg-emoji emoji-id=5818804345247894731>✅</tg-emoji> Градиент создан из фона"
+            "<tg-emoji emoji-id=5818804345247894731>✅</tg-emoji> Градиент создан из фона "
             "<a href=\"https://t.me/nft/{}\">подарка</a>!"
         ),
         "noargs": "<tg-emoji emoji-id=5778527486270770928>❌</tg-emoji> Не указаны аргументы!",
@@ -375,6 +375,7 @@ class Gradientor(loader.Module):
             return await utils.answer(message, self.strings["noargs"])
 
         args = args[0].split("/")[-1]
+        background_only = True
         
         try:
             gift: UniqueStarGift = await self.client(GetUniqueStarGiftRequest(args))
@@ -404,4 +405,4 @@ class Gradientor(loader.Module):
             background_only=background_only
         )
 
-        await utils.answer(message, self.strings["nft_done"].format(args[0]), file=result, force_document=True)
+        await utils.answer(message, self.strings["nft_done"].format(args), file=result, force_document=True)
