@@ -6,7 +6,7 @@
 
 # meta developer: @ZetGo
 
-__version__ = (1, 0, 2)
+__version__ = (1, 1, 0)
 
 import io
 import math
@@ -94,9 +94,9 @@ def set_gradient(im: io.BytesIO, gradient: Image.Image) -> io.BytesIO:
     buffer.seek(0)
     return buffer
 
-def crop_by_bbox(img: Image.Image, bbox: tuple = None):
+def crop_by_bbox(img: Image.Image, bbox: tuple):
     img_w, img_h = img.size
-    x, y, w, h = bbox or BBOX_TGA_TGD
+    x, y, w, h = bbox
 
     left = int(round(x * img_w))
     top = int(round(y * img_h))
@@ -129,6 +129,13 @@ BBOX_TGA_TGD = (
     1260 / 8268,
     2504 / 8268,
     2504 / 8268,
+)
+
+BBOX_IOS = (
+    2590 / 8268,
+    629 / 8268,
+    3120 / 8268,
+    3120 / 8268,
 )
 
 
@@ -167,15 +174,26 @@ class Gradientor(loader.Module):
         ru_doc="[фотография/reply] - создать аватарку с градиентом из цвета профиля\n"
                 "--update-cache - обновить кеш профиля, если вы только что сменили фон профиля\n"
                 "--linear - использовать линейный градиент\n"
-                "--light - использовать светлую тему"
+                "--light - использовать светлую тему\n"
+                "--ios - создать аватарку для iOS-клиентов"
     )
     async def makepp(self, message: Message):
-        """[photo/reply] - create a profile picture with a gradient from profile color\n
-            --update-cache - update profile cache if you just changed profile background\n
-            --linear - use linear gradient\n
-            --light - use light theme"""
+        """[photo/reply] - create a profile picture with a gradient from profile color
+            --update-cache - update profile cache if you just changed profile background
+            --linear - use linear gradient
+            --light - use light theme
+            --ios - create a profile picture for iOS clients"""
         reply: Message = await message.get_reply_message()
         args = utils.get_args(message)
+
+        if "--ios" in args:
+            bbox = BBOX_IOS
+            _type = "ios"
+            args.remove("--ios")
+        
+        else:
+            bbox = BBOX_TGA_TGD
+            _type = "android"
 
         if "--update-cache" in args:
             upd_cache = True
@@ -203,20 +221,17 @@ class Gradientor(loader.Module):
 
         user = None
         background_only = False
+        add_glow = False
 
         if args:
             user = await self.client.get_entity(int(args[0]) if args[0].isdigit() else args[0])
 
-        def _has_photo(m: Message):
-            return m.photo or (m.document and "image/" in getattr(m.document, "mime_type", ""))
-
-        photo_source = photo_source = (
-            reply
-            if reply and _has_photo(reply)
-            else message
+        photo_source = (
+            message
+            if (not reply or not (reply.photo or reply.document and "image/" in getattr(reply.document, "mime_type", "")))
+            else reply
         )
-
-        if not _has_photo(photo_source):
+        if not (photo_source.photo or photo_source.document and "image/" in getattr(photo_source.document, "mime_type", "")):
             background_only = True
 
         if not user:
@@ -245,14 +260,22 @@ class Gradientor(loader.Module):
                 ((28, 28, 28), (28, 28, 28))
             )
 
+            if _type == "ios":
+                add_glow = True
+                force_linear = True
+
         else:
             color1, color2 = (28, 28, 28), (28, 28, 28)
         
         await utils.answer(message, self.strings["gradient_creating"])
 
         gradient = get_gradient((1280, 1280), color1, color2, "linear" if force_linear else "radial")
+
+        if add_glow:
+            pass # TODO
+
         if not _full:
-            gradient = crop_by_bbox(gradient)
+            gradient = crop_by_bbox(gradient, bbox)
 
         if not background_only and not _full:
             p_b = await photo_source.download_media(bytes)
