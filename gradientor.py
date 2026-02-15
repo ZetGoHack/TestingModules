@@ -6,7 +6,7 @@
 
 # meta developer: @ZetGo
 
-__version__ = (1, 1, 0)
+__version__ = (1, 2, 0)
 
 import io
 import math
@@ -14,11 +14,15 @@ import math
 from PIL import Image, ImageDraw
 
 from herokutl.tl.custom import Message
+from herokutl.tl.functions.payments import GetUniqueStarGiftRequest
 from herokutl.tl.functions.help import (
     GetPeerProfileColorsRequest
 )
 from herokutl.tl.types import (
-    EmojiStatusCollectible
+    EmojiStatusCollectible,
+)
+from herokutl.tl.types.payments import (
+    UniqueStarGift,
 )
 
 from .. import loader, utils
@@ -146,11 +150,29 @@ class Gradientor(loader.Module):
         "_cls_doc": "A module to create your profile picture with a background from your profile",
         "gradient_creating": "<tg-emoji emoji-id=5886667040432853038>🔁</tg-emoji> Creating gradient...",
         "gradient_created": "<tg-emoji emoji-id=5818804345247894731>✅</tg-emoji> Gradient created!",
+        "nft_done": (
+            "<tg-emoji emoji-id=5818804345247894731>✅</tg-emoji> Gradient created from"
+            "<a href=\"https://t.me/nft/{}\">gift</a> background!"
+        ),
+        "noargs": "<tg-emoji emoji-id=5778527486270770928>❌</tg-emoji> No arguments provided!",
+        "nft_error": (
+            "<tg-emoji emoji-id=5778527486270770928>❌</tg-emoji> Failed to get gift info."
+            "Make sure the link/slug is correct"
+        ),
     }
     strings_ru = {
         "_cls_doc": "Модуль для создания вашей аватарки на фоне из вашего профиля",
         "gradient_creating": "<tg-emoji emoji-id=5886667040432853038>🔁</tg-emoji> Создание градиента...",
         "gradient_created": "<tg-emoji emoji-id=5818804345247894731>✅</tg-emoji> Градиент создан!",
+        "nft_done": (
+            "<tg-emoji emoji-id=5818804345247894731>✅</tg-emoji> Градиент создан из фона"
+            "<a href=\"https://t.me/nft/{}\">подарка</a>!"
+        ),
+        "noargs": "<tg-emoji emoji-id=5778527486270770928>❌</tg-emoji> Не указаны аргументы!",
+        "nft_error": (
+            "<tg-emoji emoji-id=5778527486270770928>❌</tg-emoji> Не удалось получить информацию о подарке."
+            "Убедитесь, что ссылка/slug правильные"
+        ),
     }
 
     async def client_ready(self):
@@ -169,6 +191,52 @@ class Gradientor(loader.Module):
             }
 
             self.set("PROFILE_COLORS", self.colors)
+
+    async def make_gradient(
+        self,
+        photo_source: Message,
+        bbox: tuple,
+        color1: int,
+        color2: int,
+        force_linear: bool = False,
+        add_glow: bool = False,
+        _full: bool = False,
+        background_only: bool = True,
+    ):
+        gradient = get_gradient((1280, 1280), color1, color2, "linear" if force_linear else "radial")
+
+        if add_glow:
+            pass # TODO
+
+        if not _full:
+            gradient = crop_by_bbox(gradient, bbox)
+
+        if not background_only and not _full:
+            p_b = await photo_source.download_media(bytes)
+            p_b_io = io.BytesIO(p_b)
+            p_b_io.seek(0)
+
+            result = set_gradient(p_b_io, gradient)
+
+        else:
+            result = io.BytesIO()
+            gradient.save(result, format='PNG')
+            result.seek(0)
+
+        result.name = "grad @nullmod.png"
+        
+        return result
+    
+    async def _get_photo_source(self, m: Message, r: Message):
+        photo_source = (
+            m
+            if (not r or not (r.photo or r.document and "image/" in getattr(r.document, "mime_type", "")))
+            else r
+        )
+        if not (photo_source.photo or photo_source.document and "image/" in getattr(photo_source.document, "mime_type", "")):
+            return None
+        
+        return photo_source
 
     @loader.command(
         ru_doc="[фотография/reply] - создать аватарку с градиентом из цвета профиля\n"
@@ -226,12 +294,7 @@ class Gradientor(loader.Module):
         if args:
             user = await self.client.get_entity(int(args[0]) if args[0].isdigit() else args[0])
 
-        photo_source = (
-            message
-            if (not reply or not (reply.photo or reply.document and "image/" in getattr(reply.document, "mime_type", "")))
-            else reply
-        )
-        if not (photo_source.photo or photo_source.document and "image/" in getattr(photo_source.document, "mime_type", "")):
+        if not (photo_source := await self._get_photo_source(message, reply)):
             background_only = True
 
         if not user:
@@ -269,26 +332,73 @@ class Gradientor(loader.Module):
         
         await utils.answer(message, self.strings["gradient_creating"])
 
-        gradient = get_gradient((1280, 1280), color1, color2, "linear" if force_linear else "radial")
+        result = await self.make_gradient(
+            photo_source,
+            bbox,
+            color1,
+            color2,
+            force_linear,
+            add_glow,
+            _full,
+            background_only
+        )
 
-        if add_glow:
-            pass # TODO
-
-        if not _full:
-            gradient = crop_by_bbox(gradient, bbox)
-
-        if not background_only and not _full:
-            p_b = await photo_source.download_media(bytes)
-            p_b_io = io.BytesIO(p_b)
-            p_b_io.seek(0)
-
-            result = set_gradient(p_b_io, gradient)
-
-        else:
-            result = io.BytesIO()
-            gradient.save(result, format='PNG')
-            result.seek(0)
-        
-        result.name = "grad @nullmod.png"
-        
         await utils.answer(message, self.strings["gradient_created"], file=result, force_document=True)
+
+    @loader.command(ru_doc="[gift link/slug] - создать аватарку с градиентом из фона nft-подарка")
+    async def nftbg(self, message: Message):
+        """[gift link/slug] - create a profile picture with a gradient from nft gift background"""
+        reply: Message = await message.get_reply_message()
+        args = utils.get_args(message)
+        
+        if "--ios" in args:
+            bbox = BBOX_IOS
+            args.remove("--ios")
+        
+        else:
+            bbox = BBOX_TGA_TGD
+
+        if "--linear" in args:
+            force_linear = True
+            args.remove("--linear")
+        else:
+            force_linear = False
+
+        if "--full" in args:
+            _full = True
+            args.remove("--full")
+        else:
+            _full = False
+        
+        if not args:
+            return await utils.answer(message, self.strings["noargs"])
+
+        args = args[0].split("/")[-1]
+        
+        try:
+            gift: UniqueStarGift = await self.client(GetUniqueStarGiftRequest(args))
+        except Exception as e:
+            return await utils.answer(message, self.strings["nft_error"] + "\n" + str(e))
+        
+        color1, color2 = (
+            gift.gift.background.edge_color, gift.gift.background.center_color
+        )
+        color1 = hex_to_rgb(color1)
+        color2 = hex_to_rgb(color2)
+
+        if not (photo_source := await self._get_photo_source(message, reply)):
+            background_only = True
+
+        await utils.answer(message, self.strings["gradient_creating"])
+
+        result = await self.make_gradient(
+            photo_source,
+            bbox,
+            color1,
+            color2,
+            force_linear,
+            _full=_full,
+            background_only=background_only
+        )
+
+        await utils.answer(message, self.strings["nft_done"].format(args[0]), file=result, force_document=True)
