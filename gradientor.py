@@ -20,6 +20,7 @@ from herokutl.tl.functions.help import (
 )
 from herokutl.tl.types import (
     EmojiStatusCollectible,
+    StarGiftAttributeBackdrop,
 )
 from herokutl.tl.types.payments import (
     UniqueStarGift,
@@ -380,8 +381,10 @@ class Gradientor(loader.Module):
         except Exception as e:
             return await utils.answer(message, self.strings["nft_error"] + "\n" + str(e))
         
+        backdrop = next(attr for attr in gift.gift.attributes if isinstance(attr, StarGiftAttributeBackdrop))
+        
         color1, color2 = (
-            gift.gift.background.edge_color, gift.gift.background.center_color
+            backdrop.edge_color, backdrop.center_color
         )
         color1 = hex_to_rgb(color1)
         color2 = hex_to_rgb(color2)
