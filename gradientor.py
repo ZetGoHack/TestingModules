@@ -5,6 +5,7 @@
 #░░░███░███░░█░░███░███
 
 # meta developer: @ZetGo
+# scope: hikka_min 2.0.0
 
 __version__ = (1, 2, 2)
 
@@ -144,7 +145,7 @@ BBOX_IOS = (
 )
 
 
-@loader.translatable_docstring
+@loader.tds
 class Gradientor(loader.Module):
     strings = {
         "name": "Gradientor",
@@ -269,13 +270,13 @@ class Gradientor(loader.Module):
             args.remove("--update-cache")
         else:
             upd_cache = False
-        
+
         if "--linear" in args:
             force_linear = True
             args.remove("--linear")
         else:
             force_linear = False
-        
+
         if "--light" in args:
             theme = "light"
             args.remove("--light")
@@ -305,10 +306,10 @@ class Gradientor(loader.Module):
                 user = reply.sender
             else:
                 user = self.client.hikka_me
-        
+
         if not user.premium:
             color1, color2 = (28, 28, 28), (28, 28, 28)
-        
+
         elif user.emoji_status and isinstance(user.emoji_status, EmojiStatusCollectible):
             color1, color2 = (
                 user.emoji_status.edge_color, user.emoji_status.center_color
@@ -330,7 +331,7 @@ class Gradientor(loader.Module):
 
         else:
             color1, color2 = (28, 28, 28), (28, 28, 28)
-        
+
         await utils.answer(message, self.strings["gradient_creating"])
 
         result = await self.make_gradient(
@@ -375,7 +376,7 @@ class Gradientor(loader.Module):
             return await utils.answer(message, self.strings["noargs"])
 
         args = args[0].split("/")[-1]
-        background_only = True
+        background_only = False
         
         try:
             gift: UniqueStarGift = await self.client(GetUniqueStarGiftRequest(args))
