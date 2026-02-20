@@ -3,7 +3,7 @@
 #░░░░█░░███░░█░░█░█░█░█
 #░░░█░░░█░░░░█░░█░█░█░█
 #░░░███░███░░█░░███░███
-v = ("ooooo", "kaaaa", "kkkkk")
+v = ("oooooo", "kaaaa", "kkkkk")
 # meta developer: @nullmod & @codermasochist
 # scope: heroku_min 1.7.2
 # scope: hikka_min 1.7.2
@@ -33,7 +33,7 @@ EMOJIS = {
 
 def replacer(string: str):
     for _from, _to in EMOJIS.items():
-        string.replace(_from, _to)
+        string = string.replace(_from, _to)
 
     return string
 
