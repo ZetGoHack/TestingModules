@@ -57,46 +57,40 @@ class Gifts(loader.Module):
 
     strings = {
         "name": "Gifts",
-        "noargs": "<emoji document_id=5019523782004441717>❌</emoji> No arguments provided",
-        "toomany": "<emoji document_id=5019523782004441717>❌</emoji> Too many arguments",
-        "unotexist": "<emoji document_id=5019523782004441717>❌</emoji> User does not exist",
-        "not_user_or_channel": "<emoji document_id=5019523782004441717>❌</emoji> This is not a user or channel",
-        "gifterr": "<emoji document_id=5019523782004441717>❌</emoji> Gift slug is invalid",
+        "noargs": "<tg-emoji emoji-id=5019523782004441717>❌</tg-emoji> No arguments provided",
+        "toomany": "<tg-emoji emoji-id=5019523782004441717>❌</tg-emoji> Too many arguments",
+        "unotexist": "<tg-emoji emoji-id=5019523782004441717>❌</tg-emoji> User does not exist",
+        "not_user_or_channel": "<tg-emoji emoji-id=5019523782004441717>❌</tg-emoji> This is not a user or channel",
+        "gifterr": "<tg-emoji emoji-id=5019523782004441717>❌</tg-emoji> Gift slug is invalid",
         # .gifts command
-        "loading": "<emoji document_id=6030657343744644592>🔁</emoji> Fetching gifts...",
-        "firstline": "<emoji document_id=5875180111744995604>🎁</emoji> <b>Gifts ({}/{} shown) of {}</b>",
+        "loading": "<tg-emoji emoji-id=6030657343744644592>🔁</tg-emoji> Fetching gifts...",
+        "firstline": "<tg-emoji emoji-id=5875180111744995604>🎁</tg-emoji> <b>Gifts ({}/{} shown) of {}</b>",
         "exp": "<blockquote expandable>{}</blockquote>",
-        "nfts": """\n{} <a href='https://t.me/nft/{}'>{} #{}</a>
-  {}
-  <emoji document_id=5776219138917668486>📈</emoji> <b>Availability:</b> <code>{}</code>
-  <emoji document_id=5776213190387961618>🕓</emoji> <b>Can transfer after</b> <code>{}</code>\n""",
+        "nfts": """\n{} <a href='https://t.me/nft/{}'>{} #{}</a>\n""",
         "p": "Pinned",
         "up": "Unpinned",
-        "giftline": "\n<emoji document_id=6032644646587338669>🎁</emoji> <b>Gifts ({}) - {} <emoji document_id=5951810621887484519>⭐️</emoji>:</b>\n",
-        "gift": "[x{}] {} — {} <emoji document_id=5951810621887484519>⭐️</emoji>\n\n",
-        "doesnthave": "<emoji document_id=5325773049201434770>😭</emoji> <b>{} doesn't have any public gifts</b>",
+        "giftline": "\n<tg-emoji emoji-id=6032644646587338669>🎁</tg-emoji> <b>Gifts ({}) - {} <tg-emoji emoji-id=5951810621887484519>⭐️</tg-emoji>:</b>\n",
+        "gift": "[x{}] {} — {} <tg-emoji emoji-id=5951810621887484519>⭐️</tg-emoji>\n\n",
+        "doesnthave": "<tg-emoji emoji-id=5325773049201434770>😭</tg-emoji> <b>{} doesn't have any public gifts</b>",
         # / .gifts command
         "not_available": "<i>Not available</i>",
         "nft": "<a href='t.me/nft/{}'>\u200f</a>",
         "docerror": "I can't show it (Invalid document ID).\nPlease, report this message and the message above to @gitneko.\n{}",
     }
     strings_ru = {
-        "toomany": "<emoji document_id=5019523782004441717>❌</emoji> Слишком много аргументов",
-        "noargs": "<emoji document_id=5019523782004441717>❌</emoji> Вы не указали аргументы",
-        "unotexist": "<emoji document_id=5019523782004441717>❌</emoji> Такого пользователя не существует",
-        "not_user_or_channel": "<emoji document_id=5019523782004441717>❌</emoji> Это не пользователь и не канал",
-        "gifterr": "<emoji document_id=5019523782004441717>❌</emoji> Некорректный id подарка",
+        "toomany": "<tg-emoji emoji-id=5019523782004441717>❌</tg-emoji> Слишком много аргументов",
+        "noargs": "<tg-emoji emoji-id=5019523782004441717>❌</tg-emoji> Вы не указали аргументы",
+        "unotexist": "<tg-emoji emoji-id=5019523782004441717>❌</tg-emoji> Такого пользователя не существует",
+        "not_user_or_channel": "<tg-emoji emoji-id=5019523782004441717>❌</tg-emoji> Это не пользователь и не канал",
+        "gifterr": "<tg-emoji emoji-id=5019523782004441717>❌</tg-emoji> Некорректный id подарка",
         # .gifts command
-        "loading": "<emoji document_id=6030657343744644592>🔁</emoji> Получаю подарки...",
-        "firstline": "<emoji document_id=5875180111744995604>🎁</emoji> <b>Подарки ({}/{} показано) у {}</b>",
-        "nfts": """\n{} <a href='https://t.me/nft/{}'>{} #{}</a>
-  {}
-  <emoji document_id=5776219138917668486>📈</emoji> <b>Всего подарков:</b> <code>{}</code>
-  <emoji document_id=5776213190387961618>🕓</emoji> <b>Возможно передать после</b> <code>{}</code>\n""", 
+        "loading": "<tg-emoji emoji-id=6030657343744644592>🔁</tg-emoji> Получаю подарки...",
+        "firstline": "<tg-emoji emoji-id=5875180111744995604>🎁</tg-emoji> <b>Подарки ({}/{} показано) у {}</b>",
+        "nfts": """\n{} <a href='https://t.me/nft/{}'>{} #{}</a>\n""", 
         "p": "Закреплено",
         "up": "Не закреплено",
-        "giftline": "\n<emoji document_id=6032644646587338669>🎁</emoji> <b>Подарки ({}) - {} <emoji document_id=5951810621887484519>⭐️</emoji>:</b>\n",
-        "doesnthave": "<emoji document_id=5325773049201434770>😭</emoji> <b>{} не имеет публичных подарков</b>",
+        "giftline": "\n<tg-emoji emoji-id=6032644646587338669>🎁</tg-emoji> <b>Подарки ({}) - {} <tg-emoji emoji-id=5951810621887484519>⭐️</tg-emoji>:</b>\n",
+        "doesnthave": "<tg-emoji emoji-id=5325773049201434770>😭</tg-emoji> <b>{} не имеет публичных подарков</b>",
         # / .gifts command
         "not_available": "<i>Не доступно</i>",
         "nft": "<a href='t.me/nft/{}'>\u200f</a>",
@@ -143,11 +137,12 @@ class Gifts(loader.Module):
         if len(args) > 1:
             await utils.answer(message, self.strings["toomany"])
             return
+
         if len(args):
             id = args[0]
             try:
                 id = int(id)
-            except: pass    
+            except: pass
         else:
             if message.is_reply:
                 reply = await message.get_reply_message()
@@ -158,41 +153,51 @@ class Gifts(loader.Module):
         await utils.answer(message, self.strings["loading"])
 
         user_gifts = await self._get_gifts(id, params)
+
         if not user_gifts:
             await utils.answer(message, self.strings["unotexist"])
             return
+
         entity = await self.client.get_entity(id)
+
         if isinstance(entity, (Channel, User)):
             name = entity.first_name if hasattr(entity, "first_name") else entity.title
+
         else:
             await utils.answer(message, self.strings["not_user_or_channel"])
             return
+
         if user_gifts[0]["nfts"] or user_gifts[0]["gifts"]:
             text = self.strings["firstline"].format(user_gifts[2], user_gifts[1], name)
+
             if user_gifts[0]["nfts"]:
-                text += "\n<emoji document_id=5807868868886009920>👑</emoji> <b>NFTs ({}):</b>\n".format(user_gifts[3][0])
+                text += "\n<tg-emoji emoji-id=5807868868886009920>👑</tg-emoji> <b>NFTs ({}):</b>\n".format(user_gifts[3][0])
                 nfts = ""
+
                 for nft in user_gifts[0]["nfts"]:
-                    nfts += self.strings["nfts"].format(nft["emoji"], nft["slug"], nft["name"],
-                                                        nft["num"], nft["pinned_to_top"],
-                                                        nft["availability_total"], nft["can_transfer_at"], nft["slug"])
+                    nfts += self.strings["nfts"].format(nft["emoji"], nft["slug"], nft["name"], nft["num"])
+
                 text += self.strings["exp"].format(nfts)
+
             if user_gifts[0]["gifts"]:
                 stars = [gift["sum"] for gift in user_gifts[0]["gifts"]]
                 text += self.strings["giftline"].format(user_gifts[3][1], sum(stars))
                 gifts = ""
+
                 for gift in user_gifts[0]["gifts"]:
                     gifts += self.strings["gift"].format(gift["count"], gift["emoji"], gift["sum"])
+
                 text += self.strings["exp"].format(gifts)
             try:
                 await utils.answer(message, text)
             except DocumentInvalidError:
                 await message.respond(self.strings["docerror"].format(
                         "Limit: " + str(self.config["gift_limit"]) + "\n"
-                        + "Peer: " + str(id)
+                        + "Peer: " + str(id) + "\n"
+                        + "Flags: " + str(params)
                     )
                 )
-                await utils.answer(message, utils.html_escape(text))
+                await utils.answer(message, utils.escape_html(text))
         else:
             await utils.answer(message, self.strings["doesnthave"].format(name))
 
@@ -227,12 +232,12 @@ class Gifts(loader.Module):
                 if isinstance(gift.gift, StarGiftUnique):
                     nft_count += 1
                     gifts[0]["nfts"].append({
-                        "emoji": "<emoji document_id={}>{}</emoji>".format(gift.gift.attributes[0].document.id, gift.gift.attributes[0].document.attributes[1].alt), 
+                        "emoji": "<tg-emoji emoji-id={}>{}</tg-emoji>".format(gift.gift.attributes[0].document.id, gift.gift.attributes[0].document.attributes[1].alt), 
                         "name": gift.gift.title,
                         "slug": gift.gift.slug,
                         "num": gift.gift.num,
                         "availability_total": gift.gift.availability_total,
-                        "pinned_to_top": f"<emoji document_id=5796440171364749940>📌</emoji> <b>{self.strings['p']}</b>" if gift.pinned_to_top else f"<emoji document_id=5794314463200940940>📌</emoji> <b>{self.strings['up']}</b>",
+                        "pinned_to_top": f"<tg-emoji emoji-id=5796440171364749940>📌</tg-emoji> <b>{self.strings['p']}</b>" if gift.pinned_to_top else f"<tg-emoji emoji-id=5794314463200940940>📌</tg-emoji> <b>{self.strings['up']}</b>",
                         "can_transfer_at": (
                             time.strftime("%H:%M %d.%m.%Y", time.gmtime(gift.can_transfer_at))
                             if username in self.usernames else
@@ -250,8 +255,8 @@ class Gifts(loader.Module):
                             break
                     if gift_exists: continue
                     gifts[0]["gifts"].append({
-                        "emoji": "<emoji document_id={}>{}</emoji>".format(st_id, gift.gift.sticker.attributes[1].alt),
-                        "stars": f"<code>{gift.gift.stars}</code>" + " <emoji document_id=5951810621887484519>⭐️</emoji>",
+                        "emoji": "<tg-emoji emoji-id={}>{}</tg-emoji>".format(st_id, gift.gift.sticker.attributes[1].alt),
+                        "stars": f"<code>{gift.gift.stars}</code>" + " <tg-emoji emoji-id=5951810621887484519>⭐️</tg-emoji>",
                         "sum": gift.gift.stars,
                         "count": 1,
                     })
@@ -292,33 +297,33 @@ class Gifts(loader.Module):
             owner_display_name = f"{first_name} {last_name}".strip() or "Unknown"
             if getattr(owner, "username", None) or (getattr(owner, "usernames", None) and len(owner.usernames) > 0):
                 username = owner.username if getattr(owner, "username", None) else owner.usernames[0].username
-                owner_str = f'<emoji document_id=5275979556308674886>👤</emoji> <b>Owner</b>: <a href="https://t.me/{username}">{owner_display_name}</a> (id: <code>{owner.id}</code>)'
+                owner_str = f'<tg-emoji emoji-id=5275979556308674886>👤</tg-emoji> <b>Owner</b>: <a href="https://t.me/{username}">{owner_display_name}</a> (id: <code>{owner.id}</code>)'
             else:
-                owner_str = f'<emoji document_id=5275979556308674886>👤</emoji> <b>Owner</b>: {owner_display_name} (id: <code>{owner.id}</code>)'
+                owner_str = f'<tg-emoji emoji-id=5275979556308674886>👤</tg-emoji> <b>Owner</b>: {owner_display_name} (id: <code>{owner.id}</code>)'
         elif getattr(res.gift, "owner_name", None):
             owner_display_name = res.gift.owner_name
-            owner_str = f'<emoji document_id=5275979556308674886>👤</emoji> <b>Owner</b>: {owner_display_name}'
+            owner_str = f'<tg-emoji emoji-id=5275979556308674886>👤</tg-emoji> <b>Owner</b>: {owner_display_name}'
         else:
-            owner_str = f'<emoji document_id=5275979556308674886>👤</emoji> <b>Owner</b>: Unknown'
+            owner_str = f'<tg-emoji emoji-id=5275979556308674886>👤</tg-emoji> <b>Owner</b>: Unknown'
 
         lines = [owner_str]
 
         for g in res.gift.attributes:
             if hasattr(g, "name"):
                 if isinstance(g, StarGiftAttributeModel):
-                    attr_type = f'<emoji document_id="{res.gift.attributes[0].document.id}">🎁</emoji> <b>Model</b>'
+                    attr_type = f'<tg-emoji emoji-id="{res.gift.attributes[0].document.id}">🎁</tg-emoji> <b>Model</b>'
                 elif isinstance(g, StarGiftAttributePattern):
-                    attr_type = "<emoji document_id=5253944419870062295>🍃</emoji> <b>Pattern</b>"
+                    attr_type = "<tg-emoji emoji-id=5253944419870062295>🍃</tg-emoji> <b>Pattern</b>"
                 elif isinstance(g, StarGiftAttributeBackdrop):
-                    attr_type = "<emoji document_id=5764899533565729469>🎨</emoji> <b>Background</b>"
+                    attr_type = "<tg-emoji emoji-id=5764899533565729469>🎨</tg-emoji> <b>Background</b>"
                 else:
                     attr_type = "Attribute"
                 lines.append(f"{attr_type}: <code>{g.name}</code> (<code>{getattr(g, 'rarity_permille', 0)/10:.1f}</code>%)")
 
-        lines.append(f"<emoji document_id=6007817446398890097>📝</emoji> <b>Issued</b>: <code>{res.gift.availability_issued}</code> / <code>{res.gift.availability_total}</code>")
+        lines.append(f"<tg-emoji emoji-id=6007817446398890097>📝</tg-emoji> <b>Issued</b>: <code>{res.gift.availability_issued}</code> / <code>{res.gift.availability_total}</code>")
         
         if hasattr(res.gift, 'value_amount') and hasattr(res.gift, 'value_currency'):
-            lines.append(f"<emoji document_id=6014655953457123498>💱</emoji> <b>Price</b>: <code>{res.gift.value_amount // 100}</code> {res.gift.value_currency}")
+            lines.append(f"<tg-emoji emoji-id=6014655953457123498>💱</tg-emoji> <b>Price</b>: <code>{res.gift.value_amount // 100}</code> {res.gift.value_currency}")
 
         result = "\n".join(lines)
         await utils.answer(message, f'<a href="t.me/nft/{slug}">\u200f</a><blockquote>{result}</blockquote>', link_preview=True, invert_media=True)
