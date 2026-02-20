@@ -3,8 +3,7 @@
 #░░░░█░░███░░█░░█░█░█░█
 #░░░█░░░█░░░░█░░█░█░█░█
 #░░░███░███░░█░░███░███
-#H:Mods Team [💎]
-v = ("ooooo", "kaaaa", "kkkk")
+v = ("ooooo", "kaaaa", "kkkkk")
 # meta developer: @nullmod & @codermasochist
 # scope: heroku_min 1.7.2
 # scope: hikka_min 1.7.2
@@ -23,6 +22,20 @@ from herokutl.tl.types import (
 # -      error       - #
 from herokutl.errors.rpcerrorlist import DocumentInvalidError
 # -      end       - #
+
+EMOJIS = {
+    "5231003994519794860": "5253982443215547954",
+    "5465502401358226185": "5298801741209299033",
+    "5384540360863150750": "5413732008033543033",
+    "5291741351845587729": "5296769534483523552",
+    "5359452507699436094": "5406820323322521867",
+}
+
+def replacer(string: str):
+    for _from, _to in EMOJIS.items():
+        string.replace(_from, _to)
+
+    return string
 
 @loader.tds
 class Gifts(loader.Module):
@@ -245,7 +258,7 @@ class Gifts(loader.Module):
                     })
                 elif isinstance(gift.gift, StarGift):
                     gifts_count += 1
-                    st_id = str(gift.gift.sticker.id).replace("5231003994519794860", "5253982443215547954").replace("5465502401358226185", "5298801741209299033").replace("5384540360863150750", "5413732008033543033").replace("5291741351845587729", "5296769534483523552") # < - jst dumpfix to avoid DocumentInvalidError
+                    st_id = replacer(str(gift.gift.sticker.id))
                     gift_exists = False
                     for gft in gifts[0]["gifts"]:
                         if st_id in gft["emoji"]:
