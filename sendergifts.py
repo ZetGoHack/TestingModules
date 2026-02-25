@@ -71,9 +71,6 @@ class SenderGifts(loader.Module):
         ]
     }
 
-    async def client_ready(self, client, db):
-        self.client = client
-
     async def get_star_balance(self):
         try:
             balance_info = (await self.client(GetStarsStatusRequest("me")))
@@ -102,6 +99,10 @@ class SenderGifts(loader.Module):
             text = parts[1] if len(parts) > 1 else ""
             if username.startswith('@'):
                 username = username[1:]
+            try:
+                username = int(username)
+            except ValueError:
+                pass
             msg = await utils.answer(message, self.strings["checking_user"])
             try:
                 user = await self.client.get_entity(username)
