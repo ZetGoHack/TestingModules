@@ -7,7 +7,7 @@
 # meta developer: @ZetGo
 # scope: hikka_min 2.0.0
 
-__version__ = (1, 2, 2)
+__version__ = (1, 2, 3)
 
 import io
 import math
@@ -21,6 +21,7 @@ from herokutl.tl.functions.help import (
 )
 from herokutl.tl.types import (
     EmojiStatusCollectible,
+    MessageMediaWebPage,
     StarGiftAttributeBackdrop,
 )
 from herokutl.tl.types.payments import (
@@ -235,7 +236,7 @@ class Gradientor(loader.Module):
             if (not r or not (r.photo or r.document and "image/" in getattr(r.document, "mime_type", "")))
             else r
         )
-        if not (photo_source.photo or photo_source.document and "image/" in getattr(photo_source.document, "mime_type", "")):
+        if not (photo_source.photo or photo_source.document and "image/" in getattr(photo_source.document, "mime_type", "") and not isinstance(photo_source.document, MessageMediaWebPage)):
             return None
         
         return photo_source
