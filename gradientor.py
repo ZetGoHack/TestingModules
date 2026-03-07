@@ -7,7 +7,7 @@
 # meta developer: @ZetGo
 # scope: hikka_min 2.0.0
 
-__version__ = (1, 2, 2)
+__version__ = (1, 2, 4)
 
 import io
 import math
@@ -20,6 +20,7 @@ from herokutl.tl.functions.help import (
     GetPeerProfileColorsRequest
 )
 from herokutl.tl.types import (
+    Channel,
     EmojiStatusCollectible,
     StarGiftAttributeBackdrop,
 )
@@ -29,7 +30,27 @@ from herokutl.tl.types.payments import (
 
 from .. import loader, utils
 
-def resize_image(image: Image.Image, max_size: int = 1280) -> Image.Image:
+SHAPES = {
+ # TODO: фигуры для создания масок на авы
+}
+
+BBOX_TGA_TGD = (
+    2894 / 8268,
+    1260 / 8268,
+    2504 / 8268,
+    2504 / 8268,
+)
+
+BBOX_IOS = (
+    2590 / 8268,
+    629 / 8268,
+    3120 / 8268,
+    3120 / 8268,
+)
+
+DEFAULT_PP_SIZE = 1280
+
+def resize_image(image: Image.Image, max_size: int = DEFAULT_PP_SIZE) -> Image.Image:
     w, h = image.size
     if max(w, h) <= max_size:
         return image
@@ -85,9 +106,43 @@ def get_gradient(size: tuple, color1: tuple, color2: tuple, gradient_type: str =
 
     return gradient
 
-def set_gradient(im: io.BytesIO, gradient: Image.Image) -> io.BytesIO:
-    img = resize_image(Image.open(im).convert('RGBA'))
+# Source: https://github.com/TelegramMessenger/Telegram-iOS/blob/master/submodules/TelegramUI/Components/PeerInfo/PeerInfoCoverComponent/Sources/PeerInfoCoverComponent.swift#L68-L615
+def _add_glow(image: Image.Image, bbox: tuple) -> Image.Image:
+    img = image.convert("RGBA")
+    size = img.size[0]
 
+    bx, by, bw, bh = bbox
+    cx = bx * size + bw * size * 0.5
+    cy = by * size + bh * size * 0.5
+
+    radius = (bh * size / 2) * (300 / 104)
+
+    mask = Image.new("L", (size, size), 0)
+    draw = ImageDraw.Draw(mask)
+
+    for i in range(100):
+        step = 1.0 - i / (100 - 1)
+        alpha = 0.4 * pow(1.0 - step, 2)
+        alpha_value = int(round(max(0, min(1, alpha)) * 255))
+
+        _radius = radius * step
+        bbox_pix = [
+            int(round(cx - _radius)),
+            int(round(cy - _radius)),
+            int(round(cx + _radius)),
+            int(round(cy + _radius))
+        ]
+
+        if alpha_value > 0:
+            draw.ellipse(bbox_pix, fill=alpha_value)
+
+    white = Image.new("RGBA", (size, size), (255, 255, 255, 0))
+    white.putalpha(mask)
+    result = Image.alpha_composite(img, white)
+
+    return result.convert("RGBA")
+
+def set_gradient(img: Image.Image, gradient: Image.Image) -> io.BytesIO:
     max_size = max(img.width, img.height)
     gradient = gradient.resize((max_size, max_size), Image.LANCZOS).convert('RGBA')
     left = (max_size - img.width) // 2
@@ -125,24 +180,6 @@ def hexes_to_rgbs(value: list):
     else:
         res = hex_to_rgb(value[0])
         return (res, res)
-
-SHAPES = {
- # TODO: фигуры для создания масок на авы
-}
-
-BBOX_TGA_TGD = (
-    2894 / 8268,
-    1260 / 8268,
-    2504 / 8268,
-    2504 / 8268,
-)
-
-BBOX_IOS = (
-    2590 / 8268,
-    629 / 8268,
-    3120 / 8268,
-    3120 / 8268,
-)
 
 
 @loader.tds
@@ -204,11 +241,13 @@ class Gradientor(loader.Module):
         add_glow: bool = False,
         _full: bool = False,
         background_only: bool = True,
+        resize_percent: int = 100,
     ):
-        gradient = get_gradient((1280, 1280), color1, color2, "linear" if force_linear else "radial")
+        gradient = get_gradient((DEFAULT_PP_SIZE,)*2, color1, color2, "linear" if force_linear else "radial")
 
         if add_glow:
             pass # TODO
+            # gradient = _add_glow(gradient, bbox)
 
         if not _full:
             gradient = crop_by_bbox(gradient, bbox)
@@ -218,7 +257,10 @@ class Gradientor(loader.Module):
             p_b_io = io.BytesIO(p_b)
             p_b_io.seek(0)
 
-            result = set_gradient(p_b_io, gradient)
+            img = Image.open(p_b_io).convert('RGBA')
+            img = resize_image(img, math.ceil(DEFAULT_PP_SIZE * (resize_percent / 100)))
+
+            result = set_gradient(img, gradient)
 
         else:
             result = io.BytesIO()
@@ -244,6 +286,7 @@ class Gradientor(loader.Module):
         ru_doc="[фотография/reply] - создать аватарку с градиентом из цвета профиля\n"
                 "--update-cache - обновить кеш профиля, если вы только что сменили фон профиля\n"
                 "--linear - использовать линейный градиент\n"
+                "--scale [масштаб в процентах] - изменить размер накладываемого фото (по умолчанию 100)\n"
                 "--light - использовать светлую тему\n"
                 "--ios - создать аватарку для iOS-клиентов"
     )
@@ -251,6 +294,7 @@ class Gradientor(loader.Module):
         """[photo/reply] - create a profile picture with a gradient from profile color
             --update-cache - update profile cache if you just changed profile background
             --linear - use linear gradient
+            --scale [scale in percents] - change the size of the overlaid photo (default 100)
             --light - use light theme
             --ios - create a profile picture for iOS clients"""
         reply: Message = await message.get_reply_message()
@@ -276,6 +320,18 @@ class Gradientor(loader.Module):
             args.remove("--linear")
         else:
             force_linear = False
+        
+        if "--scale" in args:
+            _scale_indx = args.index("--scale")
+            try:
+                scale = int(args[_scale_indx + 1])
+            except ValueError:
+                args.remove("--scale")
+                scale = 100
+
+            del _scale_indx
+        else:
+            scale = 100
 
         if "--light" in args:
             theme = "light"
@@ -307,7 +363,7 @@ class Gradientor(loader.Module):
             else:
                 user = self.client.hikka_me
 
-        if not user.premium:
+        if not isinstance(user, Channel) and not user.premium:
             color1, color2 = (28, 28, 28), (28, 28, 28)
 
         elif user.emoji_status and isinstance(user.emoji_status, EmojiStatusCollectible):
@@ -342,7 +398,8 @@ class Gradientor(loader.Module):
             force_linear,
             add_glow,
             _full,
-            background_only
+            background_only,
+            scale,
         )
 
         await utils.answer(message, self.strings["gradient_created"], file=result, force_document=True)
