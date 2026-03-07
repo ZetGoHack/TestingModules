@@ -22,6 +22,7 @@ from herokutl.tl.functions.help import (
 from herokutl.tl.types import (
     Channel,
     EmojiStatusCollectible,
+    MessageMediaWebPage,
     StarGiftAttributeBackdrop,
 )
 from herokutl.tl.types.payments import (
@@ -277,7 +278,7 @@ class Gradientor(loader.Module):
             if (not r or not (r.photo or r.document and "image/" in getattr(r.document, "mime_type", "")))
             else r
         )
-        if not (photo_source.photo or photo_source.document and "image/" in getattr(photo_source.document, "mime_type", "")):
+        if not ((photo_source.photo or photo_source.document and "image/" in getattr(photo_source.document, "mime_type", "")) and not isinstance(photo_source.media, MessageMediaWebPage)):
             return None
         
         return photo_source
