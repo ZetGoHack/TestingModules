@@ -326,6 +326,7 @@ class Gradientor(loader.Module):
             _scale_indx = args.index("--scale")
             try:
                 scale = int(args[_scale_indx + 1])
+                args.pop(_scale_indx)
                 args.pop(_scale_indx + 1)
             except ValueError:
                 args.remove("--scale")
