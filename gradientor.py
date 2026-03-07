@@ -143,9 +143,10 @@ def _add_glow(image: Image.Image, bbox: tuple) -> Image.Image:
 
     return result.convert("RGBA")
 
-def set_gradient(img: Image.Image, gradient: Image.Image) -> io.BytesIO:
+def set_gradient(img: Image.Image, gradient: Image.Image, size = 100) -> io.BytesIO:
     max_size = max(img.width, img.height)
-    gradient = gradient.resize((max_size, max_size), Image.LANCZOS).convert('RGBA')
+    img = resize_image(img, math.ceil(DEFAULT_PP_SIZE * (size / 100)))
+    gradient = gradient.resize((max_size,) * 2, Image.LANCZOS).convert('RGBA')
     left = (max_size - img.width) // 2
     top = (max_size - img.height) // 2
     gradient.paste(img, (left, top), img)
@@ -259,9 +260,9 @@ class Gradientor(loader.Module):
             p_b_io.seek(0)
 
             img = Image.open(p_b_io).convert('RGBA')
-            img = resize_image(img, math.ceil(DEFAULT_PP_SIZE * (resize_percent / 100)))
+            # img = resize_image(img, math.ceil(DEFAULT_PP_SIZE * (resize_percent / 100)))
 
-            result = set_gradient(img, gradient)
+            result = set_gradient(img, gradient, resize_percent)
 
         else:
             result = io.BytesIO()
