@@ -154,8 +154,8 @@ def set_gradient(img: Image.Image, gradient: Image.Image, size = 100) -> io.Byte
     if max(img.size) > DEFAULT_PP_SIZE:
         img = resize_image(img)
 
-    grad_size = max(img.size)
-    img = resize_image(img, int(grad_size * (size / 100)))
+    grad_size = DEFAULT_PP_SIZE
+    img = resize_image(img, int(max(img.size) * (size / 100)))
 
     gradient = gradient.resize((grad_size,) * 2, Image.LANCZOS).convert('RGBA')
     left = (grad_size - img.width) // 2
