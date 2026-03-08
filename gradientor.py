@@ -293,7 +293,7 @@ class Gradientor(loader.Module):
             if match:
                 emoji_id = match.group(1) or match.group(2)
                 try:
-                    doc = (await self.client(GetCustomEmojiDocumentsRequest([int(emoji_id)]))).documents[0]
+                    doc = (await self.client(GetCustomEmojiDocumentsRequest([int(emoji_id)])))[0]
                     if "image/" in getattr(doc, "mime_type", ""):
                         photo = await self.client.download_media(doc, bytes)
                     # elif "tgsticker" in getattr(doc, "mime_type", ""):
