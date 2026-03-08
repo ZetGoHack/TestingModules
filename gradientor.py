@@ -56,7 +56,7 @@ BBOX_IOS = (
 DEFAULT_PP_SIZE = 1280 # no need to use a bigger size since Telegram will compress it anyway
                        # better than overloading the script with large images
 
-RE_ONLY_ONE_EMOJI = re.compile(r"^<tg-emoji emoji-id=(\d+)></tg-emoji>$|^<emoji document_id=(\d+)></emoji>$")
+RE_ONLY_ONE_EMOJI = re.compile(r"^<tg-emoji emoji-id=(\d+)>[^<]+</tg-emoji>$|^<emoji document_id=(\d+)>[^<]+</emoji>$")
 
 def resize_image(image: Image.Image, max_size: int = DEFAULT_PP_SIZE) -> Image.Image:
     w, h = image.size
@@ -303,6 +303,8 @@ class Gradientor(loader.Module):
                         photo = None
                 except Exception:
                     photo = None
+            else:
+                photo = None
         else:
             photo = None
 
