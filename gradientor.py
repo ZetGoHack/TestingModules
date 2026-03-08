@@ -7,7 +7,7 @@
 # meta developer: @ZetGo
 # scope: hikka_min 2.0.0
 
-__version__ = (1, 2, 4)
+__version__ = (1, 2, 5)
 
 import io
 import math
@@ -49,7 +49,8 @@ BBOX_IOS = (
     3120 / 8268,
 )
 
-DEFAULT_PP_SIZE = 1280
+DEFAULT_PP_SIZE = 1280 # no need to use a bigger size since Telegram will compress it anyway
+                       # better than overloading the script with large images
 
 def resize_image(image: Image.Image, max_size: int = DEFAULT_PP_SIZE) -> Image.Image:
     w, h = image.size
@@ -144,17 +145,21 @@ def _add_glow(image: Image.Image, bbox: tuple) -> Image.Image:
     return result.convert("RGBA")
 
 def set_gradient(img: Image.Image, gradient: Image.Image, size = 100) -> io.BytesIO:
-    max_size = max(img.width, img.height)
-    img = resize_image(img, math.ceil(DEFAULT_PP_SIZE * (size / 100)))
-    gradient = gradient.resize((max_size,) * 2, Image.LANCZOS).convert('RGBA')
-    left = (max_size - img.width) // 2
-    top = (max_size - img.height) // 2
+    if max(img.size) > DEFAULT_PP_SIZE:
+        img = resize_image(img)
+
+    grad_size = max(img.size)
+    img = resize_image(img, int(grad_size * (size / 100)))
+
+    gradient = gradient.resize((grad_size,) * 2, Image.LANCZOS).convert('RGBA')
+    left = (grad_size - img.width) // 2
+    top = (grad_size - img.height) // 2
     gradient.paste(img, (left, top), img)
+
     buffer = io.BytesIO()
-
     gradient.save(buffer, format='PNG')
-
     buffer.seek(0)
+
     return buffer
 
 def crop_by_bbox(img: Image.Image, bbox: tuple):
@@ -244,7 +249,7 @@ class Gradientor(loader.Module):
         _full: bool = False,
         background_only: bool = True,
         resize_percent: int = 100,
-    ):
+    ) -> io.BytesIO:
         gradient = get_gradient((DEFAULT_PP_SIZE,)*2, color1, color2, "linear" if force_linear else "radial")
 
         if add_glow:
@@ -426,6 +431,18 @@ class Gradientor(loader.Module):
             args.remove("--linear")
         else:
             force_linear = False
+        
+        if "--scale" in args:
+            _scale_indx = args.index("--scale")
+            try:
+                scale = int(args[_scale_indx + 1])
+                args.pop(_scale_indx + 1)
+                args.pop(_scale_indx)
+            except ValueError:
+                args.remove("--scale")
+                scale = 100
+
+            del _scale_indx
 
         if "--full" in args:
             _full = True
@@ -464,7 +481,8 @@ class Gradientor(loader.Module):
             color2,
             force_linear,
             _full=_full,
-            background_only=background_only
+            background_only=background_only,
+            scale=scale,
         )
 
         await utils.answer(message, self.strings["nft_done"].format(args), file=result, force_document=True)
