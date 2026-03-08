@@ -8,7 +8,7 @@
 # scope: hikka_min 2.0.0
 # requires: Pillow git+https://github.com/ZetGoHack/TStickers.git
 
-__version__ = (1, 2, 6)
+__version__ = (1, 2, 7)
 
 import io
 import math
