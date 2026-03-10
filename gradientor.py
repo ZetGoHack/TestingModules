@@ -513,9 +513,10 @@ class Gradientor(loader.Module):
             color1,
             color2,
             force_linear,
-            _full=_full,
-            background_only=background_only,
-            scale=scale,
+            False,
+            _full,
+            background_only,
+            scale,
         )
 
         await utils.answer(message, self.strings["nft_done"].format(args), file=result, force_document=True)
