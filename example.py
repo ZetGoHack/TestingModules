@@ -128,7 +128,10 @@ from .. import utils
 
 from telethon.tl.custom import Message
 
+
 # endregion
+
+import asyncio
 
 # region СТРУКТУРА МОДУЛЯ
 
@@ -139,6 +142,7 @@ from telethon.tl.custom import Message
 class TheBestExampleEverMod(loader.Module):
     """Это описание модуля. Оно отображается после установки и в меню команды `.help TheBestExampleEverMod`"""
 
+    # region ПЕРЕВОДЫ
     # strings - словарь строк для модуля. Ключи - это идентификаторы строк, по которым к ним можно обратиться в коде.
     #           Значения - это сами строки на разных языках. Язык выбирается пользователем в настройках юзербота.
     #           Если строка не найдётся для выбранного языка, будет показано значение по умолчанию (то есть взято из strings)
@@ -146,3 +150,111 @@ class TheBestExampleEverMod(loader.Module):
 
     #           Переводы указываются в словарях strings_{код языка}, например, strings_ru для русского. Код языка - это
     #           стандартный код ISO 639-1 (ru, en, de и т.д.)
+
+    #           ⚠️ В коде всегда используйте ключи из strings - strings["ключ"]. Юзербот сам по установленному языку человека выбирает источник строк
+
+    strings = {
+        "name": "TheBestExampleEver", # имя модуля. Этот ключ обязателен. В других переводах можно не указывать, будет использоваться это значение
+        "_cls_doc": "This is the best example module ever!", # описание самого модуля. Он заменяет указанный выше docstring. Переводимый ключ (можно использовать в других языках)
+        "cfg_changed": "Config value changed to {}!", # строка для использования в коде
+        "loading": "<emoji document_id=5382187328670282655>🐱</emoji> Your result is loading...", # не забываем про возможность использовать html разметку в сообщениях!
+        "loaded": "<emoji emoji-id=5382147531503319073>😶</emoji> Just kidding! I haven't loaded anything, here are the arguments you entered: {}", # строка с аргументами команды. В коде можно использовать .format для подстановки аргументов
+    }
+
+    strings_ru = {
+        "_cls_doc": "Это лучший пример модуля!",
+        "cfg_changed": "Значение конфига изменено на {}!",
+        "loading": "<emoji document_id=5382187328670282655>🐱</emoji> Ваш пример загружается...",
+        "loaded": "<emoji document_id=5382147531503319073>😶</emoji> Шучу! Я ничего не загружал, вот аргументы, которые вы ввели: {}",
+    }
+
+    strings_jp = {
+        "_cls_doc": "これは最高のモジュールの例です！",
+        "cfg_changed": "構成値が{}に変更されました！",
+        "loading": "<emoji document_id=5382187328670282655>🐱</emoji> 結果を読み込んでいます...",
+        "loaded": "<emoji document_id=5382147531503319073>😶</emoji> 冗談です！何も読み込んでいません。入力した引数は次のとおりです：{}",
+    }
+
+
+    # endregion ПЕРЕВОДЫ
+
+
+    # region ИНИЦИАЛИЗАЦИЯ
+
+
+    # Инициализация. Обычно тут регистрируется конфиг self.config модуля (если он нужен)
+    def __init__(self):
+        self.config = loader.ModuleConfig(
+            loader.ConfigValue(
+                option="example_option", # имя опции. По этому имени к ней можно обратиться в коде
+                default=42, # значение по умолчанию
+                doc="This is an example option", # описание опции. Отображается в конфиге модуля
+                validator=loader.validators.Integer(), # валидатор для опции. Проверяет, что значение, которое пользователь вводит в конфиге, соответствует требованиям.
+                                                       # ℹ️ Все валидаторы ищите в Heroku/heroku/validators.py
+                on_change=self._on_config_change, # функция, которая будет вызвана при изменении опции. Может быть асинхронной, или синхронной.
+                                                  # Ничего не будет передано в аргументы
+            ),
+            loader.ConfigValue(
+                "list_example",
+                [1, 2, 3],
+                "This is an example list option",
+                validator=loader.validators.Series( # валидатор для списков. Проверяет каждый элемент списка на соответствие требованиям.
+                                                    # В данном случае - что каждый элемент - это число от 0 до 42 включительно
+                    loader.validators.Integer(minimum=0, maximum=42)
+                ),
+                on_change=self._on_config_change,
+            ),
+            loader.ConfigValue("nothing") # а можно просто оставить лишь одно название значения. Это, конечно, ничего полезного не даст пользователю...
+        )
+
+    # Клиент готов. Вызывается после __init__ и config_loaded. В self уже готовы все атрибуты (self.client, self.db и т.д.), можно спокойно работать.
+    # Обычно тут загружаются какие-то данные из базы, или выполняются действия, которые должны быть при каждом запуске модуля
+    async def client_ready(self):
+        pass
+
+
+    # endregion ИНИЦИАЛИЗАЦИЯ
+
+    
+    async def _on_config_change(self):
+        self.set("cfg_value", self.config["example_option"])
+        await self.client.send_message(
+            self.client.heroku_me.id, self.strings["cfg_changed"].format(self.config["example_option"])
+        )
+
+
+    # region КОМАНДЫ
+
+
+    # Команды. Функции, вызываемые юзерботом при вводе команды (имя команды - это имя функции). Регистрируются в юб с помощью декоратора @loader.command,
+    # или `cmd` в конце функции. При написании команды вызывается с `herokutl.tl.custom.Message` в аргументах
+    @loader.command(ru_doc="Пример описания для команды на русском", jp_doc="コマンドの日本語の説明の例")
+    async def example(self, message: Message):
+        """Example description for a command in English"""
+        # Аргументы команды. Следующие функции из utils (это лишь часть) возвращают аргументы команды, исключая её саму. ".example arg1" > "arg1"
+        args_tuple = utils.get_args(message) # (arg1, arg2, arg3) - разделение по пробелу
+        args_string = utils.get_args_raw(message) # arg1 arg2 arg3 - сырой текст без html оформления
+        args_html = utils.get_args_html(message) # <b>arg1</b> arg2 <n>arg3</n> - сырой текст с html оформлением
+
+
+        # У вас есть три варианта взаимодействия с сообщением для ответа - редактирование; ответ; ответ с инлайн-формой. Вот первые два варианта:
+
+        # Вариант 1 - utils.answer
+        m = await utils.answer(message, self.strings["loading"]) # utils.answer - универсальный способ ответить на команду. Если команда 
+                                                                                  # была отправлена от вашего имени (с парой помарок), то сообщение будет отредактировано.
+                                                                                  # Если от другого пользователя - будет отправлено новое сообщение с ответом.
+                                                                                  # Если указан reply_markup, то будет отправлено новое сообщение с инлайн-кнопками.
+                                                                                  # Подробнее о кнопках - в другом примере
+                                                                                  # Всегда возврващает объект затронутого сообщения (редакт или отправленное)
+
+        await asyncio.sleep(1) # делаем задержку между отправкой "загрузка..." и результатом. 
+                                     # Частые запросы к API могут привести к флудвейту. Не забывайте про задержки!
+
+        # Вариант 2 - использовать методы из Telethon напрямую
+        await m.reply(self.strings["loaded"].format(args_html))
+
+
+    # endregion КОМАНДЫ
+
+
+# endregion СТРУКТУРА МОДУЛЯ
