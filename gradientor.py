@@ -8,7 +8,7 @@
 # scope: hikka_min 2.0.0
 # requires: Pillow git+https://github.com/ZetGoHack/TStickers.git
 
-__version__ = (1, 2, 7)
+__version__ = (1, 2, 8)
 
 import io
 import math
@@ -288,7 +288,7 @@ class Gradientor(loader.Module):
             photo = await m.download_media(bytes)
         elif m.document and "image/" in getattr(m.document, "mime_type", "") and not isinstance(m.media, MessageMediaWebPage):
             photo = await m.download_media(bytes)
-        elif not m.document and m.text:
+        elif not m.document and m.message:
             match = RE_ONLY_ONE_EMOJI.match(m.text.strip())
             if match:
                 emoji_id = match.group(1) or match.group(2)
