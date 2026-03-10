@@ -311,6 +311,7 @@ class Gradientor(loader.Module):
         return photo
     
     async def get_photo(self, m: Message, r: Message):
+        photo = None
         if r:
             photo = await self._get_photo(r)
 
