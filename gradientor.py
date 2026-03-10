@@ -474,6 +474,8 @@ class Gradientor(loader.Module):
                 scale = 100
 
             del _scale_indx
+        else:
+            scale = 100
 
         if "--full" in args:
             _full = True
