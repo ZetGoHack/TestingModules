@@ -387,7 +387,7 @@ class TheBestExampleEverMod(loader.Module):
 
 
     @loader.command(ru_doc="Пример команды с инлайн-кнопками", jp_doc="インラインボタンを使用したコマンドの例")
-    async def exrpmkp(self, message: Message):
+    async def exmplmkp(self, message: Message):
         """Example of a command with inline buttons"""
 
 
@@ -528,6 +528,8 @@ class TheBestExampleEverMod(loader.Module):
         # Сообщение message при наличии reply_markup будет удалено, а вместо него будет открыта инлайн-форма
         await utils.answer(message, self.strings["inl__mrk_example"], reply_markup=reply_markup)
 
+
+        # endregion КНОПКИ
 
 
     # Инлайн-команды. Функции, вызываемые при вводе инлайн-команды в виде @ur_inline_bot inlexample query1 query2.
