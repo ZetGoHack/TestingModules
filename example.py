@@ -302,13 +302,16 @@ class TheBestExampleEverMod(loader.Module):
         #                                       пользоваться дальше
         #                        ℹ️ Учти, что числовые ключи будут автоматически конвертироваться в string-ключ. 1 > "1". Указывай в ключе только string!
 
-        self.set("cfg_value", self.config["example_option"])
+        value = self.get("cfg_value")
+
+        if (opt := self.config["example_option"]) != value:
+            self.set("cfg_value", opt)
 
         # endregion ДАТАБАЗА
 
-        await self.client.send_message(
-            self.client.heroku_me.id, self.strings["cfg_changed"].format(self.config["example_option"])
-        )
+            await self.client.send_message(
+                self.client.heroku_me.id, self.strings["cfg_changed"].format(self.config["example_option"])
+            )
 
 
     # region КОМАНДЫ
