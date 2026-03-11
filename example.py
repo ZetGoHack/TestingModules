@@ -410,7 +410,7 @@ class TheBestExampleEverMod(loader.Module):
                   "text": "кнопка с обработчиком клика",
                   "callback": self.example_callback,
                   "args": (message.id, message.chat_id),
-                  "kwargs": {"ranom_num": 42},
+                  "kwargs": {"random_num": 42},
               }, # первая кнопка 
            ],
            [ # второй ряд
