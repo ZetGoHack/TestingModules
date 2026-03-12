@@ -10,7 +10,7 @@
 # Скорее, я сделал справочник по функционалу и возможностям модулей с
 # теорией и примерами использования.
 
-# То есть, если у тебя появился вопрос "А как сделать это?", "а как
+# То есть, если у тебя появился вопрос "А как сделать это?", "А как
 # это работает?" - этот пример поможет тебе найти ответ.
 
 # ⬆️ Обрати внимание! ⬆️
@@ -122,7 +122,8 @@ __version__ = ("beta", "test", 1) # будет отображено как "vbet
 # 3. FFmpeg - если модуль использует функции, для которых нужен ffmpeg. При отсутствии юзербот вернёт ошибку
 #             пользователю с требованием установить ffmpeg. Модуль не будет установлен
 
-# scope: ffmpeg
+##scope: ffmpeg
+#^ тут лишний #
 
 
 # 4. Inline - укажите, если модуль использует инлайн-бота для работы. Юзербот проверит, работает ли он.
@@ -255,7 +256,13 @@ class TheBestExampleEverMod(loader.Module):
                 ),
                 on_change=self._on_config_change,
             ),
-            loader.ConfigValue("nothing") # а можно просто оставить лишь одно название значения. Это, конечно, ничего полезного не даст пользователю...
+            loader.ConfigValue("nothing"), # а можно просто оставить лишь одно название значения. Это, конечно, ничего полезного не даст пользователю...
+            loader.ConfigValue(
+                "watcher",
+                True,
+                "Should wathcer be running?",
+                validator=loader.validators.Boolean(),
+            )
         )
 
     # Действия при загрузке модуля через .dlm или .lm. Обычно используется для начальной настройки, которая не должна выполняться при каждом запуске модуля.
@@ -356,7 +363,8 @@ class TheBestExampleEverMod(loader.Module):
         # kwargs - аргументы из "kwargs" кнопки. В данном случае - {"random_num": 42}
 
         await call.answer(
-            f"You clicked the button! Here are the arguments you passed: {message_id}, {chat_id}, {kwargs['random_num']}"
+            f"You clicked the button! Here are the arguments you passed: {message_id}, {chat_id}, {kwargs['random_num']}",
+            show_alert = True,
         )
 
         async def _back(call: InlineCall):
@@ -367,9 +375,9 @@ class TheBestExampleEverMod(loader.Module):
 
         await call.edit(
             "Ты только что нажал на кнопку! Ты можешь изменить сообщение прямо через call.edit(), как тут",
-            reply_markup={"text": "Назад", "callback": _back}
+            reply_markup={"text": "Назад", "callback": _back},
         )
-    
+
     async def example_input(self, call: InlineCall, data: str):
         # call - объект CallbackQuery из aiogram. Содержит в себе всю информацию о клике по кнопке,
         # а также методы для взаимодействия с ним (ответить на клик, отредактировать сообщение и т.д.)
@@ -377,7 +385,7 @@ class TheBestExampleEverMod(loader.Module):
 
         await call.answer(f"You entered in inline mode: {data}")
 
-    
+
     @loader.callback_handler()
     async def example_callback_handler(self, call: BotInlineCall):
         if call.data != "example/hello":
@@ -570,6 +578,33 @@ class TheBestExampleEverMod(loader.Module):
 
 
     # endregion ИНЛАЙН-КОМАНДЫ
+
+
+    # region WATCHER
+
+
+    # watcher - функция, которая вызывается при каждом новом сообщении, полученным диспатчером юзербота,
+    # а так же подходящим под условия самого watcher. Функция получает объект `herokutl.tl.custom.Message`.
+    # Условия watcher устанавливаются в аргументы декоратора @loader.watcher, или @loader.tag
+    # ℹ️ Подробнее про теги: https://dev.heroku-ub.xyz/watchers
+
+    @loader.watcher(no_commands=True)   # Не пропускать команды в этот watcher
+    async def example_watcher(self, message: Message):
+        if not self.config["watcher"]: # Включать/Выключать wathcer можно через локальные настройки
+            return
+
+        if not message.message or not message.message.startswith("testwatcher"):
+            return
+        
+        prefix = self.get_prefix()
+        
+        await message.reply(
+            "Watcher from TheBestExampleEverMod is working!\n"
+            "You can turn the watcher off in <code>{prefix}cfg TheBestExampleEverMod</code>".format(prefix=prefix)
+        )
+
+
+    # endregion WATCHER
 
 
     # region ВЫГРУЗКА
