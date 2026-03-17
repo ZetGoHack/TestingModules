@@ -8,7 +8,7 @@
 # scope: hikka_min 2.0.0
 # requires: Pillow git+https://github.com/ZetGoHack/TStickers.git
 
-__version__ = (1, 2, 9)
+__version__ = (1, 3, 0)
 
 import io
 import math
@@ -39,7 +39,7 @@ SHAPES = {
  # TODO: фигуры для создания масок на авы
 }
 
-BBOX_TGA_TGD = (
+BBOX_TGA = (
     2894 / 8268,
     1260 / 8268,
     2504 / 8268,
@@ -51,6 +51,13 @@ BBOX_IOS = (
     629 / 8268,
     3120 / 8268,
     3120 / 8268,
+)
+
+BBOX_TGD = (
+    4779 / 16000,
+    4779 / 16000,
+    10442 / 16000,
+    10442 / 16000,
 )
 
 DEFAULT_PP_SIZE = 1280 # no need to use a bigger size since Telegram will compress it anyway
@@ -150,16 +157,27 @@ def _add_glow(image: Image.Image, bbox: tuple) -> Image.Image:
 
     return result.convert("RGBA")
 
-def set_gradient(img: Image.Image, gradient: Image.Image, size = 100) -> io.BytesIO:
-    if max(img.size) > DEFAULT_PP_SIZE:
-        img = resize_image(img)
-
+def set_gradient(img: Image.Image, gradient: Image.Image, scale: int = 100) -> io.BytesIO:
     grad_size = DEFAULT_PP_SIZE
-    img = resize_image(img, int(max(img.size) * (size / 100)))
 
     gradient = gradient.resize((grad_size,) * 2, Image.LANCZOS).convert('RGBA')
-    left = (grad_size - img.width) // 2
-    top = (grad_size - img.height) // 2
+
+    target_size = grad_size * scale / 100
+
+    img_w, img_h = img.size
+    img_max = max(img_w, img_h)
+
+    fit_size = min(target_size, img_max * 4)
+
+    scale_factor = fit_size / img_max
+    new_w = max(1, int(round(img_w * scale_factor)))
+    new_h = max(1, int(round(img_h * scale_factor)))
+
+    resampling = Image.LANCZOS if scale_factor <= 1 else Image.BICUBIC
+    img = img.resize((new_w, new_h), resampling)
+
+    left = (grad_size - new_w) // 2
+    top = (grad_size - new_h) // 2
     gradient.paste(img, (left, top), img)
 
     buffer = io.BytesIO()
@@ -324,7 +342,8 @@ class Gradientor(loader.Module):
                 "--linear - использовать линейный градиент\n"
                 "--scale [масштаб в процентах] - изменить размер накладываемого фото (по умолчанию 100)\n"
                 "--light - использовать светлую тему\n"
-                "--ios - создать аватарку для iOS-клиентов"
+                "--ios - создать аватарку для iOS-клиентов\n"
+                "--tgd - создать аватарку для Telegram Desktop"
     )
     async def makepp(self, message: Message):
         """[photo/reply/emoji] - create a profile picture with a gradient from profile color
@@ -332,7 +351,8 @@ class Gradientor(loader.Module):
             --linear - use linear gradient
             --scale [scale in percents] - change the size of the overlaid photo (default 100)
             --light - use light theme
-            --ios - create a profile picture for iOS clients"""
+            --ios - create a profile picture for iOS clients
+            --tgd - create a profile picture for Telegram Desktop"""
         reply: Message = await message.get_reply_message()
         args = utils.get_args(message)
 
@@ -340,9 +360,14 @@ class Gradientor(loader.Module):
             bbox = BBOX_IOS
             _type = "ios"
             args.remove("--ios")
-        
+
+        elif "--tgd" in args:
+            bbox = BBOX_TGD
+            _type = "tgd"
+            args.remove("--tgd")
+
         else:
-            bbox = BBOX_TGA_TGD
+            bbox = BBOX_TGA
             _type = "android"
 
         if "--update-cache" in args:
@@ -451,9 +476,13 @@ class Gradientor(loader.Module):
         if "--ios" in args:
             bbox = BBOX_IOS
             args.remove("--ios")
+
+        elif "--tgd" in args:
+            bbox = BBOX_TGD
+            args.remove("--tgd")
         
         else:
-            bbox = BBOX_TGA_TGD
+            bbox = BBOX_TGA
 
         if "--linear" in args:
             force_linear = True
