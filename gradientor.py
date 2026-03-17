@@ -56,8 +56,8 @@ BBOX_IOS = (
 BBOX_TGD = (
     4779 / 16000,
     4779 / 16000,
-    10442 / 16000,
-    10442 / 16000,
+    7728 / 16000,
+    7728 / 16000,
 )
 
 DEFAULT_PP_SIZE = 1280 # no need to use a bigger size since Telegram will compress it anyway
