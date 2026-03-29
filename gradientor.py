@@ -8,7 +8,7 @@
 # scope: hikka_min 2.0.0
 # requires: Pillow git+https://github.com/ZetGoHack/TStickers.git
 
-__version__ = (1, 3, 0)
+__version__ = (1, 3, 1)
 
 import io
 import math
@@ -53,14 +53,14 @@ BBOX_IOS = (
     3120 / 8268,
 )
 
-BBOX_TGD = (
-    4779 / 16000,
-    4779 / 16000,
-    7728 / 16000,
-    7728 / 16000,
-)
+# BBOX_TGD = (
+#     4779 / 16000,
+#     4779 / 16000,
+#     7728 / 16000,
+#     7728 / 16000,
+# )
 
-DEFAULT_PP_SIZE = 1280 # no need to use a bigger size since Telegram will compress it anyway
+DEFAULT_PP_SIZE = 2048 # no need to use a bigger size since Telegram will compress it anyway
                        # better than overloading the script with large images
 
 RE_ONLY_ONE_EMOJI = re.compile(r"^<tg-emoji emoji-id=(\d+)>[^<]+</tg-emoji>$|^<emoji document_id=(\d+)>[^<]+</emoji>$")
@@ -342,8 +342,8 @@ class Gradientor(loader.Module):
                 "--linear - использовать линейный градиент\n"
                 "--scale [масштаб в процентах] - изменить размер накладываемого фото (по умолчанию 100)\n"
                 "--light - использовать светлую тему\n"
-                "--ios - создать аватарку для iOS-клиентов\n"
-                "--tgd - создать аватарку для Telegram Desktop"
+                "--ios - создать аватарку для iOS-клиентов"
+                # "--tgd - создать аватарку для Telegram Desktop"
     )
     async def makepp(self, message: Message):
         """[photo/reply/emoji] - create a profile picture with a gradient from profile color
@@ -351,8 +351,8 @@ class Gradientor(loader.Module):
             --linear - use linear gradient
             --scale [scale in percents] - change the size of the overlaid photo (default 100)
             --light - use light theme
-            --ios - create a profile picture for iOS clients
-            --tgd - create a profile picture for Telegram Desktop"""
+            --ios - create a profile picture for iOS clients"""
+          # --tgd - create a profile picture for Telegram Desktop"""
         reply: Message = await message.get_reply_message()
         args = utils.get_args(message)
 
@@ -361,10 +361,10 @@ class Gradientor(loader.Module):
             _type = "ios"
             args.remove("--ios")
 
-        elif "--tgd" in args:
-            bbox = BBOX_TGD
-            _type = "tgd"
-            args.remove("--tgd")
+        # elif "--tgd" in args:
+        #     bbox = BBOX_TGD
+        #     _type = "tgd"
+        #     args.remove("--tgd")
 
         else:
             bbox = BBOX_TGA
@@ -477,9 +477,9 @@ class Gradientor(loader.Module):
             bbox = BBOX_IOS
             args.remove("--ios")
 
-        elif "--tgd" in args:
-            bbox = BBOX_TGD
-            args.remove("--tgd")
+        # elif "--tgd" in args:
+        #     bbox = BBOX_TGD
+        #     args.remove("--tgd")
         
         else:
             bbox = BBOX_TGA
