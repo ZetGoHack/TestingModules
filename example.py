@@ -650,7 +650,7 @@ class TheBestExampleEverMod(loader.Module):
             await self.client.send_message(
                 "me",
                 self.strings[status].format(
-                    telethon.utils.get_display_name(user) + str(user_id),
+                    telethon.utils.get_display_name(user) + f" ({user_id})",
                 ),
             )
 
