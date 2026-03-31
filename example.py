@@ -628,8 +628,11 @@ class TheBestExampleEverMod(loader.Module):
     # endregion WATCHER
 
 
-    # region 
+    # region RAW_HANDLER
 
+    # raw_handler - функция, которая вызывается при каждом новом событии, полученным диспатчером юзербота, если это событие
+    # является одним из типов, указанных в аргументах декоратора @loader.raw_handler. Функция получает объект события 
+    # (например тут - UpdateUserStatus).
     @loader.raw_handler(UpdateUserStatus)
     async def raw_handler(self, event: UpdateUserStatus):
         if not self.config["raw_handler"]:
@@ -651,7 +654,7 @@ class TheBestExampleEverMod(loader.Module):
                 ),
             )
 
-    # endregion
+    # endregion RAW_HANDLER
 
 
     # region ВЫГРУЗКА
