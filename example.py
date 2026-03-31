@@ -44,7 +44,7 @@
 
 # region META-ТЕГИ
 # 1. Версия модуля. Всегда должна быть кортежем с тремя элементами
-__version__ = ("beta", "test", 1) # будет отображено как "vbeta.test.1"
+__version__ = ("beta", "test", 2) # будет отображено как "vbeta.test.1"
 
 
 # 2. Разработчик - имя, юзернейм или канал разработчика модуля
@@ -137,6 +137,7 @@ __version__ = ("beta", "test", 1) # будет отображено как "vbet
 import asyncio
 from ..types import BotInlineCall, InlineCall, InlineQuery
 
+import telethon
 
 # region ИМПОРТЫ
 
@@ -154,6 +155,7 @@ from .. import utils
 # то рекомендую просто использовать общий "from telethon import ...". Оба юб заменят его на свою библиотеку
 
 from telethon.tl.custom import Message
+from telethon.tl.types import UpdateUserStatus, UserStatusOnline, UserStatusOffline # для raw_handler
 
 
 # endregion
@@ -189,6 +191,8 @@ class TheBestExampleEverMod(loader.Module):
         "cfg_changed": "Config value changed to {}!", # строка для использования в коде
         "loading": "<emoji document_id=5382187328670282655>🐱</emoji> Your result is loading...", # не забываем про возможность использовать html разметку в сообщениях!
         "loaded": "<emoji emoji-id=5382147531503319073>😶</emoji> Just kidding! I haven't loaded anything, here are the arguments you entered: {}", # строка с аргументами команды. В коде можно использовать .format для подстановки аргументов
+        "user_online": "<emoji document_id=5323703983066324828>🟢</emoji> <b>{} is online!</b>",
+        "user_offline": "<emoji document_id=5325738268556271707>🔴</emoji> <b>{} is offline!</b>",
         "inl__a_message": "This is a simple message",
         "inl__a_message_desc": "Example of a simple message",
         "inl__a_message_text": "<b>You entered in inline arguments: {}!</b>",
@@ -203,6 +207,8 @@ class TheBestExampleEverMod(loader.Module):
         "cfg_changed": "Значение конфига изменено на {}!",
         "loading": "<emoji document_id=5382187328670282655>🐱</emoji> Ваш пример загружается...",
         "loaded": "<emoji document_id=5382147531503319073>😶</emoji> Шучу! Я ничего не загружал, вот аргументы, которые вы ввели: {}",
+        "user_online": "<emoji document_id=5323703983066324828>🟢</emoji> <b>{} вошёл в сеть!</b>",
+        "user_offline": "<emoji document_id=5325738268556271707>🔴</emoji> <b>{} вышел из сети!</b>",
         "inl__a_message": "Это простое сообщение",
         "inl__a_message_desc": "Пример простого сообщения",
         "inl__a_message_text": "<b>Вы ввели в аргументы инлайна: {}!</b>",
@@ -217,6 +223,8 @@ class TheBestExampleEverMod(loader.Module):
         "cfg_changed": "構成値が{}に変更されました！",
         "loading": "<emoji document_id=5382187328670282655>🐱</emoji> 結果を読み込んでいます...",
         "loaded": "<emoji document_id=5382147531503319073>😶</emoji> 冗談です！何も読み込んでいません。入力した引数は次のとおりです：{}",
+        "user_online": "<emoji document_id=5323703983066324828>🟢</emoji> <b>{}がオンラインです！</b>",
+        "user_offline": "<emoji document_id=5325738268556271707>🔴</emoji> <b>{}がオフラインです！</b>",
         "inl__a_message": "これは単純なメッセージです",
         "inl__a_message_desc": "単純なメッセージの例",
         "inl__a_message_text": "<b>インライン引数に入力した内容：{}！</b>",
@@ -261,7 +269,21 @@ class TheBestExampleEverMod(loader.Module):
                 True,
                 "Should wathcer be running?",
                 validator=loader.validators.Boolean(),
-            )
+            ),
+            loader.ConfigValue(
+                "raw_handler",
+                True,
+                "Should raw handler be runnig?",
+                validator=loader.validators.Boolean(),
+            ),
+            loader.ConfigValue(
+                "handler_targets",
+                [],
+                "A targets list to track online",
+                validator=loader.validators.Series(
+                    loader.validators.Integer(),
+                ),
+            ),
         )
 
     # Действия при загрузке модуля через .dlm или .lm. Обычно используется для начальной настройки, которая не должна выполняться при каждом запуске модуля.
@@ -604,6 +626,32 @@ class TheBestExampleEverMod(loader.Module):
 
 
     # endregion WATCHER
+
+
+    # region 
+
+    @loader.raw_handler(UpdateUserStatus)
+    async def raw_handler(self, event: UpdateUserStatus):
+        if not self.config["raw_handler"]:
+            return
+
+        user_id = event.user_id
+        
+        if user_id in self.config["handler_targets"]:
+            user = await self.client.get_entity(user_id)
+            if isinstance(event.status, UserStatusOnline):
+                status = "user_online"
+            else:
+                status = "user_offline"
+
+            await self.client.send_message(
+                "me",
+                self.strings[status].format(
+                    telethon.utils.get_display_name(user),
+                ),
+            )
+
+    # endregion
 
 
     # region ВЫГРУЗКА
