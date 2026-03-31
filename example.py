@@ -604,15 +604,19 @@ class TheBestExampleEverMod(loader.Module):
     # region WATCHER
 
 
-    # watcher - функция, которая вызывается при каждом новом сообщении, полученным диспатчером юзербота,
-    # а так же подходящим под условия самого watcher. Функция получает объект `herokutl.tl.custom.Message`.
-    # Условия watcher устанавливаются в аргументы декоратора @loader.watcher, или @loader.tag
+    # watcher - функция, которая вызывается при каждом новом сообщении (❗ даже если это сервисное сообщение,
+    # то есть без текста), полученным диспатчером юзербота, а так же подходящим под условия самого watcher.
+    # Функция получает объект `herokutl.tl.custom.Message`. Условия watcher устанавливаются в аргументы
+    # декоратора @loader.watcher, или @loader.tag
     # ℹ️ Подробнее про теги: https://dev.heroku-ub.xyz/watchers
 
     @loader.watcher(no_commands=True)   # Не пропускать команды в этот watcher
     async def example_watcher(self, message: Message):
         if not self.config["watcher"]: # Включать/Выключать wathcer можно через локальные настройки
             return
+        
+        if not hasattr(message, "message"): # В нашем случае нужно исключить сервисные сообщения,
+            return                          # у которых нет текста
 
         if not message.message or not message.message.startswith("testwatcher"):
             return
