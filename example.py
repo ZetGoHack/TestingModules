@@ -200,6 +200,20 @@ class TheBestExampleEverMod(loader.Module):
         "inl__a_photo": "This is an example of a message with photo",
         "inl__a_photo_desc": "Example of a message with photo for inline",
         "inl__a_photo_caption": "<b>This is a photo with caption!</b>",
+        "inl__gallery": "Example gallery",
+        "inl__gallery_desc": "Example of inline gallery from query",
+        "inl__gallery_caption": "<b>This photo was opened from query_gallery</b>",
+        "inl__button": "Button in inline",
+        "inl__insert_query": "Insert query",
+        "inl__a_gif": "Example GIF",
+        "inl__a_gif_desc": "Example of a gif result",
+        "inl__a_gif_caption": "<b>This is a gif with caption!</b>",
+        "inl__a_video": "Example video",
+        "inl__a_video_desc": "Example of a video result",
+        "inl__a_video_caption": "<b>This is a video with caption!</b>",
+        "inl__a_file": "Example file",
+        "inl__a_file_desc": "Example of a document result",
+        "inl__a_file_caption": "<b>This is a PDF file!</b>",
     }
 
     strings_ru = {
@@ -216,6 +230,20 @@ class TheBestExampleEverMod(loader.Module):
         "inl__a_photo": "Это пример сообщения с фото",
         "inl__a_photo_desc": "Пример сообщения с фото для инлайна",
         "inl__a_photo_caption": "<b>Это фото с подписью!</b>",
+        "inl__gallery": "Пример галереи",
+        "inl__gallery_desc": "Пример инлайн-галереи из запроса",
+        "inl__gallery_caption": "<b>Это фото открыто через query_gallery</b>",
+        "inl__button": "Кнопка в инлайне",
+        "inl__insert_query": "Вставить запрос",
+        "inl__a_gif": "Пример GIF",
+        "inl__a_gif_desc": "Пример результата с gif",
+        "inl__a_gif_caption": "<b>Это gif с подписью!</b>",
+        "inl__a_video": "Пример видео",
+        "inl__a_video_desc": "Пример результата с видео",
+        "inl__a_video_caption": "<b>Это видео с подписью!</b>",
+        "inl__a_file": "Пример файла",
+        "inl__a_file_desc": "Пример результата с документом",
+        "inl__a_file_caption": "<b>Это PDF-файл!</b>",
     }
 
     strings_jp = {
@@ -232,6 +260,20 @@ class TheBestExampleEverMod(loader.Module):
         "inl__a_photo": "これは写真付きメッセージの例です",
         "inl__a_photo_desc": "インラインの写真付きメッセージの例",
         "inl__a_photo_caption": "<b>これはキャプション付きの写真です！</b>",
+        "inl__gallery": "ギャラリーの例",
+        "inl__gallery_desc": "クエリから開くインラインギャラリーの例",
+        "inl__gallery_caption": "<b>この写真は query_gallery から開かれました</b>",
+        "inl__button": "インラインのボタン",
+        "inl__insert_query": "クエリを挿入",
+        "inl__a_gif": "GIF の例",
+        "inl__a_gif_desc": "GIF 結果の例",
+        "inl__a_gif_caption": "<b>これはキャプション付きの GIF です！</b>",
+        "inl__a_video": "動画の例",
+        "inl__a_video_desc": "動画結果の例",
+        "inl__a_video_caption": "<b>これはキャプション付きの動画です！</b>",
+        "inl__a_file": "ファイルの例",
+        "inl__a_file_desc": "ドキュメント結果の例",
+        "inl__a_file_caption": "<b>これは PDF ファイルです！</b>",
     }
 
 
@@ -407,6 +449,11 @@ class TheBestExampleEverMod(loader.Module):
         await call.answer(f"You entered in inline mode: {data}")
 
 
+    async def example_gallery_photo(self):
+        # функция должна вернуть ссылку на фотографию, или список из них
+        return ["https://github.com/ZetGoHack/TestingModules/raw/main/ex_thumb.jpg"]
+
+
     @loader.callback_handler()
     async def example_callback_handler(self, call: BotInlineCall):
         if call.data != "example/hello":
@@ -474,15 +521,16 @@ class TheBestExampleEverMod(loader.Module):
            [
                 {
                     "text": "webapp-кнопка",
-                    "url": ( # крч, спустя 20 минут тестов и одного вопроса к одному крутому человеку выяснилось,
-                             # что web_app кнопки невозможно отправить через инлайн (только в личку)...
-                             # Но в любом случае, многие клиенты отображают кнопку с webapp-подобными ссылками
+                    "url": ( # спустя 20 минут тестов и одного вопроса к одному крутому человеку выяснилось,
+                             # что web_app кнопки невозможно отправить через инлайн (только в личке)...
+                             # В любом случае, многие клиенты отображают url кнопку с webapp-подобными ссылками
                              # как webapp кнопку
                         "https://t.me/xgift?startapp=profile-1226061708_ref-b1e785f69fb4ac258f97898b37b72536"
                     ),
                 },
            ],
            [{"text": "Закрыть форму", "action": "close"}],
+           [{"text": "Выгрузить форму", "action": "unload"}],
         ]
 
 
@@ -515,7 +563,9 @@ class TheBestExampleEverMod(loader.Module):
         #         иначе кнопка не будет создана
 
         # "web_app" - кнопка для открытия webapp. При клике открывает webapp. Может быть
-        #             строкой (url), или словарём с параметрами для WebAppInfo из aiogram
+        #             строкой (url), или словарём с параметрами для WebAppInfo из aiogram.
+        #             На практике, Телеграм позволяет использовать её только в обычных,
+        #             сообщениях бота, не в инлайн-формах
 
         # "copy" - кнопка для копирования текста внутри неё "copy": "текст для копирования"
 
@@ -526,6 +576,9 @@ class TheBestExampleEverMod(loader.Module):
         #                                                   сообщения
 
         #            2. "action": "close" - закрыть (удалить и выгрузить) инлайн-форму
+
+        #            3. "action": "unload" - только выгрузить форму из памяти юзербота. Сообщение
+        #                                    останется, но кнопки больше не будут обрабатываться
 
 
         # endregion ТИПЫ КНОПОК
@@ -547,7 +600,14 @@ class TheBestExampleEverMod(loader.Module):
 
         # "disable_security" - отключить проверку безопасности для кнопки. Проверка проверяет,
         #                      является ли нажавший пользователь одним из владельцев юзербота,
-        #                      или есть ли его ID в списке разрешённых пользователейт
+        #                      или есть ли его ID в списке разрешённых пользователей
+
+        # "force_me" - разрешить кнопку только владельцу юзербота
+
+        # "style" - цвет кнопки: "danger" - красный, "primary" - синий, "success" - зелёный
+
+        # "emoji_id" - document_id кастомного эмодзи для иконки кнопки. Не работает в Inline-сообщениях,
+        #              только в обычных сообщениях бота
 
 
         # endregion ПАРАМЕТРЫ КНОПОК
@@ -563,6 +623,17 @@ class TheBestExampleEverMod(loader.Module):
         # Сообщение message при наличии reply_markup будет удалено, а вместо него будет открыта инлайн-форма
         await utils.answer(message, self.strings["inl__mrk_example"], reply_markup=reply_markup)
 
+        # utils.answer с reply_markup - это почти всегда вызов self.inline.form (кроме случая, когда message
+        # это уже call).
+
+        await self.inline.form(
+            self.strings["inl__mrk_example"],
+            message,
+            reply_markup,
+            always_allow=[25, 50, 149], # Да, эти оба параметра могут быть локальными для каждой кнопки,
+            disable_security=False,     # так и глобальными для всех кнопок в форме
+        )
+
 
         # endregion КНОПКИ
 
@@ -574,7 +645,25 @@ class TheBestExampleEverMod(loader.Module):
     async def inlexample(self, query: InlineQuery):
         """Example description for an inline command in English"""
         # Чтобы вернуть результаты инлайн-команды, нужно вернуть либо словарь, либо список словарей. Ниже все случаи использования
-        # со всеми типами контента внутри:
+
+        # Для query_gallery можно ответить на query самостоятельно и ничего не возвращать:
+        if query.args == "gallery":
+            # query_gallery - функция для ответа на inline-запрос несколькими результатами-галереями,
+            # например, если фото/данные для них берутся из разных источников
+            await self.inline.query_gallery(
+                query,
+                [
+                    {
+                        "title": self.strings["inl__gallery"],
+                        "description": self.strings["inl__gallery_desc"],
+                        "next_handler": self.example_gallery_photo,
+                        "caption": self.strings["inl__gallery_caption"],
+                    },
+                ],
+            )
+            return
+
+        # Ниже основные типы контента, которые ты можешь вернуть из inline_handler:
 
         results = [
         # 1. Простое сообщение:
@@ -583,15 +672,43 @@ class TheBestExampleEverMod(loader.Module):
                 "description": self.strings["inl__a_message_desc"],
                 "message": self.strings["inl__a_message_text"].format(query.args),
                 "thumb": "https://github.com/ZetGoHack/TestingModules/raw/main/ex_thumb.jpg",
-                "reply_markup": {"text": "Кнопка в инлайне", "url": "https://t.me/ZetGo"},
+                "reply_markup": [
+                    {"text": self.strings["inl__insert_query"], "switch_inline_query_current_chat": "inlexample "},
+                    # switch_inline_query(_current_chat) - подставить пользователю начальный шаблон твоей команды,
+                    # например: "@ZetGoBot inlexample". Работает только в результатах inline_handler
+                ],
             },
+        # 2. Фото:
             {
                 "title": self.strings["inl__a_photo"],
                 "description": self.strings["inl__a_photo_desc"],
                 "photo": "https://github.com/ZetGoHack/TestingModules/raw/main/ex_thumb.jpg",
-                "mime_type": "image/jpeg", # Обязательный параметр при отправке фото, видео и документов. 
-                                           # Если не указать - кнопка не будет работать
                 "caption": self.strings["inl__a_photo_caption"],
+            },
+
+        # 3. GIF:
+            {
+                "title": self.strings["inl__a_gif"],
+                "description": self.strings["inl__a_gif_desc"],
+                "gif": "https://github.com/ZetGoHack/TestingModules/raw/main/dooo.gif",
+                "caption": self.strings["inl__a_gif_caption"],
+            },
+
+        # 4. Видео
+            {
+                "title": self.strings["inl__a_video"],
+                "description": self.strings["inl__a_video_desc"],
+                "video": "https://github.com/ZetGoHack/TestingModules/raw/main/example_cat.mp4",
+                "thumb": "https://github.com/ZetGoHack/TestingModules/raw/main/ex_thumb.jpg",
+                "caption": self.strings["inl__a_video_caption"],
+            },
+        # 5. Документ:
+            {
+                "title": self.strings["inl__a_file"],
+                "description": self.strings["inl__a_file_desc"],
+                "file": "https://sample-files.com/downloads/documents/pdf/basic-text.pdf",
+                "mime_type": "application/pdf", # Для file обязателен параметр mime_type
+                "caption": self.strings["inl__a_file_caption"],
             },
         ]
 
