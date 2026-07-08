@@ -258,16 +258,18 @@ class Gifts(loader.Module):
                     })
                 elif isinstance(gift.gift, StarGift):
                     gifts_count += 1
+                    gift_id = gift.gift.id
                     st_id = replacer(str(gift.gift.sticker.id))
                     gift_exists = False
                     for gft in gifts[0]["gifts"]:
-                        if st_id in gft["emoji"]:
+                        if gft["id"] == gift_id:
                             gft["count"] += 1
                             gft["sum"] += gift.gift.stars
                             gift_exists = True
                             break
                     if gift_exists: continue
                     gifts[0]["gifts"].append({
+                        "id": gift_id,
                         "emoji": "<tg-emoji emoji-id={}>{}</tg-emoji>".format(st_id, gift.gift.sticker.attributes[1].alt),
                         "stars": f"<code>{gift.gift.stars}</code>" + " <tg-emoji emoji-id=5951810621887484519>⭐️</tg-emoji>",
                         "sum": gift.gift.stars,
