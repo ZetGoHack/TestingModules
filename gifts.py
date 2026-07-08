@@ -3,7 +3,7 @@
 #░░░░█░░███░░█░░█░█░█░█
 #░░░█░░░█░░░░█░░█░█░█░█
 #░░░███░███░░█░░███░███
-v = ("oooooo", "kaaaa", "kkkkk")
+v = ("oooooo", "kaaaaa", "kkkkk")
 # meta developer: @nullmod & @codermasochist
 # scope: heroku_min 1.7.2
 # scope: hikka_min 1.7.2
@@ -228,14 +228,14 @@ class Gifts(loader.Module):
                     count = self.config["gift_limit"]
                 else:
                     count = gifts_info.count
-                hundreds = count // 100
-                remainder = count % 100
-                limits = [*(100 for _ in range(hundreds-1)), *((remainder,) if remainder else ())]
-                offsets = [100*i for i in range(1, hundreds + 1)]
-                for limit, offset in zip(limits, offsets):
+                while gifts_info.next_offset and len(gifts_info.gifts) < count:
                     await asyncio.sleep(0.4)
-                    next_offset = await self.client(GetSavedStarGiftsRequest(peer=username, offset=str(offset).encode(), limit=limit, **parameters))
-                    gifts_info.gifts.extend(next_offset.gifts)
+                    remaining = count - len(gifts_info.gifts)
+                    next_page = await self.client(GetSavedStarGiftsRequest(peer=username, offset=gifts_info.next_offset, limit=min(remaining, 100), **parameters))
+                    if not next_page.gifts:
+                        break
+                    gifts_info.gifts.extend(next_page.gifts)
+                    gifts_info.next_offset = next_page.next_offset
             gifts.append(gifts_info.count)
         except:
             raise
@@ -258,18 +258,16 @@ class Gifts(loader.Module):
                     })
                 elif isinstance(gift.gift, StarGift):
                     gifts_count += 1
-                    gift_id = gift.gift.id
                     st_id = replacer(str(gift.gift.sticker.id))
                     gift_exists = False
                     for gft in gifts[0]["gifts"]:
-                        if gft["id"] == gift_id:
+                        if st_id in gft["emoji"]:
                             gft["count"] += 1
                             gft["sum"] += gift.gift.stars
                             gift_exists = True
                             break
                     if gift_exists: continue
                     gifts[0]["gifts"].append({
-                        "id": gift_id,
                         "emoji": "<tg-emoji emoji-id={}>{}</tg-emoji>".format(st_id, gift.gift.sticker.attributes[1].alt),
                         "stars": f"<code>{gift.gift.stars}</code>" + " <tg-emoji emoji-id=5951810621887484519>⭐️</tg-emoji>",
                         "sum": gift.gift.stars,
