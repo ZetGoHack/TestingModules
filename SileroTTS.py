@@ -4,7 +4,7 @@
 #░░░█░░░█░░░░█░░█░█░█░█
 #░░░███░███░░█░░███░███
 
-__version__ = (0, 0, 3)
+__version__ = (1, 0, 0)
 
 import re
 
@@ -32,14 +32,27 @@ class SileroTTSMod(loader.Module):
     
     async def _process_tts(self, message: Message, tts_text: str, caption: str = ""):
         async with self.client.conversation(SILERO_USERNAME) as conv:
-            await conv.send_message(tts_text)
-            try:
-                result: Message = await conv.get_response()
-            except TimeoutError:
-                return await utils.answer(message, self.strings["bot_is_not_responding"])
-            
-        if _match := SUB_PROMPT_RE.search(result.text):
-            return await utils.answer(message, self.strings["sub"].format(channel=_match.group(1), command=message.message))
+            for _ in range(2):
+                await conv.send_message(tts_text)
+
+                try:
+                    result: Message = await conv.get_response()
+                except TimeoutError:
+                    return await utils.answer(message, self.strings["bot_is_not_responding"])
+
+                await conv.mark_read()
+
+                if _match := SUB_PROMPT_RE.search(result.text):
+                    click = await result.click()
+
+                    if click.message == "Вас нет в списке подписчиков.":
+                        return await utils.answer(message, self.strings["sub"].format(channel=_match.group(1), command=message.message))
+
+                    elif click.message == "Успешно!":
+                        continue
+
+                else:
+                    break
         
         if not result.media:
             return await utils.answer(message, self.strings["no_audio"])
