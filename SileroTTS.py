@@ -4,14 +4,16 @@
 #░░░█░░░█░░░░█░░█░█░█░█
 #░░░███░███░░█░░███░███
 
-__version__ = (0, 0, 1)
+__version__ = (0, 0, 3)
+
+import re
 
 from telethon.tl.custom import Message
 
 from .. import loader, utils
 
 SILERO_USERNAME = "@silero_voice_bot"
-SUB_PROMPT = "Подпишись на канал новостей бота: @silero_voice_news"
+SUB_PROMPT_RE = re.compile(r"Подпишись на канал новостей бота: @([a-zA-Z][a-zA-Z0-9_]{4,30})")
 
 @loader.tds
 class SileroTTSMod(loader.Module):
@@ -23,40 +25,40 @@ class SileroTTSMod(loader.Module):
         "bot_is_not_responding": "Не удалось дождаться ответа от бота. Попробуйте позже",
         "processing": "Обрабатываю...",
         "sub": (
-            "Для работы команды подпишитесь на @silero_voice_news."
-            "После подписки вы сможете пользоваться модулем и снова ввести команду <code>{text}</code>"
+            "Для работы команды подпишитесь на @{channel}."
+            "После подписки вы сможете пользоваться модулем и снова ввести команду <code>{command}</code>"
         ),
     }
     
-    async def _process_tts(self, message: Message, caption: str = ""):
-        text = utils.get_args_raw(message)
-        if not text:
-            return await utils.answer(message, self.strings["no_args"])
-        
+    async def _process_tts(self, message: Message, tts_text: str, caption: str = ""):
         async with self.client.conversation(SILERO_USERNAME) as conv:
-            await conv.send_message(text)
+            await conv.send_message(tts_text)
             try:
                 result: Message = await conv.get_response()
             except TimeoutError:
                 return await utils.answer(message, self.strings["bot_is_not_responding"])
             
-        if SUB_PROMPT in result.text:
-            return await utils.answer(message, self.strings["sub"])
+        if _match := SUB_PROMPT_RE.search(result.text):
+            return await utils.answer(message, self.strings["sub"].format(channel=_match.group(1), command=message.message))
         
-        if not message.media:
+        if not result.media:
             return await utils.answer(message, self.strings["no_audio"])
-
+        
         if message.out:
             await message.delete()
 
-        if message.is_reply:
-            return await utils.answer(message, caption, file=result.media)
-
+        return await self.client.send_message(message.chat_id, caption, file=result.media, reply_to=getattr(message.reply_to, "reply_to_msg_id", None))
 
 
     @loader.command()
     async def tts(self, message: Message):
         """[текст] - озвучить текст"""
+        text = utils.get_args_raw(message)
+
+        if not text:
+            return await utils.answer(message, self.strings["no_args"])
+
+        return await self._process_tts(message, text)
 
     @loader.command()
     async def ttst(self, message: Message):
@@ -64,5 +66,16 @@ class SileroTTSMod(loader.Module):
 
         .ttst текст - оставит в подписи озвученный текст
         .ttst текст / подпись - оставит в подписи ваш собственный текст"""
-        pass
+        args = utils.get_args_html(message)
+
+        if not args:
+            return await utils.answer(message, self.strings["no_args"])
+        
+        if len(args := args.split("/", maxsplit=1)) < 2:
+            text = args
+            caption = ""
+        else:
+            text, caption = args
+
+        return await self._process_tts(message, text, caption)
 
