@@ -8,12 +8,12 @@
 # scope: hikka_min 2.0.0
 # requires: Pillow git+https://github.com/ZetGoHack/TStickers.git
 
-__version__ = (1, 3, 1)
+__version__ = (1, 3, 2)
 
 import io
 import math
 import re
-from tstickers import convert
+# from tstickers import convert
 
 from PIL import Image, ImageDraw
 
@@ -217,7 +217,7 @@ def hexes_to_rgbs(value: list):
 class Gradientor(loader.Module):
     strings = {
         "name": "Gradientor",
-        "_cls_doc": "A module to create your profile picture with a background from your profile",
+        "_cls_doc": "A module to create your profile picture with a background from your profile\n\nALSO TRY: @gradientorbot!!!",
         "gradient_creating": "<tg-emoji emoji-id=5886667040432853038>🔁</tg-emoji> Creating gradient...",
         "gradient_created": "<tg-emoji emoji-id=5818804345247894731>✅</tg-emoji> Gradient created!",
         "nft_done": (
@@ -231,7 +231,7 @@ class Gradientor(loader.Module):
         ),
     }
     strings_ru = {
-        "_cls_doc": "Модуль для создания вашей аватарки на фоне из вашего профиля",
+        "_cls_doc": "Модуль для создания вашей аватарки на фоне из вашего профиля\n\nТАК ЖЕ ПОПРОБУЙТЕ: @gradientorbot!!!",
         "gradient_creating": "<tg-emoji emoji-id=5886667040432853038>🔁</tg-emoji> Создание градиента...",
         "gradient_created": "<tg-emoji emoji-id=5818804345247894731>✅</tg-emoji> Градиент создан!",
         "nft_done": (
@@ -277,8 +277,7 @@ class Gradientor(loader.Module):
         gradient = get_gradient((DEFAULT_PP_SIZE,)*2, color1, color2, "linear" if force_linear else "radial")
 
         if add_glow:
-            pass # TODO
-            # gradient = _add_glow(gradient, bbox)
+            pass # NO FURTHER DEVELOPMENT
 
         if not _full:
             gradient = crop_by_bbox(gradient, bbox)
@@ -288,7 +287,6 @@ class Gradientor(loader.Module):
             p_b_io.seek(0)
 
             img = Image.open(p_b_io).convert('RGBA')
-            # img = resize_image(img, math.ceil(DEFAULT_PP_SIZE * (resize_percent / 100)))
 
             result = set_gradient(img, gradient, resize_percent)
 
@@ -312,9 +310,6 @@ class Gradientor(loader.Module):
                     doc = (await self.client(GetCustomEmojiDocumentsRequest([int(emoji_id)])))[0]
                     if "image/" in getattr(doc, "mime_type", ""):
                         photo = await self.client.download_media(doc, bytes)
-                    # elif "tgsticker" in getattr(doc, "mime_type", ""):
-                    #     photo = await self.client.download_media(doc, bytes)
-                    #     # TODO: add lottie conversion # в принципе добавить поддержку наложения видео... потом уже лотти
                     else:
                         photo = None
                 except Exception:
@@ -343,7 +338,6 @@ class Gradientor(loader.Module):
                 "--scale [масштаб в процентах] - изменить размер накладываемого фото (по умолчанию 100)\n"
                 "--light - использовать светлую тему\n"
                 "--ios - создать аватарку для iOS-клиентов"
-                # "--tgd - создать аватарку для Telegram Desktop"
     )
     async def makepp(self, message: Message):
         """[photo/reply/emoji] - create a profile picture with a gradient from profile color
@@ -352,7 +346,6 @@ class Gradientor(loader.Module):
             --scale [scale in percents] - change the size of the overlaid photo (default 100)
             --light - use light theme
             --ios - create a profile picture for iOS clients"""
-          # --tgd - create a profile picture for Telegram Desktop"""
         reply: Message = await message.get_reply_message()
         args = utils.get_args(message)
 
@@ -360,11 +353,6 @@ class Gradientor(loader.Module):
             bbox = BBOX_IOS
             _type = "ios"
             args.remove("--ios")
-
-        # elif "--tgd" in args:
-        #     bbox = BBOX_TGD
-        #     _type = "tgd"
-        #     args.remove("--tgd")
 
         else:
             bbox = BBOX_TGA
@@ -476,10 +464,6 @@ class Gradientor(loader.Module):
         if "--ios" in args:
             bbox = BBOX_IOS
             args.remove("--ios")
-
-        # elif "--tgd" in args:
-        #     bbox = BBOX_TGD
-        #     args.remove("--tgd")
         
         else:
             bbox = BBOX_TGA
