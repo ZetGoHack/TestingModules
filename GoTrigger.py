@@ -7,15 +7,19 @@
 # meta developer: @ZetGo
 # requires: python-dateutil
 
+import base64
 import logging
 import re
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, time
-from zoneinfo import ZoneInfo
 from dateutil.relativedelta import relativedelta, MO, TU, WE, TH, FR, SA, SU
+from typing import Literal
+from zoneinfo import ZoneInfo
 
+from herokutl.extensions import BinaryReader
+from herokutl.errors import FileReferenceExpiredError, FileReferenceInvalidError
 from herokutl.tl.types import TypeMessageMedia
 from herokutl.tl.custom import Message
 
@@ -136,31 +140,96 @@ class TriggerCondition:
         elif isinstance(self.trigger, re.Pattern):
             return re.search(self.trigger, str(value))
 
+    @staticmethod
+    def text(trigger: str, exact_match: bool = False) -> "TriggerCondition":
+        return TriggerCondition("text", str(trigger), exact_match)
+
+    def to_str(self):
+        if isinstance(self.trigger, re.Pattern):
+            trig = self.trigger.pattern
+        else:
+            trig = self.trigger
+        return f"{self.field_name} == {trig}"
+
 
 CONDITIONS = TriggerCondition | TimeCondition
 
 
+@dataclass
+class MessageMedia:
+    media: str
+    chat_id: int
+    message_id: int
+
+    async def refresh(self, client):
+        fresh = await client.get_messages(self.chat_id, ids=self.message_id)
+        self.media = base64.b64encode(bytes(fresh.media)).decode()
+        return self.get()
+
+    def get(self) -> TypeMessageMedia:
+        return BinaryReader(base64.b64decode(self.media)).tgread_object()
+
+
+@dataclass
+class MessageReaction:
+    text: str = ""
+    media: MessageMedia = None
+    # rich_message: list # ну его начерт. без парсера рич оформление в текст обрабатывать это проклято
+    reply_to: Literal["trigger", "trigger_reply"] | int | None = ( # if int or None is set - send_to_chat_id is required
+        "trigger_reply"
+    )
+    send_to_chat_id: int = None
+
+    async def send(self, trigger_message: Message):
+        kwargs = {}
+        if self.reply_to == "trigger":
+            fun = trigger_message.reply
+        elif self.reply_to == "trigger_reply":
+            fun = trigger_message.respond
+        else:
+            fun = trigger_message.client.send_message
+            kwargs = {
+                "entity": self.send_to_chat_id or trigger_message.chat_id,
+                "reply_to": self.reply_to,
+            }
+
+        media = None
+        if self.media:
+            media = self.media.get()
+
+        try:
+            await fun(self.text, file=media, **kwargs)
+        except (FileReferenceExpiredError, FileReferenceInvalidError):
+            await fun(
+                self.text, file=self.media.refresh(trigger_message.client), **kwargs
+            )
+
+
+REACTIONS = MessageReaction
+
+
+@dataclass
 class GoTrigger:
-    def __init__(self, conditions: list[TriggerCondition], time_condition: TimeCondition | None = None):
+    conditions: list[TriggerCondition]
+    time_condition: TimeCondition | None = None
+    reactions: list[REACTIONS]
+
+    def run(self, message: Message):
         pass
 
-    def _react(self):
-        pass
+    async def _react(self, message: Message):
+        for reaction in self.reactions:
+            try:
+                await reaction.send(message)
+            except Exception:
+                logger.exception("Error while reacting to the trigger %s", [cond.to_str() for cond in self.conditions])
 
     def export(self):
         return
 
     @staticmethod
     def load(exported_dict: dict) -> "GoTrigger":
-        for classname in exported_dict.get("classnames", []):
-            try:
-                classname: str = classname
-            except ImportError:
-                logger.exception(
-                    "%s Can't load %s trigger because of exception",
-                    utils.ascii_face(),
-                    exported_dict["name"],
-                )
+        pass
 
 
 @loader.tds
@@ -194,4 +263,4 @@ class GoTriggerMod(loader.Module):
             return await utils.answer(message, "Вынеответили :(")
 
 
-__version__ = (0, 0, 0)
+__version__ = (0, 0, 1)
