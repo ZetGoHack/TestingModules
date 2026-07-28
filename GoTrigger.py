@@ -322,7 +322,7 @@ class MessageMedia(Exportable):
         return base64.b64encode(bytes(media)).decode()
 
     def describe(self) -> str:
-        return f"media from t.me/c/{self.chat_id}/{self.message_id}"
+        return f"{self.type} media from t.me/c/{self.chat_id}/{self.message_id}"
 
     @staticmethod
     def parse(message_with_media: Message):
@@ -386,14 +386,15 @@ class MessageReaction(Reaction):
     @staticmethod
     def parse(
         message: Message,
+        media_message: Message | None = None,
         reply_to: Literal["trigger", "trigger_reply"] | int | None = "trigger_reply",
         send_to_chat_id: int = None,
     ):
         """Parses the replied message"""
         text = message.text
-        media = MessageMedia.parse(message.media)
+        media = MessageMedia.parse(media_message)
 
-        return MessageReaction(text, media, reply_to, send_to_chat_id)
+        return MessageReaction(text=text, media=media, reply_to=reply_to, send_to_chat_id=send_to_chat_id)
 
 
 def _validate_registry():
@@ -469,19 +470,35 @@ class GoTrigger:
 class GoTriggerMod(loader.Module):
     strings = {"name": "GoTrigger"}
 
+    def __init__(self):
+        ""
+        # self.config = loader.ModuleConfig(
+        #     loader.ConfigCategory(
+        #         "defaults",
+        #         loader.ConfigValue(
+        #         ),
+        #         doc=lambda: self.strings["_cfg_defaults"],
+        #     )
+        # )
+
     async def client_ready(self):
         saved_triggers: list[dict] = self.get("triggers", [])
 
         self.triggers = [GoTrigger.load(trig) for trig in saved_triggers]
+
+        heroku_forum = self._db.get("heroku.forums", "channel_id", 0)
+        self.assets_topic = await utils.asset_forum_topic(self.client, self.db, heroku_forum, "GoTrigger Assets", self.strings["_assets_topic"])
 
     @loader.watcher()
     async def main_watcher(self, message: Message):
         pass
 
     async def _add_to_assets(
-        self, media_pull: TypeMessageMedia | list[TypeMessageMedia]
-    ):
-        pass
+        self, media: TypeMessageMedia,
+    ) -> Message:
+        heroku_forum = self._db.get("heroku.forums", "channel_id", 0)
+
+        return await self.client.send_message(heroku_forum, file=media, reply_to=self.assets_topic.id)
 
     @loader.command(ru_doc="[имяТриггера/ничего] - меню триггеров")
     async def gotriggs(self, message: Message):
@@ -493,11 +510,32 @@ class GoTriggerMod(loader.Module):
     )
     async def goadd(self, message: Message):
         """[triggerName] - append the replied message to the trigger's action"""
-        return
+        if not (args := utils.get_args(message)):
+            return await utils.answer(message, "Вы не указали имя триггера")
+
+        trigger_name = args[0]
+
         if not (reply := await message.get_reply_message()):
             return await utils.answer(message, "Вынеответили :(")
         if not (message.text or message.media):
-            return await utils.answer(message, "Нечего добавлять в триггер")
+            return await utils.answer(message, "Нечего добавлять в триггер (нет ни текста, ни медиа)")
+
+        try:
+            trigger = next(trigger for trigger in self.triggers if trigger.name.lower() in trigger_name)
+        except StopIteration:
+            return await utils.answer(message, f"Триггера с именем <code>{trigger_name}</code> не существует. Невозможно добавить сообщение")
+
+        if reply.media:
+            media_message = await self._add_to_assets(reply.media)
+
+        reaction = MessageReaction.parse(
+            message=reply,
+            media_message=media_message,
+        )
+
+        trigger.reactions.append(reaction)
+
+        await utils.answer(message, "Действие успешно добавлено в триггер!")
 
 
 __version__ = (0, 0, 4)
