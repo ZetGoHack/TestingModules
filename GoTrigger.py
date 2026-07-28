@@ -45,6 +45,9 @@ class TimeCond(Condition):
     def matches(self, dt: datetime) -> bool:
         return all(c.matches(dt) for c in self.conditions)
 
+    def describe(self) -> str:
+        return " & ".join(c.describe() for c in self.conditions)
+
 
 @dataclass
 class Weekday(Condition):
@@ -52,6 +55,9 @@ class Weekday(Condition):
 
     def matches(self, dt):
         return dt.weekday() in self.days
+
+    def describe(self) -> str:
+        return ", ".join(WEEKDAY_NAMES[d] for d in sorted(self.days))
 
 
 @dataclass
@@ -61,11 +67,17 @@ class DayOfMonth(Condition):
     def matches(self, dt):
         return dt.day in self.days
 
+    def describe(self) -> str:
+        return "day " + ", ".join(str(d) for d in sorted(self.days))
+
 
 @dataclass
 class LastDayOfMonth(Condition):
     def matches(self, dt):
         return dt.day == (dt + relativedelta(day=31)).day
+
+    def describe(self) -> str:
+        return "last day of month"
 
 
 @dataclass
@@ -85,6 +97,13 @@ class NthWeekday(Condition):
             )
         return d == anchor + relativedelta(weekday=wd)
 
+    def describe(self) -> str:
+        if self.n == -1:
+            nth = "last"
+        else:
+            nth = f"#{abs(self.n)}" + (" from the end" if self.n < 0 else "")
+        return f"{nth} {WEEKDAY_NAMES[self.weekday]} of {self.period}"
+
 
 @dataclass
 class TimeRange(Condition):
@@ -96,6 +115,9 @@ class TimeRange(Condition):
         if self.start <= self.end:
             return self.start <= t <= self.end
         return t >= self.start or t <= self.end
+
+    def describe(self) -> str:
+        return f"{self.start:%H:%M}-{self.end:%H:%M}"
 
 
 @dataclass
@@ -116,6 +138,16 @@ class TimeCondition:
         if not self.valid_on:
             return True
         return any(c.matches(dt) for c in self.valid_on)
+
+    def describe(self) -> str:
+        parts = []
+        if self.valid_on:
+            parts.append("on " + " / ".join(c.describe() for c in self.valid_on))
+        if self.invalid_on:
+            parts.append("except " + " / ".join(c.describe() for c in self.invalid_on))
+        if self.tz:
+            parts.append(f"({self.tz})")
+        return " ".join(parts) or "always"
 
 
 @dataclass
@@ -138,18 +170,20 @@ class TriggerCondition:
                 return self.trigger in str(value)
 
         elif isinstance(self.trigger, re.Pattern):
-            return re.search(self.trigger, str(value))
+            return bool(self.trigger.search(str(value)))
+
+        return False
 
     @staticmethod
     def text(trigger: str, exact_match: bool = False) -> "TriggerCondition":
         return TriggerCondition("text", str(trigger), exact_match)
 
-    def to_str(self):
+    def describe(self) -> str:
         if isinstance(self.trigger, re.Pattern):
-            trig = self.trigger.pattern
-        else:
-            trig = self.trigger
-        return f"{self.field_name} == {trig}"
+            return f"{self.field_name} ~ {self.trigger.pattern}"
+        if isinstance(self.trigger, bool):
+            return f"{self.field_name} is {self.trigger}"
+        return f"{'' if self.exact_match else 'in '}{self.field_name}: {self.trigger}"
 
 
 CONDITIONS = TriggerCondition | TimeCondition
@@ -168,6 +202,9 @@ class MessageMedia:
 
     def get(self) -> TypeMessageMedia:
         return BinaryReader(base64.b64decode(self.media)).tgread_object()
+
+    def describe(self) -> str:
+        return f"media from {self.chat_id}/{self.message_id}"
 
 
 @dataclass
@@ -201,9 +238,14 @@ class MessageReaction:
             await fun(self.text, file=media, **kwargs)
         except (FileReferenceExpiredError, FileReferenceInvalidError):
             await fun(
-                self.text, file=self.media.refresh(trigger_message.client), **kwargs
+                self.text, file=await self.media.refresh(trigger_message.client), **kwargs
             )
 
+    def describe(self) -> str:
+        preview = utils.escape_html(self.text[:40]) or (
+            self.media.describe() if self.media else "empty"
+        )
+        return f"send {preview} -> {self.reply_to}"
 
 REACTIONS = MessageReaction
 
@@ -223,6 +265,9 @@ class GoTrigger:
                 await reaction.send(message)
             except Exception:
                 logger.exception("Error while reacting to the trigger %s", [cond.to_str() for cond in self.conditions])
+
+    def describe(self) -> str:
+        return " & ".join(cond.describe() for cond in self.conditions)
 
     def export(self):
         return
@@ -263,4 +308,4 @@ class GoTriggerMod(loader.Module):
             return await utils.answer(message, "Вынеответили :(")
 
 
-__version__ = (0, 0, 1)
+__version__ = (0, 0, 2)
