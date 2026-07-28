@@ -305,6 +305,7 @@ class MessageMedia(Exportable):
     display_name: ClassVar[str] = "media"
 
     media: str
+    type: str
     chat_id: int
     message_id: int
 
@@ -316,8 +317,26 @@ class MessageMedia(Exportable):
     def get(self) -> TypeMessageMedia:
         return BinaryReader(base64.b64decode(self.media)).tgread_object()
 
+    @staticmethod
+    def encode(media: TypeMessageMedia) -> str:
+        return base64.b64encode(bytes(media)).decode()
+
     def describe(self) -> str:
-        return f"media from {self.chat_id}/{self.message_id}"
+        return f"media from t.me/c/{self.chat_id}/{self.message_id}"
+
+    @staticmethod
+    def parse(message_with_media: Message):
+        if message_with_media.media is not None:
+            media, chat_id, message_id = (
+                MessageMedia.encode(message_with_media.media),
+                message_with_media.chat_id,
+                message_with_media.id,
+            )
+            media_type = media.__class__.__name__.lstrip("MessageMedia")
+
+            return MessageMedia(media, media_type, chat_id, message_id)
+
+        return None
 
 
 @dataclass
@@ -363,6 +382,18 @@ class MessageReaction(Reaction):
             self.media.describe() if self.media else "empty"
         )
         return f"send {preview} -> {self.reply_to}"
+
+    @staticmethod
+    def parse(
+        message: Message,
+        reply_to: Literal["trigger", "trigger_reply"] | int | None = "trigger_reply",
+        send_to_chat_id: int = None,
+    ):
+        """Parses the replied message"""
+        text = message.text
+        media = MessageMedia.parse(message.media)
+
+        return MessageReaction(text, media, reply_to, send_to_chat_id)
 
 
 def _validate_registry():
@@ -439,7 +470,9 @@ class GoTriggerMod(loader.Module):
     strings = {"name": "GoTrigger"}
 
     async def client_ready(self):
-        pass
+        saved_triggers: list[dict] = self.get("triggers", [])
+
+        self.triggers = [GoTrigger.load(trig) for trig in saved_triggers]
 
     @loader.watcher()
     async def main_watcher(self, message: Message):
@@ -456,13 +489,15 @@ class GoTriggerMod(loader.Module):
         pass
 
     @loader.command(
-        ru_doc="[имяТриггера] [номерДействия] - добавить сообщение из ответа в конец действия Триггера"
+        ru_doc="[имяТриггера] - добавить сообщение из ответа в конец действия Триггера"
     )
     async def goadd(self, message: Message):
-        """[triggerName] [actionNumber] - append the replied message to the trigger's action"""
+        """[triggerName] - append the replied message to the trigger's action"""
         return
         if not (reply := await message.get_reply_message()):
             return await utils.answer(message, "Вынеответили :(")
+        if not (message.text or message.media):
+            return await utils.answer(message, "Нечего добавлять в триггер")
 
 
-__version__ = (0, 0, 3)
+__version__ = (0, 0, 4)
