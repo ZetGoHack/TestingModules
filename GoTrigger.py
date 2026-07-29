@@ -75,6 +75,7 @@ def _decode(value):
 
 class Exportable(ABC):
     display_name: ClassVar[str] = ""
+    selectable: ClassVar[bool] = True
     _registry: ClassVar[dict[str, type["Exportable"]]] = {}
 
     def __init_subclass__(cls, **kwargs):
@@ -86,7 +87,7 @@ class Exportable(ABC):
         return [
             sub
             for sub in Exportable._registry.values()
-            if issubclass(sub, cls) and not sub.__abstractmethods__
+            if issubclass(sub, cls) and not sub.__abstractmethods__ and sub.selectable
         ]
 
     @abstractmethod
@@ -295,6 +296,35 @@ class TriggerCondition(Condition):
         return f"{'' if self.exact_match else 'in '}{self.field_name}: {self.trigger}"
 
 
+@dataclass
+class ChatScope(Condition):
+    display_name: ClassVar[str] = "active_chats"
+    selectable: ClassVar[bool] = False
+
+    whitelist: set[int] = field(default_factory=set)
+    blacklist: set[int] = field(default_factory=set)
+
+    @property
+    def is_global(self) -> bool:
+        return not self.whitelist
+
+    def check(self, message: Message) -> bool:
+        chat_id = utils.get_chat_id(message)
+        if chat_id in self.blacklist:
+            return False
+        return chat_id in self.whitelist if self.whitelist else True
+
+    def describe(self) -> str:
+        where = (
+            "anywhere"
+            if self.is_global
+            else "in " + ", ".join(str(c) for c in sorted(self.whitelist))
+        )
+        if self.blacklist:
+            where += " except " + ", ".join(str(c) for c in sorted(self.blacklist))
+        return where
+
+
 class Reaction(Exportable):
     @abstractmethod
     async def send(self, trigger_message: Message): ...
@@ -415,12 +445,17 @@ class GoTrigger:
     name: str
     conditions: list[Condition]
     reactions: list[Reaction]
+    active_chats: ChatScope = field(default_factory=ChatScope)
 
     async def run(self, message: Message):
         if self._check(message):
             await self._react(message)
 
     def _check(self, message: Message) -> bool:
+        if not self.active_chats.check(message):
+            logger.debug("[%s] Out of scope: %s", self.name, self.active_chats.describe())
+            return False
+
         logger.debug(
             "[%s] Started checking with %s conditions", self.name, len(self.conditions)
         )
@@ -444,13 +479,17 @@ class GoTrigger:
                 )
 
     def describe(self) -> str:
-        return " & ".join(cond.describe() for cond in self.conditions)
+        parts = [cond.describe() for cond in self.conditions]
+        if not self.active_chats.is_global or self.active_chats.blacklist:
+            parts.append(self.active_chats.describe())
+        return " & ".join(parts)
 
     def export(self) -> dict:
         return {
             "name": self.name,
             "conditions": [cond.to_dict() for cond in self.conditions],
             "reactions": [reaction.to_dict() for reaction in self.reactions],
+            "active_chats": self.active_chats.to_dict(),
         }
 
     @classmethod
@@ -463,6 +502,9 @@ class GoTrigger:
             reactions=[
                 Reaction.from_dict(reaction) for reaction in exported_dict["reactions"]
             ],
+            active_chats=ChatScope.from_dict(
+                exported_dict.get("active_chats") or ChatScope().to_dict()
+            ),
         )
 
 
@@ -491,7 +533,15 @@ class GoTriggerMod(loader.Module):
 
     @loader.watcher()
     async def main_watcher(self, message: Message):
-        pass
+        if not self.triggers:
+            return
+
+        # scheduled_tasks = []
+
+        for trigger in self.triggers:
+            if task := await trigger.run(message):
+                pass
+                # scheduled_tasks.extend(task)
 
     async def _add_to_assets(
         self, media: TypeMessageMedia,
@@ -538,4 +588,4 @@ class GoTriggerMod(loader.Module):
         await utils.answer(message, "Действие успешно добавлено в триггер!")
 
 
-__version__ = (0, 0, 4)
+__version__ = (0, 0, 5)
