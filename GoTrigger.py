@@ -424,7 +424,9 @@ class MessageReaction(Reaction):
         text = message.text
         media = MessageMedia.parse(media_message)
 
-        return MessageReaction(text=text, media=media, reply_to=reply_to, send_to_chat_id=send_to_chat_id)
+        return MessageReaction(
+            text=text, media=media, reply_to=reply_to, send_to_chat_id=send_to_chat_id
+        )
 
 
 def _validate_registry():
@@ -453,7 +455,9 @@ class GoTrigger:
 
     def _check(self, message: Message) -> bool:
         if not self.active_chats.check(message):
-            logger.debug("[%s] Out of scope: %s", self.name, self.active_chats.describe())
+            logger.debug(
+                "[%s] Out of scope: %s", self.name, self.active_chats.describe()
+            )
             return False
 
         logger.debug(
@@ -510,10 +514,21 @@ class GoTrigger:
 
 @loader.tds
 class GoTriggerMod(loader.Module):
-    strings = {"name": "GoTrigger"}
+    strings = {
+        "name": "GoTrigger",
+        "menu_main": """<tg-emoji emoji-id=5875271289605722323>🍔</tg-emoji> <b>GoTrigger: Меню</b>
+
+<tg-emoji emoji-id=5854776233950188167>🏷</tg-emoji> Текущие триггеры ({count}):
+<blockquote>{triggers}</blockquote>
+
+Выберите один для настройки
+<tg-emoji emoji-id=5343843578638538809>🍓</tg-emoji><tg-emoji emoji-id=5343843578638538809>🍓</tg-emoji><tg-emoji emoji-id=5343843578638538809>🍓</tg-emoji><tg-emoji emoji-id=5343843578638538809>🍓</tg-emoji><tg-emoji emoji-id=5875008416132370818>🔽</tg-emoji><tg-emoji emoji-id=5875008416132370818>🔽</tg-emoji><tg-emoji emoji-id=5875008416132370818>🔽</tg-emoji>
+""",
+        "menu_trigger_line": "<tg-emoji emoji-id=5343544262367682803>🍓</tg-emoji>&gt; {name} - {cond_count} условия, {reac_count} реакций",
+    }
 
     def __init__(self):
-        ""
+        """"""
         # self.config = loader.ModuleConfig(
         #     loader.ConfigCategory(
         #         "defaults",
@@ -529,7 +544,13 @@ class GoTriggerMod(loader.Module):
         self.triggers = [GoTrigger.load(trig) for trig in saved_triggers]
 
         heroku_forum = self._db.get("heroku.forums", "channel_id", 0)
-        self.assets_topic = await utils.asset_forum_topic(self.client, self.db, heroku_forum, "GoTrigger Assets", self.strings["_assets_topic"])
+        self.assets_topic = await utils.asset_forum_topic(
+            self.client,
+            self.db,
+            heroku_forum,
+            "GoTrigger Assets",
+            self.strings["_assets_topic"],
+        )
 
     @loader.watcher()
     async def main_watcher(self, message: Message):
@@ -544,16 +565,72 @@ class GoTriggerMod(loader.Module):
                 # scheduled_tasks.extend(task)
 
     async def _add_to_assets(
-        self, media: TypeMessageMedia,
+        self,
+        media: TypeMessageMedia,
     ) -> Message:
         heroku_forum = self._db.get("heroku.forums", "channel_id", 0)
 
-        return await self.client.send_message(heroku_forum, file=media, reply_to=self.assets_topic.id)
+        return await self.client.send_message(
+            heroku_forum, file=media, reply_to=self.assets_topic.id
+        )
+
+    async def _trigger_menu(self, call, name: str):
+        return 
+
+    async def _inl_add_trigger(self, call, data = None):
+        return
+
+    def _build_main_markup(self, triggers: list[GoTrigger]):
+        buttons = []
+        for trigger in triggers:
+            buttons.append(
+                [
+                    {
+                        "text": trigger.name,
+                        "callback": self._trigger_menu,
+                        "kwargs": {"name": trigger.name},
+                    }
+                ]
+            )
+
+        buttons.append(
+            [
+                {
+                    "name": self.strings["btn_add_trigger"],
+                    "callback": self._inl_add_trigger,
+                }
+            ]
+        )
+        return
+
+    async def _menu(self, message: Message, page: int = 0):
+        text = self.strings["menu_main"]
+
+        page_triggers = self.triggers[page : page + 5]
+
+        triggs = "\n".join(
+            [
+                self.strings["menu_trigger_line"].format(
+                    name=trigger.name,
+                    cond_count=len(trigger.conditions),
+                    reac_count=len(trigger.reactions),
+                )
+                for trigger in page_triggers
+            ]
+        )
+
+        reply_markup = self._build_main_markup(page_triggers)
+
+        await utils.answer(
+            message,
+            text.format(count=len(self.triggers), triggers=triggs),
+            reply_markup=reply_markup,
+        )
 
     @loader.command(ru_doc="[имяТриггера/ничего] - меню триггеров")
     async def gotriggs(self, message: Message):
         """[triggerName/none] - triggers menu"""
-        pass
+        await self._menu(message)
 
     @loader.command(
         ru_doc="[имяТриггера] - добавить сообщение из ответа в конец действия Триггера"
@@ -568,12 +645,21 @@ class GoTriggerMod(loader.Module):
         if not (reply := await message.get_reply_message()):
             return await utils.answer(message, "Вынеответили :(")
         if not (message.text or message.media):
-            return await utils.answer(message, "Нечего добавлять в триггер (нет ни текста, ни медиа)")
+            return await utils.answer(
+                message, "Нечего добавлять в триггер (нет ни текста, ни медиа)"
+            )
 
         try:
-            trigger = next(trigger for trigger in self.triggers if trigger.name.lower() in trigger_name)
+            trigger = next(
+                trigger
+                for trigger in self.triggers
+                if trigger.name.lower() in trigger_name
+            )
         except StopIteration:
-            return await utils.answer(message, f"Триггера с именем <code>{trigger_name}</code> не существует. Невозможно добавить сообщение")
+            return await utils.answer(
+                message,
+                f"Триггера с именем <code>{trigger_name}</code> не существует. Невозможно добавить сообщение",
+            )
 
         if reply.media:
             media_message = await self._add_to_assets(reply.media)
@@ -588,4 +674,4 @@ class GoTriggerMod(loader.Module):
         await utils.answer(message, "Действие успешно добавлено в триггер!")
 
 
-__version__ = (0, 0, 5)
+__version__ = (0, 0, 6)
