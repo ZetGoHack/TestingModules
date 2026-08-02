@@ -55,7 +55,7 @@
 # 1. Версия модуля. Длина кортежа не валидируется, но до Heroku 2.0.0
 #    невозможно было открыть .help у модулей с версией короче трёх элементов.
 #    Ради совместимости со старыми юзерботами лучше всегда указывать три элемента
-__version__ = ("beta", "test", 4) # будет отображено как "vbeta.test.4"
+__version__ = ("beta", "test", 5) # будет отображено как "vbeta.test.5"
 
 
 # 2. Разработчик - имя, юзернейм или канал разработчика модуля
@@ -146,8 +146,15 @@ __version__ = ("beta", "test", 4) # будет отображено как "vbet
 
 
 import asyncio
-from typing import Literal
-from ..types import BotInlineCall, InlineCall, InlineQuery, Module, Library
+from typing import TYPE_CHECKING, Literal
+from ..types import BotInlineCall, InlineCall, InlineQuery
+# ⚠️ Module и Library - специально импортируются под TYPE_CHECKING
+#    Loader ищет класс твоего модуля как первый попавшийся в файле подкласс от Module (vars(module).values()),
+#    а Module - подкласс самого себя. Если импортировать его ДО объявления своего класса - loader найдёт сам Module
+#    раньше твоего класса, создаст пустой Module() и юзербот загрузит модуль как буквально нерабочую пустышку.
+#    Аннотации, использующие эти типы, надо оборачивать в строку
+if TYPE_CHECKING:
+    from ..types import Module, Library
 
 import telethon
 
@@ -804,9 +811,10 @@ class TheBestExampleEverMod(loader.Module):
         # region LOOKUP (доступ к модулям)
 
 
-        tester_module: Literal[False] | Module | Library = self.lookup(
+        tester_module: "Literal[False] | Module | Library" = self.lookup(
             "TestMod"
         )
+        # ^ аннотация в кавычках (forward reference) - см. предупреждение у импорта Module/Library в начале файла
         # self.lookup("module_classname_or_name") - метод, буквально возвращающий объект класса активного Модуля/Библиотеки.
         #                                           с ним вы получаете доступ к self модуля и вызывать его функции, получать
         #                                           его данные и прочее. можно переиспользовать одну функцию одного модуля в
