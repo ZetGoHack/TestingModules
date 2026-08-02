@@ -24,6 +24,7 @@ from herokutl.tl.types import TypeMessageMedia
 from herokutl.tl.custom import Message
 
 from .. import loader, utils
+from ..types import InlineCall
 
 logger = logging.getLogger(__name__)
 
@@ -518,7 +519,7 @@ class GoTriggerMod(loader.Module):
         "name": "GoTrigger",
         "menu_main": """<tg-emoji emoji-id=5875271289605722323>🍔</tg-emoji> <b>GoTrigger: Меню</b>
 
-<tg-emoji emoji-id=5854776233950188167>🏷</tg-emoji> Текущие триггеры ({count}):
+<tg-emoji emoji-id=5854776233950188167>🏷</tg-emoji> Текущие триггеры ({shown}/{count}, Страница {page}):
 <blockquote>{triggers}</blockquote>
 
 Выберите один для настройки
@@ -574,10 +575,10 @@ class GoTriggerMod(loader.Module):
             heroku_forum, file=media, reply_to=self.assets_topic.id
         )
 
-    async def _trigger_menu(self, call, name: str):
-        return 
+    async def _trigger_menu(self, call: InlineCall, name: str):
+        return
 
-    async def _inl_add_trigger(self, call, data = None):
+    async def _inl_add_trigger(self, call: InlineCall, data: dict = None):
         return
 
     def _build_main_markup(self, triggers: list[GoTrigger]):
@@ -601,7 +602,7 @@ class GoTriggerMod(loader.Module):
                 }
             ]
         )
-        return
+        return buttons
 
     async def _menu(self, message: Message, page: int = 0):
         text = self.strings["menu_main"]
@@ -623,7 +624,12 @@ class GoTriggerMod(loader.Module):
 
         await utils.answer(
             message,
-            text.format(count=len(self.triggers), triggers=triggs),
+            text.format(
+                shown=len(page_triggers),
+                count=len(self.triggers),
+                page=page,
+                triggers=triggs,
+            ),
             reply_markup=reply_markup,
         )
 
