@@ -55,7 +55,7 @@
 # 1. Версия модуля. Длина кортежа не валидируется, но до Heroku 2.0.0
 #    невозможно было открыть .help у модулей с версией короче трёх элементов.
 #    Ради совместимости со старыми юзерботами лучше всегда указывать три элемента
-__version__ = ("beta", "test", 3) # будет отображено как "vbeta.test.3"
+__version__ = ("beta", "test", 4) # будет отображено как "vbeta.test.4"
 
 
 # 2. Разработчик - имя, юзернейм или канал разработчика модуля
@@ -146,7 +146,8 @@ __version__ = ("beta", "test", 3) # будет отображено как "vbet
 
 
 import asyncio
-from ..types import BotInlineCall, InlineCall, InlineQuery
+from typing import Literal
+from ..types import BotInlineCall, InlineCall, InlineQuery, Module, Library
 
 import telethon
 
@@ -303,9 +304,21 @@ class TheBestExampleEverMod(loader.Module):
                 doc="This is an example option", # описание опции. Отображается в конфиге модуля
                 validator=loader.validators.Integer(), # валидатор для опции. Проверяет, что значение, которое пользователь вводит в конфиге, соответствует требованиям.
                                                        # ℹ️ Все валидаторы ищите в Heroku/heroku/validators.py
+                                                       #     Список классов валидаторов: ["Boolean", "Integer", "Float", "String", "Choice", "MultiChoice",
+                                                       #                                  "Series", "Link", "RegExp", "TelegramID", "Union", "NoneType",
+                                                       #                                  "Hidden", "Emoji", "EntityLike", "RandomLink"]
+
                 on_change=self._on_config_change, # функция, которая будет вызвана при изменении опции. Может быть асинхронной, или синхронной.
                                                   # Ничего не будет передано в аргументы
             ),
+            loader.ConfigValue(
+                "hidden_value",
+                "some_hidden_data",
+                "Data that should not be displayed in the settings menu",
+                validator=loader.validators.Hidden(       # Hidden - буквально скрывает данные и заменяет на * в основном меню модуля. >
+                    loader.validators.String(), #          При открытии меню самого значения, данные можно "подсмотреть", нажав на кнопку >
+                ),                                        #          [Показать значение]. Значение раскрывается только в его меню. Незаменимо для >
+            ),                                            #          конфигов API ключей и прочих чувствительных данных
             loader.ConfigValue(
                 "list_example",
                 [1, 2, 3],
@@ -338,6 +351,8 @@ class TheBestExampleEverMod(loader.Module):
                 ),
             ),
         )
+
+        self._loop_iterations = 0 # переменная для loop
 
     # Действия при загрузке модуля через .dlm или .lm. Обычно используется для начальной настройки, которая не должна выполняться при каждом запуске модуля.
     # Вызывается ДО client_ready. В self уже готовы все атрибуты (self.client, self.db и т.д.)
@@ -758,6 +773,56 @@ class TheBestExampleEverMod(loader.Module):
 
 
     # endregion WATCHER
+
+
+    # region ЦИКЛЫ
+
+
+    @loader.loop(
+        interval=60, # default int 5
+        autostart=True, # default bool False
+        wait_before=True, # default bool False
+        stop_clause="IS_LOOP_RUNNING" # default NoneType None
+    )
+    async def loop(self): 
+        # loop - декоратор, который помечает функцию как InfiniteLoop для запуска цикла функции каждые interval
+        #        секунд. loop по дефолту сам не запускается, если не указан autostart. Ручной запуск через 
+        #        self.loop.start(), ручная остановка цикла - self.loop.stop(). NOTE: stop() до Heroku 2.2.2 
+        #        НЕ очищал поле loop._task, что мешало повторному запуску loop.start(). В Heroku 2.2.2+ ошибка
+        #        исправлена. wait_before - переносит задержку с окончания цикла в его начало. stop_clause - имя
+        #        ключа в датабазе модуля (self.get(KEY, bool)), который является знаком полной остановки цикла.
+        #        NOTE: stop_clause до Heroku 2.2.2 так же НЕ очищал поле loop._task. Для совместимых с Hikka
+        #        модулей делайте обход через очистку поля _task и status после явной остановки цикла, если
+        #        собираетесь стартовать цикл по-новой.
+        self._loop_iterations += 1
+
+        if self._loop_iterations > 10:
+            self.set("IS_LOOP_RUNNING", False)
+            return
+
+
+        # region LOOKUP (доступ к модулям)
+
+
+        tester_module: Literal[False] | Module | Library = self.lookup(
+            "TestMod"
+        )
+        # self.lookup("module_classname_or_name") - метод, буквально возвращающий объект класса активного Модуля/Библиотеки.
+        #                                           с ним вы получаете доступ к self модуля и вызывать его функции, получать
+        #                                           его данные и прочее. можно переиспользовать одну функцию одного модуля в
+        #                                           других. неплохо подходит для интеграций модулей. если lookup не нашёл
+        #                                           модуль, будет возвращено False.
+
+        if tester_module is not False:
+            log_level = tester_module.config["tglog_level"]
+        else:
+            log_level = 0
+
+
+        # endregion LOOKUP (доступ к модулям)
+
+
+    # endregion ЦИКЛЫ
 
 
     # region RAW_HANDLER
