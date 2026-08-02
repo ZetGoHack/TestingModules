@@ -258,7 +258,7 @@ class TheBestExampleEverMod(loader.Module):
         "inl__a_file_caption": "<b>Это PDF-файл!</b>",
     }
 
-    strings_jp = {
+    strings_jp = { # JP вместо JA - исключение! юзербот использует ключ JP для японского.
         "_cls_doc": "これは最高のモジュールの例です！",
         "cfg_changed": "構成値が{}に変更されました！",
         "loading": "<emoji document_id=5382187328670282655>🐱</emoji> 結果を読み込んでいます...",
@@ -405,9 +405,9 @@ class TheBestExampleEverMod(loader.Module):
 
         # endregion ДАТАБАЗА
 
-            await self.client.send_message(
-                self.client.heroku_me.id, self.strings["cfg_changed"].format(self.config["example_option"])
-            )
+        await self.client.send_message(
+            self.client.heroku_me.id, self.strings["cfg_changed"].format(self.config["example_option"])
+        )
 
 
     # region КОМАНДЫ
@@ -589,7 +589,7 @@ class TheBestExampleEverMod(loader.Module):
         #         иначе кнопка не будет создана
 
         # "web_app" - кнопка для открытия webapp. При клике открывает webapp. Может быть
-        #             строкой (url), или словарём с параметрами для WebAppInfo из aiogram.
+        #             строкой (url), или словарём с ключом "url".
         #             На практике, Телеграм позволяет использовать её только в обычных,
         #             сообщениях бота, не в инлайн-формах
 
@@ -666,7 +666,7 @@ class TheBestExampleEverMod(loader.Module):
 
     # Инлайн-команды. Функции, вызываемые при вводе инлайн-команды в виде @ur_inline_bot inlexample query1 query2.
     # Регистрируются в юб с помощью декоратора @loader.inline_handler, как и обычные команды. В аргументы функции при вызове
-    # получает модифицированный объект `InlineQuery` из aiogram.
+    # получает объект `InlineQuery` (с Heroku 2.1.0 не связан с aiogram).
     @loader.inline_handler(ru_doc="Пример описания для инлайн-команды на русском", jp_doc="インラインコマンドの日本語の説明の例")
     async def inlexample(self, query: InlineQuery):
         """Example description for an inline command in English"""
