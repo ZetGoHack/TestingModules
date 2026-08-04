@@ -31,6 +31,9 @@ logger = logging.getLogger(__name__)
 WEEKDAYS = (MO, TU, WE, TH, FR, SA, SU)
 WEEKDAY_NAMES = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 
+TRIGGER_NAME_RE = re.compile(r"^\w+$")
+PAGE_SIZE = 5
+
 
 def _encode(value):
     if isinstance(value, Exportable):
@@ -526,6 +529,34 @@ class GoTriggerMod(loader.Module):
 <tg-emoji emoji-id=5343843578638538809>🍓</tg-emoji><tg-emoji emoji-id=5343843578638538809>🍓</tg-emoji><tg-emoji emoji-id=5343843578638538809>🍓</tg-emoji><tg-emoji emoji-id=5343843578638538809>🍓</tg-emoji><tg-emoji emoji-id=5875008416132370818>🔽</tg-emoji><tg-emoji emoji-id=5875008416132370818>🔽</tg-emoji><tg-emoji emoji-id=5875008416132370818>🔽</tg-emoji>
 """,
         "menu_trigger_line": "<tg-emoji emoji-id=5343544262367682803>🍓</tg-emoji>&gt; {name} - {cond_count} условия, {reac_count} реакций",
+        "menu_trigger": """<tg-emoji emoji-id=5875271289605722323>🍔</tg-emoji> <b>GoTrigger: Настройка</b>
+
+<tg-emoji emoji-id=5875019892284985369>➕</tg-emoji> Имя: {name}
+
+<tg-emoji emoji-id=5960714428394507968>👁</tg-emoji> <b>Условия</b>:
+{conditions}
+
+<tg-emoji emoji-id=5884123981706956210>➡️</tg-emoji> <b>Порядок отправки</b>:
+{reactions}
+""",
+        "menu_trigger_desc_line": "<tg-emoji emoji-id=5343544262367682803>😀</tg-emoji>&gt; {desc}",
+        "menu_trigger_no_conditions": "<tg-emoji emoji-id=5343544262367682803>😀</tg-emoji>&gt; отсутствуют",
+        "menu_trigger_no_reactions": "<tg-emoji emoji-id=5343544262367682803>😀</tg-emoji>&gt; отсутствуют",
+        "btn_rename": "Изменить имя",
+        "btn_conditions": "Условия",
+        "btn_reactions": "Реакции",
+        "back": "Назад",
+        "close": "Закрыть",
+        "trigger_not_found": "Триггер <code>{name}</code> не найден",
+        "rename_prompt": "Введите новое имя триггера (без пробелов)",
+        "rename_invalid": "Имя триггера не должно содержать пробелов и других разделителей. Разрешены только буквы, цифры и <code>_</code>",
+        "rename_exists": "Триггер с именем <code>{name}</code> уже существует",
+        "rename_success": "Имя триггера изменено на <code>{name}</code>",
+        "goadd_no_name": "Вы не указали имя триггера",
+        "goadd_no_reply": "Вынеответили :(",
+        "goadd_empty": "Нечего добавлять в триггер (нет ни текста, ни медиа)",
+        "goadd_trigger_not_found": "Триггера с именем <code>{name}</code> не существует. Невозможно добавить сообщение",
+        "goadd_success": "Действие успешно добавлено в триггер!",
     }
 
     def __init__(self):
@@ -565,6 +596,9 @@ class GoTriggerMod(loader.Module):
                 pass
                 # scheduled_tasks.extend(task)
 
+    def _save_triggers(self):
+        self.set("triggers", [trigger.export() for trigger in self.triggers])
+
     async def _add_to_assets(
         self,
         media: TypeMessageMedia,
@@ -575,13 +609,108 @@ class GoTriggerMod(loader.Module):
             heroku_forum, file=media, reply_to=self.assets_topic.id
         )
 
-    async def _trigger_menu(self, call: InlineCall, name: str):
-        return
+    async def _trigger_menu(self, call: InlineCall, name: str, page: int = 0):
+        trigger = next((t for t in self.triggers if t.name == name), None)
+        if trigger is None:
+            return await call.answer(
+                self.strings["trigger_not_found"].format(name=name), show_alert=True
+            )
+
+        conditions = "\n".join(
+            self.strings["menu_trigger_desc_line"].format(
+                desc=utils.escape_html(cond.describe()[:20])
+            )
+            for cond in trigger.conditions
+        ) or self.strings["menu_trigger_no_conditions"]
+
+        reactions = "\n".join(
+            self.strings["menu_trigger_desc_line"].format(
+                desc=utils.escape_html(reaction.describe()[:20])
+            )
+            for reaction in trigger.reactions
+        ) or self.strings["menu_trigger_no_reactions"]
+
+        await utils.answer(
+            call,
+            self.strings["menu_trigger"].format(
+                name=trigger.name,
+                conditions=conditions,
+                reactions=reactions,
+            ),
+            reply_markup=self._build_trigger_markup(trigger, page),
+        )
+
+    def _build_trigger_markup(self, trigger: GoTrigger, page: int = 0):
+        return [
+            [
+                {
+                    "text": self.strings["btn_rename"],
+                    "input": self.strings["rename_prompt"],
+                    "handler": self._trigger_rename_handler,
+                    "args": (trigger.name,),
+                    "kwargs": {"page": page},
+                },
+            ],
+            [
+                {
+                    "text": self.strings["btn_conditions"],
+                    "callback": self._inl_trigger_conditions,
+                    "kwargs": {"name": trigger.name, "page": page},
+                },
+            ],
+            [
+                {
+                    "text": self.strings["btn_reactions"],
+                    "callback": self._inl_trigger_reactions,
+                    "kwargs": {"name": trigger.name, "page": page},
+                },
+            ],
+            [
+                {
+                    "text": self.strings["back"],
+                    "callback": self._menu,
+                    "kwargs": {"page": page},
+                },
+                {"text": self.strings["close"], "action": "close"},
+            ],
+        ]
+
+    async def _trigger_rename_handler(
+        self, call: InlineCall, data: str, name: str, page: int = 0
+    ):
+        trigger = next((t for t in self.triggers if t.name == name), None)
+        if trigger is None:
+            return await call.answer(
+                self.strings["trigger_not_found"].format(name=name), show_alert=True
+            )
+
+        new_name = data.strip()
+        if not TRIGGER_NAME_RE.fullmatch(new_name):
+            return await call.answer(self.strings["rename_invalid"], show_alert=True)
+
+        if new_name != trigger.name and any(
+            t.name == new_name for t in self.triggers
+        ):
+            return await call.answer(
+                self.strings["rename_exists"].format(name=new_name), show_alert=True
+            )
+
+        trigger.name = new_name
+        self._save_triggers()
+
+        await call.answer(self.strings["rename_success"].format(name=new_name))
+        await self._trigger_menu(call, new_name, page)
+
+    async def _inl_trigger_conditions(self, call: InlineCall, name: str, page: int = 0):
+        pass
+
+    async def _inl_trigger_reactions(self, call: InlineCall, name: str, page: int = 0):
+        pass
 
     async def _inl_add_trigger(self, call: InlineCall, data: dict = None):
         return
 
-    def _build_main_markup(self, triggers: list[GoTrigger]):
+    def _build_main_markup(self, triggers: list[GoTrigger], page: int = 0):
         buttons = []
         for trigger in triggers:
             buttons.append(
@@ -589,17 +718,45 @@ class GoTriggerMod(loader.Module):
                     {
                         "text": trigger.name,
                         "callback": self._trigger_menu,
-                        "kwargs": {"name": trigger.name},
+                        "kwargs": {"name": trigger.name, "page": page},
                     }
                 ]
             )
 
+        nav_row = []
+        if page > 0:
+            nav_row.append(
+                {
+                    "text": "⬅️",
+                    "callback": self._menu,
+                    "kwargs": {"page": page - 1},
+                }
+            )
+        if (page + 1) * PAGE_SIZE < len(self.triggers):
+            nav_row.append(
+                {
+                    "text": "➡️",
+                    "callback": self._menu,
+                    "kwargs": {"page": page + 1},
+                }
+            )
+        if nav_row:
+            buttons.append(nav_row)
+
         buttons.append(
             [
                 {
-                    "name": self.strings["btn_add_trigger"],
+                    "text": self.strings["btn_add_trigger"],
                     "callback": self._inl_add_trigger,
-                }
+                },
+            ]
+        )
+        buttons.append(
+            [
+                {
+                    "text": self.strings["close"],
+                    "action": "close",
+                },
             ]
         )
         return buttons
@@ -607,7 +764,7 @@ class GoTriggerMod(loader.Module):
     async def _menu(self, message: Message, page: int = 0):
         text = self.strings["menu_main"]
 
-        page_triggers = self.triggers[page : page + 5]
+        page_triggers = self.triggers[page * PAGE_SIZE : (page + 1) * PAGE_SIZE]
 
         triggs = "\n".join(
             [
@@ -620,7 +777,7 @@ class GoTriggerMod(loader.Module):
             ]
         )
 
-        reply_markup = self._build_main_markup(page_triggers)
+        reply_markup = self._build_main_markup(page_triggers, page)
 
         await utils.answer(
             message,
@@ -644,16 +801,14 @@ class GoTriggerMod(loader.Module):
     async def goadd(self, message: Message):
         """[triggerName] - append the replied message to the trigger's action"""
         if not (args := utils.get_args(message)):
-            return await utils.answer(message, "Вы не указали имя триггера")
+            return await utils.answer(message, self.strings["goadd_no_name"])
 
         trigger_name = args[0]
 
         if not (reply := await message.get_reply_message()):
-            return await utils.answer(message, "Вынеответили :(")
+            return await utils.answer(message, self.strings["goadd_no_reply"])
         if not (message.text or message.media):
-            return await utils.answer(
-                message, "Нечего добавлять в триггер (нет ни текста, ни медиа)"
-            )
+            return await utils.answer(message, self.strings["goadd_empty"])
 
         try:
             trigger = next(
@@ -664,7 +819,7 @@ class GoTriggerMod(loader.Module):
         except StopIteration:
             return await utils.answer(
                 message,
-                f"Триггера с именем <code>{trigger_name}</code> не существует. Невозможно добавить сообщение",
+                self.strings["goadd_trigger_not_found"].format(name=trigger_name),
             )
 
         if reply.media:
@@ -677,7 +832,7 @@ class GoTriggerMod(loader.Module):
 
         trigger.reactions.append(reaction)
 
-        await utils.answer(message, "Действие успешно добавлено в триггер!")
+        await utils.answer(message, self.strings["goadd_success"])
 
 
-__version__ = (0, 0, 6)
+__version__ = (0, 0, 67)
