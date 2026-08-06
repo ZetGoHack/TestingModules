@@ -34,6 +34,11 @@ WEEKDAY_NAMES = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 TRIGGER_NAME_RE = re.compile(r"^\w+$")
 PAGE_SIZE = 5
 
+AVALIABLE_TYPES = {
+    "conditions": {"TriggerCondition", "TimeCondition"},
+    "reactions": {"MessageReaction"},
+}
+
 
 def _encode(value):
     if isinstance(value, Exportable):
@@ -452,8 +457,12 @@ class GoTrigger:
     conditions: list[Condition]
     reactions: list[Reaction]
     active_chats: ChatScope = field(default_factory=ChatScope)
+    is_active: bool = True
 
     async def run(self, message: Message):
+        if not self.is_active:
+            return
+
         if self._check(message):
             await self._react(message)
 
@@ -498,6 +507,7 @@ class GoTrigger:
             "conditions": [cond.to_dict() for cond in self.conditions],
             "reactions": [reaction.to_dict() for reaction in self.reactions],
             "active_chats": self.active_chats.to_dict(),
+            "is_active": self.is_active,
         }
 
     @classmethod
@@ -513,13 +523,20 @@ class GoTrigger:
             active_chats=ChatScope.from_dict(
                 exported_dict.get("active_chats") or ChatScope().to_dict()
             ),
+            is_active=exported_dict.get("is_active", True),
         )
+
+
+class TriggerList(list[GoTrigger]):
+    def get(self, name: str) -> GoTrigger | None:
+        return next((trigger for trigger in self if trigger.name == name), None)
 
 
 @loader.tds
 class GoTriggerMod(loader.Module):
     strings = {
         "name": "GoTrigger",
+        "_assets_topic": "GoTrigger Assets",
         "menu_main": """<tg-emoji emoji-id=5875271289605722323>🍔</tg-emoji> <b>GoTrigger: Меню</b>
 
 <tg-emoji emoji-id=5854776233950188167>🏷</tg-emoji> Текущие триггеры ({shown}/{count}, Страница {page}):
@@ -557,6 +574,13 @@ class GoTriggerMod(loader.Module):
         "goadd_empty": "Нечего добавлять в триггер (нет ни текста, ни медиа)",
         "goadd_trigger_not_found": "Триггера с именем <code>{name}</code> не существует. Невозможно добавить сообщение",
         "goadd_success": "Действие успешно добавлено в триггер!",
+        "btn_add_trigger": "Добавить триггер",
+        "constructor_menu": "Конструктор триггера <code>{name}</code>\nАктивен: {is_active}\nУсловий: {cond_count}\nРеакций: {reac_count}",
+        "btn_save": "Сохранить",
+        "btn_enable": "Включить",
+        "btn_disable": "Выключить",
+        "btn_reset_trigger": "Сбросить",
+        "trigger_saved": "Триггер сохранён",
     }
 
     def __init__(self):
@@ -573,7 +597,7 @@ class GoTriggerMod(loader.Module):
     async def client_ready(self):
         saved_triggers: list[dict] = self.get("triggers", [])
 
-        self.triggers = [GoTrigger.load(trig) for trig in saved_triggers]
+        self.triggers = TriggerList(GoTrigger.load(trig) for trig in saved_triggers)
 
         heroku_forum = self._db.get("heroku.forums", "channel_id", 0)
         self.assets_topic = await utils.asset_forum_topic(
@@ -610,25 +634,31 @@ class GoTriggerMod(loader.Module):
         )
 
     async def _trigger_menu(self, call: InlineCall, name: str, page: int = 0):
-        trigger = next((t for t in self.triggers if t.name == name), None)
+        trigger = self.triggers.get(name)
         if trigger is None:
             return await call.answer(
                 self.strings["trigger_not_found"].format(name=name), show_alert=True
             )
 
-        conditions = "\n".join(
-            self.strings["menu_trigger_desc_line"].format(
-                desc=utils.escape_html(cond.describe()[:20])
+        conditions = (
+            "\n".join(
+                self.strings["menu_trigger_desc_line"].format(
+                    desc=utils.escape_html(cond.describe()[:20])
+                )
+                for cond in trigger.conditions
             )
-            for cond in trigger.conditions
-        ) or self.strings["menu_trigger_no_conditions"]
+            or self.strings["menu_trigger_no_conditions"]
+        )
 
-        reactions = "\n".join(
-            self.strings["menu_trigger_desc_line"].format(
-                desc=utils.escape_html(reaction.describe()[:20])
+        reactions = (
+            "\n".join(
+                self.strings["menu_trigger_desc_line"].format(
+                    desc=utils.escape_html(reaction.describe()[:20])
+                )
+                for reaction in trigger.reactions
             )
-            for reaction in trigger.reactions
-        ) or self.strings["menu_trigger_no_reactions"]
+            or self.strings["menu_trigger_no_reactions"]
+        )
 
         await utils.answer(
             call,
@@ -678,7 +708,7 @@ class GoTriggerMod(loader.Module):
     async def _trigger_rename_handler(
         self, call: InlineCall, data: str, name: str, page: int = 0
     ):
-        trigger = next((t for t in self.triggers if t.name == name), None)
+        trigger = self.triggers.get(name)
         if trigger is None:
             return await call.answer(
                 self.strings["trigger_not_found"].format(name=name), show_alert=True
@@ -688,9 +718,7 @@ class GoTriggerMod(loader.Module):
         if not TRIGGER_NAME_RE.fullmatch(new_name):
             return await call.answer(self.strings["rename_invalid"], show_alert=True)
 
-        if new_name != trigger.name and any(
-            t.name == new_name for t in self.triggers
-        ):
+        if new_name != trigger.name and any(t.name == new_name for t in self.triggers):
             return await call.answer(
                 self.strings["rename_exists"].format(name=new_name), show_alert=True
             )
@@ -707,8 +735,77 @@ class GoTriggerMod(loader.Module):
     async def _inl_trigger_reactions(self, call: InlineCall, name: str, page: int = 0):
         pass
 
+    def _generate_trigger_name(self) -> str:
+        existing = {trigger.name for trigger in self.triggers}
+        i = 1
+        while f"trigger_{i}" in existing:
+            i += 1
+        return f"trigger_{i}"
+
     async def _inl_add_trigger(self, call: InlineCall, data: dict = None):
-        return
+        name = self._generate_trigger_name()
+
+        self.triggers.append(
+            GoTrigger(
+                name=name,
+                conditions=[],
+                reactions=[],
+                active_chats=ChatScope(),
+                is_active=False,
+            )
+        )
+        self._save_triggers()
+
+        await self._trigger_constructor(call, name)
+
+    async def _trigger_constructor(self, call: InlineCall, name: str):
+        trigger = self.triggers.get(name)
+        if trigger is None:
+            return await call.answer(
+                self.strings["trigger_not_found"].format(name=name), show_alert=True
+            )
+
+        await utils.answer(
+            call,
+            self.strings["constructor_menu"].format(
+                name=trigger.name,
+                is_active=trigger.is_active,
+                cond_count=len(trigger.conditions),
+                reac_count=len(trigger.reactions),
+            ),
+            reply_markup=self._build_constructor_markup(name, created=True),
+        )
+
+    async def _inl_save_trigger(self, call: InlineCall, name: str):
+        trigger = self.triggers.get(name)
+        if trigger is None:
+            return await call.answer(
+                self.strings["trigger_not_found"].format(name=name), show_alert=True
+            )
+
+        self._save_triggers()
+        await call.answer(self.strings["trigger_saved"])
+        await self._menu(call)
+
+    async def _inl_toggle_trigger(self, call: InlineCall, name: str):
+        trigger = self.triggers.get(name)
+        if trigger is None:
+            return await call.answer(
+                self.strings["trigger_not_found"].format(name=name), show_alert=True
+            )
+
+        trigger.is_active = not trigger.is_active
+        self._save_triggers()
+
+        await self._trigger_constructor(call, name)
+
+    async def _inl_reset_trigger(self, call: InlineCall, name: str):
+        trigger = self.triggers.get(name)
+        if trigger is not None:
+            self.triggers.remove(trigger)
+            self._save_triggers()
+
+        await self._menu(call)
 
     def _build_main_markup(self, triggers: list[GoTrigger], page: int = 0):
         buttons = []
@@ -760,6 +857,63 @@ class GoTriggerMod(loader.Module):
             ]
         )
         return buttons
+
+    def _build_constructor_markup(self, trigger_name: str, created: bool = False):
+        trigger = None
+        if created:
+            trigger = self.triggers.get(trigger_name)
+            if trigger is None:
+                logger.warning(
+                    "Unexpected condition: The %s trigger does not exist, even though "
+                    "it is specified otherwise. Fallback to creating the trigger",
+                    trigger_name,
+                )
+
+        is_active = trigger.is_active if trigger else False
+
+        return [
+            [
+                {
+                    "text": self.strings["btn_save"],
+                    "callback": self._inl_save_trigger,
+                    "kwargs": {"name": trigger_name},
+                },
+            ],
+            [
+                {
+                    "text": (
+                        self.strings["btn_disable"]
+                        if is_active
+                        else self.strings["btn_enable"]
+                    ),
+                    "callback": self._inl_toggle_trigger,
+                    "kwargs": {"name": trigger_name},
+                },
+            ],
+            [
+                {
+                    "text": self.strings["btn_conditions"],
+                    "callback": self._inl_trigger_conditions,
+                    "kwargs": {"name": trigger_name},
+                },
+                {
+                    "text": self.strings["btn_reactions"],
+                    "callback": self._inl_trigger_reactions,
+                    "kwargs": {"name": trigger_name},
+                },
+            ],
+            [
+                {
+                    "text": self.strings["btn_reset_trigger"],
+                    "callback": self._inl_reset_trigger,
+                    "kwargs": {"name": trigger_name},
+                },
+            ],
+            [
+                {"text": self.strings["back"], "callback": self._menu},
+                {"text": self.strings["close"], "action": "close"},
+            ],
+        ]
 
     async def _menu(self, message: Message, page: int = 0):
         text = self.strings["menu_main"]
