@@ -34,11 +34,6 @@ WEEKDAY_NAMES = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 TRIGGER_NAME_RE = re.compile(r"^\w+$")
 PAGE_SIZE = 5
 
-AVALIABLE_TYPES = {
-    "conditions": {"TriggerCondition", "TimeCondition"},
-    "reactions": {"MessageReaction"},
-}
-
 
 def _encode(value):
     if isinstance(value, Exportable):
@@ -579,7 +574,7 @@ class GoTriggerMod(loader.Module):
         "btn_save": "Сохранить",
         "btn_enable": "Включить",
         "btn_disable": "Выключить",
-        "btn_reset_trigger": "Сбросить",
+        "btn_reset_trigger": "Удалить",
         "trigger_saved": "Триггер сохранён",
     }
 
@@ -633,7 +628,7 @@ class GoTriggerMod(loader.Module):
             heroku_forum, file=media, reply_to=self.assets_topic.id
         )
 
-    async def _trigger_menu(self, call: InlineCall, name: str, page: int = 0):
+    async def _trigger_menu(self, call: InlineCall, name: str, main_page: int = 0):
         trigger = self.triggers.get(name)
         if trigger is None:
             return await call.answer(
@@ -667,10 +662,10 @@ class GoTriggerMod(loader.Module):
                 conditions=conditions,
                 reactions=reactions,
             ),
-            reply_markup=self._build_trigger_markup(trigger, page),
+            reply_markup=self._build_trigger_markup(trigger, main_page),
         )
 
-    def _build_trigger_markup(self, trigger: GoTrigger, page: int = 0):
+    def _build_trigger_markup(self, trigger: GoTrigger, main_page: int = 0):
         return [
             [
                 {
@@ -678,35 +673,35 @@ class GoTriggerMod(loader.Module):
                     "input": self.strings["rename_prompt"],
                     "handler": self._trigger_rename_handler,
                     "args": (trigger.name,),
-                    "kwargs": {"page": page},
+                    "kwargs": {"main_page": main_page},
                 },
             ],
             [
                 {
                     "text": self.strings["btn_conditions"],
                     "callback": self._inl_trigger_conditions,
-                    "kwargs": {"name": trigger.name, "page": page},
+                    "kwargs": {"name": trigger.name, "main_page": main_page},
                 },
             ],
             [
                 {
                     "text": self.strings["btn_reactions"],
                     "callback": self._inl_trigger_reactions,
-                    "kwargs": {"name": trigger.name, "page": page},
+                    "kwargs": {"name": trigger.name, "main_page": main_page},
                 },
             ],
             [
                 {
                     "text": self.strings["back"],
                     "callback": self._menu,
-                    "kwargs": {"page": page},
+                    "kwargs": {"main_page": main_page},
                 },
                 {"text": self.strings["close"], "action": "close"},
             ],
         ]
 
     async def _trigger_rename_handler(
-        self, call: InlineCall, data: str, name: str, page: int = 0
+        self, call: InlineCall, data: str, name: str, main_page: int = 0
     ):
         trigger = self.triggers.get(name)
         if trigger is None:
@@ -727,12 +722,16 @@ class GoTriggerMod(loader.Module):
         self._save_triggers()
 
         await call.answer(self.strings["rename_success"].format(name=new_name))
-        await self._trigger_menu(call, new_name, page)
+        await self._trigger_menu(call, new_name, main_page)
 
-    async def _inl_trigger_conditions(self, call: InlineCall, name: str, page: int = 0):
+    async def _inl_trigger_conditions(
+        self, call: InlineCall, name: str, main_page: int = 0, page: int = 0
+    ):
         pass
 
-    async def _inl_trigger_reactions(self, call: InlineCall, name: str, page: int = 0):
+    async def _inl_trigger_reactions(
+        self, call: InlineCall, name: str, main_page: int = 0, page: int = 0
+    ):
         pass
 
     def _generate_trigger_name(self) -> str:
@@ -807,7 +806,7 @@ class GoTriggerMod(loader.Module):
 
         await self._menu(call)
 
-    def _build_main_markup(self, triggers: list[GoTrigger], page: int = 0):
+    def _build_main_markup(self, triggers: list[GoTrigger], main_page: int = 0):
         buttons = []
         for trigger in triggers:
             buttons.append(
@@ -815,26 +814,26 @@ class GoTriggerMod(loader.Module):
                     {
                         "text": trigger.name,
                         "callback": self._trigger_menu,
-                        "kwargs": {"name": trigger.name, "page": page},
+                        "kwargs": {"name": trigger.name, "main_page": main_page},
                     }
                 ]
             )
 
         nav_row = []
-        if page > 0:
+        if main_page > 0:
             nav_row.append(
                 {
                     "text": "⬅️",
                     "callback": self._menu,
-                    "kwargs": {"page": page - 1},
+                    "kwargs": {"main_page": main_page - 1},
                 }
             )
-        if (page + 1) * PAGE_SIZE < len(self.triggers):
+        if (main_page + 1) * PAGE_SIZE < len(self.triggers):
             nav_row.append(
                 {
                     "text": "➡️",
                     "callback": self._menu,
-                    "kwargs": {"page": page + 1},
+                    "kwargs": {"main_page": main_page + 1},
                 }
             )
         if nav_row:
@@ -915,10 +914,15 @@ class GoTriggerMod(loader.Module):
             ],
         ]
 
-    async def _menu(self, message: Message, page: int = 0):
+    async def _menu(self, message: Message, main_page: int = 0):
         text = self.strings["menu_main"]
 
-        page_triggers = self.triggers[page * PAGE_SIZE : (page + 1) * PAGE_SIZE]
+        max_page = max(0, (len(self.triggers) - 1) // PAGE_SIZE) if self.triggers else 0
+        main_page = max(0, min(main_page, max_page))
+
+        page_triggers = self.triggers[
+            main_page * PAGE_SIZE : (main_page + 1) * PAGE_SIZE
+        ]
 
         triggs = "\n".join(
             [
@@ -931,14 +935,14 @@ class GoTriggerMod(loader.Module):
             ]
         )
 
-        reply_markup = self._build_main_markup(page_triggers, page)
+        reply_markup = self._build_main_markup(page_triggers, main_page)
 
         await utils.answer(
             message,
             text.format(
                 shown=len(page_triggers),
                 count=len(self.triggers),
-                page=page,
+                page=main_page,
                 triggers=triggs,
             ),
             reply_markup=reply_markup,
@@ -989,4 +993,4 @@ class GoTriggerMod(loader.Module):
         await utils.answer(message, self.strings["goadd_success"])
 
 
-__version__ = (0, 0, 67)
+__version__ = (0, 0, 8)
