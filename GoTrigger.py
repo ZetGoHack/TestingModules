@@ -16,7 +16,7 @@ from abc import ABC, abstractmethod
 from dataclasses import MISSING, dataclass, field, fields, is_dataclass
 from datetime import datetime, time
 from dateutil.relativedelta import relativedelta, MO, TU, WE, TH, FR, SA, SU
-from typing import ClassVar, Literal
+from typing import ClassVar, Literal, get_args, get_origin
 from zoneinfo import ZoneInfo
 
 from herokutl.extensions import BinaryReader
@@ -32,8 +32,8 @@ logger = logging.getLogger(__name__)
 WEEKDAYS = (MO, TU, WE, TH, FR, SA, SU)
 WEEKDAY_NAMES = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 
-TRIGGER_NAME_RE = re.compile(r"^\w+$")
-TRIGGER_NAME_STRIP_RE = re.compile(r"[^\w]+")
+NAME_RE = re.compile(r"^\w+$")
+NAME_STRIP_RE = re.compile(r"[^\w]+")
 PAGE_SIZE = 5
 
 
@@ -345,7 +345,9 @@ class ChatScope(Condition):
 
 class Reaction(Exportable):
     @abstractmethod
-    async def send(self, trigger_message: Message): ...
+    async def send(
+        self, trigger_message: Message, media_library: dict[str, "MessageMedia"]
+    ): ...
 
 
 @dataclass
@@ -392,14 +394,16 @@ class MessageReaction(Reaction):
     display_name: ClassVar[str] = "send_message"
 
     text: str = ""
-    media: MessageMedia | None = None
+    media_name: str | None = None
     # rich_message: list # ну его начерт. без парсера рич оформление в текст обрабатывать это проклято
     reply_to: Literal["trigger", "trigger_reply"] | int | None = (
         "trigger_reply"  # if int or None is set - send_to_chat_id is required
     )
     send_to_chat_id: int | None = None
 
-    async def send(self, trigger_message: Message):
+    async def send(
+        self, trigger_message: Message, media_library: dict[str, MessageMedia]
+    ):
         kwargs = {}
         if self.reply_to == "trigger":
             fun = trigger_message.reply
@@ -412,38 +416,37 @@ class MessageReaction(Reaction):
                 "reply_to": self.reply_to,
             }
 
-        media = None
-        if self.media:
-            media = self.media.get()
+        asset = media_library.get(self.media_name) if self.media_name else None
+        media = asset.get() if asset else None
 
         try:
             await fun(self.text, file=media, **kwargs)
         except (FileReferenceExpiredError, FileReferenceInvalidError):
             await fun(
                 self.text,
-                file=await self.media.refresh(trigger_message.client),
+                file=await asset.refresh(trigger_message.client),
                 **kwargs,
             )
 
     def describe(self) -> str:
         preview = utils.escape_html(self.text[:40]) or (
-            self.media.describe() if self.media else "empty"
+            f"media:{self.media_name}" if self.media_name else "empty"
         )
         return f"send {preview} -> {self.reply_to}"
 
     @staticmethod
     def parse(
         message: Message,
-        media_message: Message | None = None,
+        media_name: str | None = None,
         reply_to: Literal["trigger", "trigger_reply"] | int | None = "trigger_reply",
         send_to_chat_id: int = None,
     ):
         """Parses the replied message"""
-        text = message.text
-        media = MessageMedia.parse(media_message)
-
         return MessageReaction(
-            text=text, media=media, reply_to=reply_to, send_to_chat_id=send_to_chat_id
+            text=message.text,
+            media_name=media_name,
+            reply_to=reply_to,
+            send_to_chat_id=send_to_chat_id,
         )
 
 
@@ -468,12 +471,12 @@ class GoTrigger:
     active_chats: ChatScope = field(default_factory=ChatScope)
     is_active: bool = True
 
-    async def run(self, message: Message):
+    async def run(self, message: Message, media_library: dict[str, "MessageMedia"]):
         if not self.is_active:
             return
 
         if self._check(message):
-            await self._react(message)
+            await self._react(message, media_library)
 
     def _check(self, message: Message) -> bool:
         if not self.active_chats.check(message):
@@ -493,10 +496,10 @@ class GoTrigger:
         logger.debug("[%s] Match", self.name)
         return True
 
-    async def _react(self, message: Message):
+    async def _react(self, message: Message, media_library: dict[str, "MessageMedia"]):
         for reaction in self.reactions:
             try:
-                await reaction.send(message)
+                await reaction.send(message, media_library)
             except Exception:
                 logger.exception(
                     "Error while reacting to the trigger %s: %s",
@@ -583,9 +586,11 @@ class GoTriggerMod(loader.Module):
         "goadd_empty": "Нечего добавлять в триггер (нет ни текста, ни медиа)",
         "goadd_trigger_not_found": "Триггера с именем <code>{name}</code> не существует. Невозможно добавить сообщение",
         "goadd_success": "Действие успешно добавлено в триггер!",
+        "goaddmedia_no_name": "Вы не указали имя для медиа",
+        "goaddmedia_no_media": "Вынеответили на сообщение с медиа",
+        "goaddmedia_success": "Медиа <code>{name}</code> добавлено в библиотеку",
         "btn_add_trigger": "Добавить триггер",
         "add_trigger_prompt": "Введите имя нового триггера",
-        "constructor_menu": "Конструктор триггера <code>{name}</code>\nАктивен: {is_active}\nУсловий: {cond_count}\nРеакций: {reac_count}",
         "btn_save": "Сохранить",
         "btn_enable": "Включить",
         "btn_disable": "Выключить",
@@ -603,6 +608,8 @@ class GoTriggerMod(loader.Module):
         "draft_not_found": "Черновик не найден",
         "draft_save_failed": "Не удалось сохранить черновик",
         "btn_discard_draft": "Отменить черновик",
+        "draft_field_custom": "Своё значение",
+        "draft_field_clear": "Не задано",
     }
 
     def __init__(self):
@@ -622,6 +629,11 @@ class GoTriggerMod(loader.Module):
         self.triggers = TriggerList(GoTrigger.load(trig) for trig in saved_triggers)
         self.drafts: dict[str, dict] = self.get("drafts", {})
 
+        saved_media: dict[str, dict] = self.get("media", {})
+        self.media_library: dict[str, MessageMedia] = {
+            name: MessageMedia.from_dict(data) for name, data in saved_media.items()
+        }
+
         heroku_forum = self._db.get("heroku.forums", "channel_id", 0)
         self.assets_topic = await utils.asset_forum_topic(
             self.client,
@@ -639,7 +651,7 @@ class GoTriggerMod(loader.Module):
         # scheduled_tasks = []
 
         for trigger in self.triggers:
-            if task := await trigger.run(message):
+            if task := await trigger.run(message, self.media_library):
                 pass
                 # scheduled_tasks.extend(task)
 
@@ -667,6 +679,21 @@ class GoTriggerMod(loader.Module):
     def _draft_suffix(self, trigger_name: str, list_field: str | None = None) -> str:
         count = self._draft_count(trigger_name, list_field)
         return self.strings["drafts"].format(count=count) if count else ""
+
+    def _save_media(self):
+        self.set(
+            "media",
+            {name: media.to_dict() for name, media in self.media_library.items()},
+        )
+
+    def _media_usage(self, media_name: str) -> list[str]:
+        return [
+            trigger.name
+            for trigger in self.triggers
+            for reaction in trigger.reactions
+            if isinstance(reaction, MessageReaction)
+            and reaction.media_name == media_name
+        ]
 
     async def _add_to_assets(
         self,
@@ -728,17 +755,33 @@ class GoTriggerMod(loader.Module):
             ],
             [
                 {
-                    "text": self.strings["btn_conditions"]
-                    + self._draft_suffix(trigger.name, "conditions"),
-                    "callback": self._inl_trigger_conditions,
+                    "text": (
+                        self.strings["btn_disable"]
+                        if trigger.is_active
+                        else self.strings["btn_enable"]
+                    ),
+                    "callback": self._inl_toggle_trigger,
                     "kwargs": {"name": trigger.name, "main_page": main_page},
                 },
             ],
             [
                 {
+                    "text": self.strings["btn_conditions"]
+                    + self._draft_suffix(trigger.name, "conditions"),
+                    "callback": self._inl_trigger_conditions,
+                    "kwargs": {"name": trigger.name, "main_page": main_page},
+                },
+                {
                     "text": self.strings["btn_reactions"]
                     + self._draft_suffix(trigger.name, "reactions"),
                     "callback": self._inl_trigger_reactions,
+                    "kwargs": {"name": trigger.name, "main_page": main_page},
+                },
+            ],
+            [
+                {
+                    "text": self.strings["btn_reset_trigger"],
+                    "callback": self._inl_reset_trigger,
                     "kwargs": {"name": trigger.name, "main_page": main_page},
                 },
             ],
@@ -758,7 +801,6 @@ class GoTriggerMod(loader.Module):
         data: str,
         name: str,
         main_page: int = 0,
-        constructor: bool = False,
     ):
         trigger = self.triggers.get(name)
         if trigger is None:
@@ -766,8 +808,8 @@ class GoTriggerMod(loader.Module):
                 self.strings["trigger_not_found"].format(name=name), show_alert=True
             )
 
-        new_name = self._normalize_trigger_name(data)
-        if not TRIGGER_NAME_RE.fullmatch(new_name):
+        new_name = self._normalize_name(data)
+        if not NAME_RE.fullmatch(new_name):
             return await call.answer(self.strings["rename_invalid"], show_alert=True)
 
         if new_name != trigger.name and self.triggers.get(new_name):
@@ -779,43 +821,22 @@ class GoTriggerMod(loader.Module):
         self._save_triggers()
 
         await call.answer(self.strings["rename_success"].format(name=new_name))
-        if constructor:
-            await self._trigger_constructor(call, new_name)
-        else:
-            await self._trigger_menu(call, new_name, main_page)
+        await self._trigger_menu(call, new_name, main_page)
 
     async def _inl_trigger_conditions(
-        self,
-        call: InlineCall,
-        name: str,
-        main_page: int = 0,
-        page: int = 0,
-        constructor: bool = False,
+        self, call: InlineCall, name: str, main_page: int = 0, page: int = 0
     ):
-        await self._items_menu(call, name, "conditions", main_page, page, constructor)
+        await self._items_menu(call, name, "conditions", main_page, page)
 
     async def _inl_trigger_reactions(
-        self,
-        call: InlineCall,
-        name: str,
-        main_page: int = 0,
-        page: int = 0,
-        constructor: bool = False,
+        self, call: InlineCall, name: str, main_page: int = 0, page: int = 0
     ):
-        await self._items_menu(call, name, "reactions", main_page, page, constructor)
+        await self._items_menu(call, name, "reactions", main_page, page)
 
     def _items_registry(self, list_field: str) -> type[Exportable]:
         return Condition if list_field == "conditions" else Reaction
 
-    def _back_to_trigger_button(
-        self, name: str, main_page: int = 0, constructor: bool = False
-    ) -> dict:
-        if constructor:
-            return {
-                "text": self.strings["back"],
-                "callback": self._trigger_constructor,
-                "kwargs": {"name": name},
-            }
+    def _back_to_trigger_button(self, name: str, main_page: int = 0) -> dict:
         return {
             "text": self.strings["back"],
             "callback": self._trigger_menu,
@@ -829,7 +850,6 @@ class GoTriggerMod(loader.Module):
         list_field: str,
         main_page: int = 0,
         page: int = 0,
-        constructor: bool = False,
     ):
         trigger = self.triggers.get(name)
         if trigger is None:
@@ -856,7 +876,6 @@ class GoTriggerMod(loader.Module):
         nav_kwargs = {
             "name": name,
             "main_page": main_page,
-            "constructor": constructor,
         }
 
         buttons = [
@@ -911,7 +930,7 @@ class GoTriggerMod(loader.Module):
 
         buttons.append(
             [
-                self._back_to_trigger_button(name, main_page, constructor),
+                self._back_to_trigger_button(name, main_page),
                 {"text": self.strings["close"], "action": "close"},
             ]
         )
@@ -932,7 +951,6 @@ class GoTriggerMod(loader.Module):
         list_field: str,
         main_page: int = 0,
         page: int = 0,
-        constructor: bool = False,
     ):
         trigger = self.triggers.get(name)
         if trigger is None:
@@ -945,7 +963,6 @@ class GoTriggerMod(loader.Module):
             "list_field": list_field,
             "main_page": main_page,
             "page": page,
-            "constructor": constructor,
         }
 
         buttons = [
@@ -982,7 +999,6 @@ class GoTriggerMod(loader.Module):
         type_name: str,
         main_page: int = 0,
         page: int = 0,
-        constructor: bool = False,
     ):
         trigger = self.triggers.get(name)
         if trigger is None:
@@ -998,7 +1014,6 @@ class GoTriggerMod(loader.Module):
             "data": {},
             "main_page": main_page,
             "page": page,
-            "constructor": constructor,
         }
         self._save_drafts()
 
@@ -1022,7 +1037,29 @@ class GoTriggerMod(loader.Module):
             return "int_set"
         if field_type == list[int]:
             return "int_list"
+        if self._field_choice_spec(field_type)[0]:
+            return "choice"
         return "unsupported"
+
+    def _field_choice_spec(self, field_type) -> tuple[tuple, bool, bool]:
+        """Extracts fixed Literal[...] options plus optional int/None fallbacks
+        from a field type such as Literal["a", "b"] | int | None."""
+        choices: tuple = ()
+        allow_int = False
+        allow_none = False
+
+        if get_origin(field_type) is Literal:
+            choices = get_args(field_type)
+        else:
+            for arg in get_args(field_type):
+                if get_origin(arg) is Literal:
+                    choices += get_args(arg)
+                elif arg is int:
+                    allow_int = True
+                elif arg is type(None):
+                    allow_none = True
+
+        return choices, allow_int, allow_none
 
     def _parse_field_value(self, raw: str, kind: str):
         raw = raw.strip()
@@ -1090,6 +1127,78 @@ class GoTriggerMod(loader.Module):
                         }
                     ]
                 )
+            elif kind == "choice":
+                choices, allow_int, allow_none = self._field_choice_spec(f.type)
+                buttons.append(
+                    [
+                        {
+                            "text": str(choice),
+                            "callback": self._inl_draft_set_choice,
+                            "kwargs": {
+                                "draft_id": draft_id,
+                                "field_name": f.name,
+                                "value": choice,
+                            },
+                        }
+                        for choice in choices
+                    ]
+                )
+                extra_row = []
+                if allow_int:
+                    extra_row.append(
+                        {
+                            "text": self.strings["draft_field_custom"],
+                            "input": self.strings["draft_field_prompt"].format(
+                                field=f.name
+                            ),
+                            "handler": self._draft_field_handler,
+                            "args": (draft_id, f.name, "int"),
+                        }
+                    )
+                if allow_none:
+                    extra_row.append(
+                        {
+                            "text": self.strings["draft_field_clear"],
+                            "callback": self._inl_draft_set_choice,
+                            "kwargs": {
+                                "draft_id": draft_id,
+                                "field_name": f.name,
+                                "value": None,
+                            },
+                        }
+                    )
+                if extra_row:
+                    buttons.append(extra_row)
+            elif f.name == "media_name":
+                # options come from module state (self.media_library), not the
+                # field's static type, so this can't go through _field_kind
+                for lib_name in self.media_library:
+                    buttons.append(
+                        [
+                            {
+                                "text": lib_name,
+                                "callback": self._inl_draft_set_choice,
+                                "kwargs": {
+                                    "draft_id": draft_id,
+                                    "field_name": f.name,
+                                    "value": lib_name,
+                                },
+                            }
+                        ]
+                    )
+                buttons.append(
+                    [
+                        {
+                            "text": self.strings["draft_field_clear"],
+                            "callback": self._inl_draft_set_choice,
+                            "kwargs": {
+                                "draft_id": draft_id,
+                                "field_name": f.name,
+                                "value": None,
+                            },
+                        }
+                    ]
+                )
 
         buttons.append(
             [
@@ -1124,7 +1233,6 @@ class GoTriggerMod(loader.Module):
                 "list_field": draft["field"],
                 "main_page": draft["main_page"],
                 "page": draft["page"],
-                "constructor": draft["constructor"],
             },
         }
 
@@ -1155,6 +1263,18 @@ class GoTriggerMod(loader.Module):
             return await call.answer(self.strings["draft_not_found"], show_alert=True)
 
         draft["data"][field_name] = not draft["data"].get(field_name, False)
+        self._save_drafts()
+
+        await self._draft_editor(call, draft_id)
+
+    async def _inl_draft_set_choice(
+        self, call: InlineCall, draft_id: str, field_name: str, value
+    ):
+        draft = self.drafts.get(draft_id)
+        if draft is None:
+            return await call.answer(self.strings["draft_not_found"], show_alert=True)
+
+        draft["data"][field_name] = value
         self._save_drafts()
 
         await self._draft_editor(call, draft_id)
@@ -1207,7 +1327,6 @@ class GoTriggerMod(loader.Module):
             draft["field"],
             draft["main_page"],
             draft["page"],
-            draft["constructor"],
         )
 
     async def _inl_discard_draft(self, call: InlineCall, draft_id: str):
@@ -1223,16 +1342,15 @@ class GoTriggerMod(loader.Module):
             draft["field"],
             draft["main_page"],
             draft["page"],
-            draft["constructor"],
         )
 
-    def _normalize_trigger_name(self, raw: str) -> str:
-        return TRIGGER_NAME_STRIP_RE.sub("", raw.strip())
+    def _normalize_name(self, raw: str) -> str:
+        return NAME_STRIP_RE.sub("", raw.strip())
 
-    async def _inl_add_trigger(self, call: InlineCall, data: str):
-        name = self._normalize_trigger_name(data)
+    async def _inl_add_trigger(self, call: InlineCall, data: str, main_page: int = 0):
+        name = self._normalize_name(data)
 
-        if not TRIGGER_NAME_RE.fullmatch(name):
+        if not NAME_RE.fullmatch(name):
             return await call.answer(self.strings["rename_invalid"], show_alert=True)
 
         if self.triggers.get(name):
@@ -1251,38 +1369,11 @@ class GoTriggerMod(loader.Module):
         )
         self._save_triggers()
 
-        await self._trigger_constructor(call, name)
+        await self._trigger_menu(call, name, main_page)
 
-    async def _trigger_constructor(self, call: InlineCall, name: str):
-        trigger = self.triggers.get(name)
-        if trigger is None:
-            return await call.answer(
-                self.strings["trigger_not_found"].format(name=name), show_alert=True
-            )
-
-        await utils.answer(
-            call,
-            self.strings["constructor_menu"].format(
-                name=trigger.name,
-                is_active=trigger.is_active,
-                cond_count=len(trigger.conditions),
-                reac_count=len(trigger.reactions),
-            ),
-            reply_markup=self._build_constructor_markup(name, created=True),
-        )
-
-    async def _inl_save_trigger(self, call: InlineCall, name: str):
-        trigger = self.triggers.get(name)
-        if trigger is None:
-            return await call.answer(
-                self.strings["trigger_not_found"].format(name=name), show_alert=True
-            )
-
-        self._save_triggers()
-        await call.answer(self.strings["trigger_saved"])
-        await self._menu(call)
-
-    async def _inl_toggle_trigger(self, call: InlineCall, name: str):
+    async def _inl_toggle_trigger(
+        self, call: InlineCall, name: str, main_page: int = 0
+    ):
         trigger = self.triggers.get(name)
         if trigger is None:
             return await call.answer(
@@ -1292,15 +1383,15 @@ class GoTriggerMod(loader.Module):
         trigger.is_active = not trigger.is_active
         self._save_triggers()
 
-        await self._trigger_constructor(call, name)
+        await self._trigger_menu(call, name, main_page)
 
-    async def _inl_reset_trigger(self, call: InlineCall, name: str):
+    async def _inl_reset_trigger(self, call: InlineCall, name: str, main_page: int = 0):
         trigger = self.triggers.get(name)
         if trigger is not None:
             self.triggers.remove(trigger)
             self._save_triggers()
 
-        await self._menu(call)
+        await self._menu(call, main_page)
 
     def _build_main_markup(self, triggers: list[GoTrigger], main_page: int = 0):
         buttons = []
@@ -1341,6 +1432,7 @@ class GoTriggerMod(loader.Module):
                     "text": self.strings["btn_add_trigger"],
                     "input": self.strings["add_trigger_prompt"],
                     "handler": self._inl_add_trigger,
+                    "kwargs": {"main_page": main_page},
                 },
             ]
         )
@@ -1353,74 +1445,6 @@ class GoTriggerMod(loader.Module):
             ]
         )
         return buttons
-
-    def _build_constructor_markup(self, trigger_name: str, created: bool = False):
-        trigger = None
-        if created:
-            trigger = self.triggers.get(trigger_name)
-            if trigger is None:
-                logger.warning(
-                    "Unexpected condition: The %s trigger does not exist, even though "
-                    "it is specified otherwise. Fallback to creating the trigger",
-                    trigger_name,
-                )
-
-        is_active = trigger.is_active if trigger else False
-
-        return [
-            [
-                {
-                    "text": self.strings["btn_rename"],
-                    "input": self.strings["rename_prompt"],
-                    "handler": self._trigger_rename_handler,
-                    "args": (trigger_name,),
-                    "kwargs": {"constructor": True},
-                },
-            ],
-            [
-                {
-                    "text": self.strings["btn_save"],
-                    "callback": self._inl_save_trigger,
-                    "kwargs": {"name": trigger_name},
-                },
-            ],
-            [
-                {
-                    "text": (
-                        self.strings["btn_disable"]
-                        if is_active
-                        else self.strings["btn_enable"]
-                    ),
-                    "callback": self._inl_toggle_trigger,
-                    "kwargs": {"name": trigger_name},
-                },
-            ],
-            [
-                {
-                    "text": self.strings["btn_conditions"]
-                    + self._draft_suffix(trigger_name, "conditions"),
-                    "callback": self._inl_trigger_conditions,
-                    "kwargs": {"name": trigger_name, "constructor": True},
-                },
-                {
-                    "text": self.strings["btn_reactions"]
-                    + self._draft_suffix(trigger_name, "reactions"),
-                    "callback": self._inl_trigger_reactions,
-                    "kwargs": {"name": trigger_name, "constructor": True},
-                },
-            ],
-            [
-                {
-                    "text": self.strings["btn_reset_trigger"],
-                    "callback": self._inl_reset_trigger,
-                    "kwargs": {"name": trigger_name},
-                },
-            ],
-            [
-                {"text": self.strings["back"], "callback": self._menu},
-                {"text": self.strings["close"], "action": "close"},
-            ],
-        ]
 
     async def _menu(self, message: Message, main_page: int = 0):
         text = self.strings["menu_main"]
@@ -1473,7 +1497,7 @@ class GoTriggerMod(loader.Module):
 
         if not (reply := await message.get_reply_message()):
             return await utils.answer(message, self.strings["goadd_no_reply"])
-        if not (message.text or message.media):
+        if not (reply.text or reply.media):
             return await utils.answer(message, self.strings["goadd_empty"])
 
         try:
@@ -1488,17 +1512,40 @@ class GoTriggerMod(loader.Module):
                 self.strings["goadd_trigger_not_found"].format(name=trigger_name),
             )
 
+        media_name = None
         if reply.media:
             media_message = await self._add_to_assets(reply.media)
+            media_name = f"m{media_message.id}"
+            self.media_library[media_name] = MessageMedia.parse(media_message)
+            self._save_media()
 
-        reaction = MessageReaction.parse(
-            message=reply,
-            media_message=media_message,
-        )
+        reaction = MessageReaction.parse(message=reply, media_name=media_name)
 
         trigger.reactions.append(reaction)
+        self._save_triggers()
 
         await utils.answer(message, self.strings["goadd_success"])
 
+    @loader.command(ru_doc="<имя> - добавить медиа из ответа в общую библиотеку")
+    async def goaddmedia(self, message: Message):
+        """<name> - add the replied media to the shared library"""
+        if not (args := utils.get_args(message)):
+            return await utils.answer(message, self.strings["goaddmedia_no_name"])
 
-__version__ = (0, 1, 1)
+        media_name = self._normalize_name(args[0])
+        if not NAME_RE.fullmatch(media_name):
+            return await utils.answer(message, self.strings["rename_invalid"])
+
+        if not (reply := await message.get_reply_message()) or not reply.media:
+            return await utils.answer(message, self.strings["goaddmedia_no_media"])
+
+        media_message = await self._add_to_assets(reply.media)
+        self.media_library[media_name] = MessageMedia.parse(media_message)
+        self._save_media()
+
+        await utils.answer(
+            message, self.strings["goaddmedia_success"].format(name=media_name)
+        )
+
+
+__version__ = (0, 2, 0)
