@@ -4,7 +4,7 @@
 #░░░█░░░█░░░░█░░█░█░█░█
 #░░░███░███░░█░░███░███
 
-__version__ = (1, 0, 0)
+__version__ = (1, 0, 1)
 
 import re
 
@@ -85,8 +85,8 @@ class SileroTTSMod(loader.Module):
             return await utils.answer(message, self.strings["no_args"])
         
         if len(args := args.split("/", maxsplit=1)) < 2:
-            text = args
-            caption = ""
+            text = args[0]
+            caption = text
         else:
             text, caption = args
 
