@@ -10,9 +10,10 @@
 import base64
 import logging
 import re
+import uuid
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field, fields, is_dataclass
+from dataclasses import MISSING, dataclass, field, fields, is_dataclass
 from datetime import datetime, time
 from dateutil.relativedelta import relativedelta, MO, TU, WE, TH, FR, SA, SU
 from typing import ClassVar, Literal
@@ -32,6 +33,7 @@ WEEKDAYS = (MO, TU, WE, TH, FR, SA, SU)
 WEEKDAY_NAMES = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 
 TRIGGER_NAME_RE = re.compile(r"^\w+$")
+TRIGGER_NAME_STRIP_RE = re.compile(r"[^\w]+")
 PAGE_SIZE = 5
 
 
@@ -570,12 +572,25 @@ class GoTriggerMod(loader.Module):
         "goadd_trigger_not_found": "Триггера с именем <code>{name}</code> не существует. Невозможно добавить сообщение",
         "goadd_success": "Действие успешно добавлено в триггер!",
         "btn_add_trigger": "Добавить триггер",
+        "add_trigger_prompt": "Введите имя нового триггера",
         "constructor_menu": "Конструктор триггера <code>{name}</code>\nАктивен: {is_active}\nУсловий: {cond_count}\nРеакций: {reac_count}",
         "btn_save": "Сохранить",
         "btn_enable": "Включить",
         "btn_disable": "Выключить",
         "btn_reset_trigger": "Удалить",
         "trigger_saved": "Триггер сохранён",
+        "drafts": " ({count} черн.)",
+        "items_menu": "<b>{field}</b>\n{items}",
+        "items_empty": "пусто",
+        "btn_add_item": "Добавить",
+        "type_picker": "Выберите тип для <b>{field}</b>",
+        "draft_editor": "Черновик <code>{type}</code>\n{fields}",
+        "draft_field_unset": "—",
+        "draft_field_prompt": "Введите значение для {field}",
+        "draft_field_invalid": "Не удалось разобрать значение",
+        "draft_not_found": "Черновик не найден",
+        "draft_save_failed": "Не удалось сохранить черновик",
+        "btn_discard_draft": "Отменить черновик",
     }
 
     def __init__(self):
@@ -593,6 +608,7 @@ class GoTriggerMod(loader.Module):
         saved_triggers: list[dict] = self.get("triggers", [])
 
         self.triggers = TriggerList(GoTrigger.load(trig) for trig in saved_triggers)
+        self.drafts: dict[str, dict] = self.get("drafts", {})
 
         heroku_forum = self._db.get("heroku.forums", "channel_id", 0)
         self.assets_topic = await utils.asset_forum_topic(
@@ -617,6 +633,28 @@ class GoTriggerMod(loader.Module):
 
     def _save_triggers(self):
         self.set("triggers", [trigger.export() for trigger in self.triggers])
+
+    def _save_drafts(self):
+        self.set("drafts", self.drafts)
+
+    def _drafts_for(self, trigger_name: str, list_field: str) -> dict[str, dict]:
+        return {
+            draft_id: draft
+            for draft_id, draft in self.drafts.items()
+            if draft["trigger"] == trigger_name and draft["field"] == list_field
+        }
+
+    def _draft_count(self, trigger_name: str, list_field: str | None = None) -> int:
+        return sum(
+            1
+            for draft in self.drafts.values()
+            if draft["trigger"] == trigger_name
+            and (list_field is None or draft["field"] == list_field)
+        )
+
+    def _draft_suffix(self, trigger_name: str, list_field: str | None = None) -> str:
+        count = self._draft_count(trigger_name, list_field)
+        return self.strings["drafts"].format(count=count) if count else ""
 
     async def _add_to_assets(
         self,
@@ -678,14 +716,16 @@ class GoTriggerMod(loader.Module):
             ],
             [
                 {
-                    "text": self.strings["btn_conditions"],
+                    "text": self.strings["btn_conditions"]
+                    + self._draft_suffix(trigger.name, "conditions"),
                     "callback": self._inl_trigger_conditions,
                     "kwargs": {"name": trigger.name, "main_page": main_page},
                 },
             ],
             [
                 {
-                    "text": self.strings["btn_reactions"],
+                    "text": self.strings["btn_reactions"]
+                    + self._draft_suffix(trigger.name, "reactions"),
                     "callback": self._inl_trigger_reactions,
                     "kwargs": {"name": trigger.name, "main_page": main_page},
                 },
@@ -701,7 +741,12 @@ class GoTriggerMod(loader.Module):
         ]
 
     async def _trigger_rename_handler(
-        self, call: InlineCall, data: str, name: str, main_page: int = 0
+        self,
+        call: InlineCall,
+        data: str,
+        name: str,
+        main_page: int = 0,
+        constructor: bool = False,
     ):
         trigger = self.triggers.get(name)
         if trigger is None:
@@ -709,11 +754,11 @@ class GoTriggerMod(loader.Module):
                 self.strings["trigger_not_found"].format(name=name), show_alert=True
             )
 
-        new_name = data.strip()
+        new_name = self._normalize_trigger_name(data)
         if not TRIGGER_NAME_RE.fullmatch(new_name):
             return await call.answer(self.strings["rename_invalid"], show_alert=True)
 
-        if new_name != trigger.name and any(t.name == new_name for t in self.triggers):
+        if new_name != trigger.name and self.triggers.get(new_name):
             return await call.answer(
                 self.strings["rename_exists"].format(name=new_name), show_alert=True
             )
@@ -722,27 +767,439 @@ class GoTriggerMod(loader.Module):
         self._save_triggers()
 
         await call.answer(self.strings["rename_success"].format(name=new_name))
-        await self._trigger_menu(call, new_name, main_page)
+        if constructor:
+            await self._trigger_constructor(call, new_name)
+        else:
+            await self._trigger_menu(call, new_name, main_page)
 
     async def _inl_trigger_conditions(
-        self, call: InlineCall, name: str, main_page: int = 0, page: int = 0
+        self,
+        call: InlineCall,
+        name: str,
+        main_page: int = 0,
+        page: int = 0,
+        constructor: bool = False,
     ):
-        pass
+        await self._items_menu(call, name, "conditions", main_page, page, constructor)
 
     async def _inl_trigger_reactions(
-        self, call: InlineCall, name: str, main_page: int = 0, page: int = 0
+        self,
+        call: InlineCall,
+        name: str,
+        main_page: int = 0,
+        page: int = 0,
+        constructor: bool = False,
     ):
-        pass
+        await self._items_menu(call, name, "reactions", main_page, page, constructor)
 
-    def _generate_trigger_name(self) -> str:
-        existing = {trigger.name for trigger in self.triggers}
-        i = 1
-        while f"trigger_{i}" in existing:
-            i += 1
-        return f"trigger_{i}"
+    def _items_registry(self, list_field: str) -> type[Exportable]:
+        return Condition if list_field == "conditions" else Reaction
 
-    async def _inl_add_trigger(self, call: InlineCall, data: dict = None):
-        name = self._generate_trigger_name()
+    def _back_to_trigger_button(
+        self, name: str, main_page: int = 0, constructor: bool = False
+    ) -> dict:
+        if constructor:
+            return {
+                "text": self.strings["back"],
+                "callback": self._trigger_constructor,
+                "kwargs": {"name": name},
+            }
+        return {
+            "text": self.strings["back"],
+            "callback": self._trigger_menu,
+            "kwargs": {"name": name, "main_page": main_page},
+        }
+
+    async def _items_menu(
+        self,
+        call: InlineCall,
+        name: str,
+        list_field: str,
+        main_page: int = 0,
+        page: int = 0,
+        constructor: bool = False,
+    ):
+        trigger = self.triggers.get(name)
+        if trigger is None:
+            return await call.answer(
+                self.strings["trigger_not_found"].format(name=name), show_alert=True
+            )
+
+        items: list[Exportable] = getattr(trigger, list_field)
+
+        max_page = max(0, (len(items) - 1) // PAGE_SIZE) if items else 0
+        page = max(0, min(page, max_page))
+        page_items = items[page * PAGE_SIZE : (page + 1) * PAGE_SIZE]
+
+        drafts = self._drafts_for(name, list_field)
+
+        lines = [
+            self.strings["menu_trigger_desc_line"].format(
+                desc=utils.escape_html(item.describe()[:40])
+            )
+            for item in page_items
+        ]
+        text = "\n".join(lines) or self.strings["items_empty"]
+
+        nav_kwargs = {
+            "name": name,
+            "main_page": main_page,
+            "constructor": constructor,
+        }
+
+        buttons = [
+            [
+                {
+                    "text": self.strings["btn_add_item"],
+                    "callback": self._inl_add_item,
+                    "kwargs": {**nav_kwargs, "list_field": list_field, "page": page},
+                },
+            ],
+        ]
+
+        for draft_id, draft in drafts.items():
+            variant = Exportable._registry[draft["type"]]
+            buttons.append(
+                [
+                    {
+                        "text": f"📝 {variant.display_name}",
+                        "callback": self._inl_resume_draft,
+                        "kwargs": {"draft_id": draft_id},
+                    }
+                ]
+            )
+
+        nav_row = []
+        if page > 0:
+            nav_row.append(
+                {
+                    "text": "⬅️",
+                    "callback": self._items_menu,
+                    "kwargs": {
+                        **nav_kwargs,
+                        "list_field": list_field,
+                        "page": page - 1,
+                    },
+                }
+            )
+        if (page + 1) * PAGE_SIZE < len(items):
+            nav_row.append(
+                {
+                    "text": "➡️",
+                    "callback": self._items_menu,
+                    "kwargs": {
+                        **nav_kwargs,
+                        "list_field": list_field,
+                        "page": page + 1,
+                    },
+                }
+            )
+        if nav_row:
+            buttons.append(nav_row)
+
+        buttons.append(
+            [
+                self._back_to_trigger_button(name, main_page, constructor),
+                {"text": self.strings["close"], "action": "close"},
+            ]
+        )
+
+        await utils.answer(
+            call,
+            self.strings["items_menu"].format(
+                field=self.strings[f"btn_{list_field}"],
+                items=text,
+            ),
+            reply_markup=buttons,
+        )
+
+    async def _inl_add_item(
+        self,
+        call: InlineCall,
+        name: str,
+        list_field: str,
+        main_page: int = 0,
+        page: int = 0,
+        constructor: bool = False,
+    ):
+        trigger = self.triggers.get(name)
+        if trigger is None:
+            return await call.answer(
+                self.strings["trigger_not_found"].format(name=name), show_alert=True
+            )
+
+        item_kwargs = {
+            "name": name,
+            "list_field": list_field,
+            "main_page": main_page,
+            "page": page,
+            "constructor": constructor,
+        }
+
+        buttons = [
+            [
+                {
+                    "text": variant.display_name,
+                    "callback": self._inl_create_draft,
+                    "kwargs": {**item_kwargs, "type_name": variant.__name__},
+                }
+            ]
+            for variant in self._items_registry(list_field).variants()
+        ]
+        buttons.append(
+            [
+                {
+                    "text": self.strings["back"],
+                    "callback": self._items_menu,
+                    "kwargs": item_kwargs,
+                },
+            ]
+        )
+
+        await utils.answer(
+            call,
+            self.strings["type_picker"].format(field=self.strings[f"btn_{list_field}"]),
+            reply_markup=buttons,
+        )
+
+    async def _inl_create_draft(
+        self,
+        call: InlineCall,
+        name: str,
+        list_field: str,
+        type_name: str,
+        main_page: int = 0,
+        page: int = 0,
+        constructor: bool = False,
+    ):
+        trigger = self.triggers.get(name)
+        if trigger is None:
+            return await call.answer(
+                self.strings["trigger_not_found"].format(name=name), show_alert=True
+            )
+
+        draft_id = uuid.uuid4().hex[:10]
+        self.drafts[draft_id] = {
+            "trigger": name,
+            "field": list_field,
+            "type": type_name,
+            "data": {},
+            "main_page": main_page,
+            "page": page,
+            "constructor": constructor,
+        }
+        self._save_drafts()
+
+        await self._draft_editor(call, draft_id)
+
+    async def _inl_resume_draft(self, call: InlineCall, draft_id: str):
+        await self._draft_editor(call, draft_id)
+
+    def _field_kind(self, field_type) -> str:
+        if field_type is bool:
+            return "bool"
+        if field_type is int:
+            return "int"
+        if field_type is float:
+            return "float"
+        if field_type is str:
+            return "str"
+        if field_type == set[int]:
+            return "int_set"
+        if field_type == list[int]:
+            return "int_list"
+        return "unsupported"
+
+    def _parse_field_value(self, raw: str, kind: str):
+        raw = raw.strip()
+        if kind == "str":
+            return raw
+        if kind == "int":
+            return int(raw)
+        if kind == "float":
+            return float(raw)
+        if kind in ("int_set", "int_list"):
+            return [int(x) for x in raw.replace(",", " ").split()]
+        raise ValueError(kind)
+
+    def _empty_value_for(self, kind: str):
+        return {
+            "bool": False,
+            "int": 0,
+            "float": 0.0,
+            "str": "",
+            "int_set": set(),
+            "int_list": [],
+        }.get(kind)
+
+    async def _draft_editor(self, call: InlineCall, draft_id: str):
+        draft = self.drafts.get(draft_id)
+        if draft is None:
+            return await call.answer(self.strings["draft_not_found"], show_alert=True)
+
+        cls = Exportable._registry[draft["type"]]
+
+        lines = []
+        buttons = []
+        for f in fields(cls):
+            value = draft["data"].get(f.name, self.strings["draft_field_unset"])
+            lines.append(f"{f.name}: {utils.escape_html(str(value))}")
+
+            kind = self._field_kind(f.type)
+            if kind == "bool":
+                buttons.append(
+                    [
+                        {
+                            "text": f.name,
+                            "callback": self._inl_draft_toggle_field,
+                            "kwargs": {"draft_id": draft_id, "field_name": f.name},
+                        }
+                    ]
+                )
+            elif kind in ("str", "int", "float", "int_set", "int_list"):
+                buttons.append(
+                    [
+                        {
+                            "text": f.name,
+                            "input": self.strings["draft_field_prompt"].format(
+                                field=f.name
+                            ),
+                            "handler": self._draft_field_handler,
+                            "args": (draft_id, f.name, kind),
+                        }
+                    ]
+                )
+
+        buttons.append(
+            [
+                {
+                    "text": self.strings["btn_save"],
+                    "callback": self._inl_save_draft,
+                    "kwargs": {"draft_id": draft_id},
+                },
+                {
+                    "text": self.strings["btn_discard_draft"],
+                    "callback": self._inl_discard_draft,
+                    "kwargs": {"draft_id": draft_id},
+                },
+            ]
+        )
+
+        await utils.answer(
+            call,
+            self.strings["draft_editor"].format(
+                type=cls.display_name, fields="\n".join(lines)
+            ),
+            reply_markup=buttons,
+        )
+
+    async def _draft_field_handler(
+        self, call: InlineCall, data: str, draft_id: str, field_name: str, kind: str
+    ):
+        draft = self.drafts.get(draft_id)
+        if draft is None:
+            return await call.answer(self.strings["draft_not_found"], show_alert=True)
+
+        try:
+            value = self._parse_field_value(data, kind)
+        except ValueError:
+            return await call.answer(
+                self.strings["draft_field_invalid"], show_alert=True
+            )
+
+        draft["data"][field_name] = value
+        self._save_drafts()
+
+        await self._draft_editor(call, draft_id)
+
+    async def _inl_draft_toggle_field(
+        self, call: InlineCall, draft_id: str, field_name: str
+    ):
+        draft = self.drafts.get(draft_id)
+        if draft is None:
+            return await call.answer(self.strings["draft_not_found"], show_alert=True)
+
+        draft["data"][field_name] = not draft["data"].get(field_name, False)
+        self._save_drafts()
+
+        await self._draft_editor(call, draft_id)
+
+    async def _inl_save_draft(self, call: InlineCall, draft_id: str):
+        draft = self.drafts.pop(draft_id, None)
+        if draft is None:
+            return await call.answer(self.strings["draft_not_found"], show_alert=True)
+
+        trigger = self.triggers.get(draft["trigger"])
+        if trigger is None:
+            self._save_drafts()
+            return await call.answer(
+                self.strings["trigger_not_found"].format(name=draft["trigger"]),
+                show_alert=True,
+            )
+
+        cls = Exportable._registry[draft["type"]]
+        kwargs = {}
+        for f in fields(cls):
+            kind = self._field_kind(f.type)
+            if f.name in draft["data"]:
+                value = draft["data"][f.name]
+                kwargs[f.name] = set(value) if kind == "int_set" else value
+            elif f.default is MISSING and f.default_factory is MISSING:
+                kwargs[f.name] = self._empty_value_for(kind)
+
+        try:
+            instance = cls(**kwargs)
+        except Exception:
+            logger.exception(
+                "Failed to build %s from draft %s", draft["type"], draft_id
+            )
+            self.drafts[draft_id] = draft
+            self._save_drafts()
+            return await call.answer(self.strings["draft_save_failed"], show_alert=True)
+
+        getattr(trigger, draft["field"]).append(instance)
+        self._save_triggers()
+        self._save_drafts()
+
+        await call.answer(self.strings["trigger_saved"])
+        await self._items_menu(
+            call,
+            draft["trigger"],
+            draft["field"],
+            draft["main_page"],
+            draft["page"],
+            draft["constructor"],
+        )
+
+    async def _inl_discard_draft(self, call: InlineCall, draft_id: str):
+        draft = self.drafts.pop(draft_id, None)
+        if draft is None:
+            return await call.answer(self.strings["draft_not_found"], show_alert=True)
+
+        self._save_drafts()
+
+        await self._items_menu(
+            call,
+            draft["trigger"],
+            draft["field"],
+            draft["main_page"],
+            draft["page"],
+            draft["constructor"],
+        )
+
+    def _normalize_trigger_name(self, raw: str) -> str:
+        return TRIGGER_NAME_STRIP_RE.sub("", raw.strip())
+
+    async def _inl_add_trigger(self, call: InlineCall, data: str):
+        name = self._normalize_trigger_name(data)
+
+        if not TRIGGER_NAME_RE.fullmatch(name):
+            return await call.answer(self.strings["rename_invalid"], show_alert=True)
+
+        if self.triggers.get(name):
+            return await call.answer(
+                self.strings["rename_exists"].format(name=name), show_alert=True
+            )
 
         self.triggers.append(
             GoTrigger(
@@ -812,7 +1269,7 @@ class GoTriggerMod(loader.Module):
             buttons.append(
                 [
                     {
-                        "text": trigger.name,
+                        "text": trigger.name + self._draft_suffix(trigger.name),
                         "callback": self._trigger_menu,
                         "kwargs": {"name": trigger.name, "main_page": main_page},
                     }
@@ -843,7 +1300,8 @@ class GoTriggerMod(loader.Module):
             [
                 {
                     "text": self.strings["btn_add_trigger"],
-                    "callback": self._inl_add_trigger,
+                    "input": self.strings["add_trigger_prompt"],
+                    "handler": self._inl_add_trigger,
                 },
             ]
         )
@@ -873,6 +1331,15 @@ class GoTriggerMod(loader.Module):
         return [
             [
                 {
+                    "text": self.strings["btn_rename"],
+                    "input": self.strings["rename_prompt"],
+                    "handler": self._trigger_rename_handler,
+                    "args": (trigger_name,),
+                    "kwargs": {"constructor": True},
+                },
+            ],
+            [
+                {
                     "text": self.strings["btn_save"],
                     "callback": self._inl_save_trigger,
                     "kwargs": {"name": trigger_name},
@@ -891,14 +1358,16 @@ class GoTriggerMod(loader.Module):
             ],
             [
                 {
-                    "text": self.strings["btn_conditions"],
+                    "text": self.strings["btn_conditions"]
+                    + self._draft_suffix(trigger_name, "conditions"),
                     "callback": self._inl_trigger_conditions,
-                    "kwargs": {"name": trigger_name},
+                    "kwargs": {"name": trigger_name, "constructor": True},
                 },
                 {
-                    "text": self.strings["btn_reactions"],
+                    "text": self.strings["btn_reactions"]
+                    + self._draft_suffix(trigger_name, "reactions"),
                     "callback": self._inl_trigger_reactions,
-                    "kwargs": {"name": trigger_name},
+                    "kwargs": {"name": trigger_name, "constructor": True},
                 },
             ],
             [
@@ -993,4 +1462,4 @@ class GoTriggerMod(loader.Module):
         await utils.answer(message, self.strings["goadd_success"])
 
 
-__version__ = (0, 0, 8)
+__version__ = (0, 1, 0)
