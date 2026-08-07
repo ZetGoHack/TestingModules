@@ -265,41 +265,53 @@ class TimeCondition(Condition):
 
 
 @dataclass
-class TriggerCondition(Condition):
-    display_name: ClassVar[str] = "message_field"
+class FieldTextCondition(Condition):
+    display_name: ClassVar[str] = "message_field_text"
 
     field_name: str
-    trigger: str | bool | re.Pattern
+    trigger: str
     exact_match: bool = False
 
     def check(self, message: Message) -> bool:
-        """Checks if the field matches the trigger"""
-        value = getattr(message, self.field_name, None)
-
-        if isinstance(self.trigger, bool):
-            return bool(value) == self.trigger
-
-        elif isinstance(self.trigger, str):
-            if self.exact_match:
-                return str(value) == self.trigger
-            else:
-                return self.trigger in str(value)
-
-        elif isinstance(self.trigger, re.Pattern):
-            return bool(self.trigger.search(str(value)))
-
-        return False
+        value = str(getattr(message, self.field_name, None))
+        if self.exact_match:
+            return value == self.trigger
+        return self.trigger in value
 
     @staticmethod
-    def text(trigger: str, exact_match: bool = False) -> "TriggerCondition":
-        return TriggerCondition("text", str(trigger), exact_match)
+    def text(trigger: str, exact_match: bool = False) -> "FieldTextCondition":
+        return FieldTextCondition("text", str(trigger), exact_match)
 
     def describe(self) -> str:
-        if isinstance(self.trigger, re.Pattern):
-            return f"{self.field_name} ~ {self.trigger.pattern}"
-        if isinstance(self.trigger, bool):
-            return f"{self.field_name} is {self.trigger}"
         return f"{'' if self.exact_match else 'in '}{self.field_name}: {self.trigger}"
+
+
+@dataclass
+class FieldBoolCondition(Condition):
+    display_name: ClassVar[str] = "message_field_bool"
+
+    field_name: str
+    trigger: bool
+
+    def check(self, message: Message) -> bool:
+        return bool(getattr(message, self.field_name, None)) == self.trigger
+
+    def describe(self) -> str:
+        return f"{self.field_name} is {self.trigger}"
+
+
+@dataclass
+class FieldRegexCondition(Condition):
+    display_name: ClassVar[str] = "message_field_regex"
+
+    field_name: str
+    pattern: re.Pattern
+
+    def check(self, message: Message) -> bool:
+        return bool(self.pattern.search(str(getattr(message, self.field_name, None))))
+
+    def describe(self) -> str:
+        return f"{self.field_name} ~ {self.pattern.pattern}"
 
 
 @dataclass
@@ -1004,6 +1016,8 @@ class GoTriggerMod(loader.Module):
             return "float"
         if field_type is str:
             return "str"
+        if field_type is re.Pattern:
+            return "regex"
         if field_type == set[int]:
             return "int_set"
         if field_type == list[int]:
@@ -1018,6 +1032,12 @@ class GoTriggerMod(loader.Module):
             return int(raw)
         if kind == "float":
             return float(raw)
+        if kind == "regex":
+            try:
+                re.compile(raw)
+            except re.error as e:
+                raise ValueError(str(e)) from e
+            return raw
         if kind in ("int_set", "int_list"):
             return [int(x) for x in raw.replace(",", " ").split()]
         raise ValueError(kind)
@@ -1028,6 +1048,7 @@ class GoTriggerMod(loader.Module):
             "int": 0,
             "float": 0.0,
             "str": "",
+            "regex": re.compile(""),
             "int_set": set(),
             "int_list": [],
         }.get(kind)
@@ -1056,7 +1077,7 @@ class GoTriggerMod(loader.Module):
                         }
                     ]
                 )
-            elif kind in ("str", "int", "float", "int_set", "int_list"):
+            elif kind in ("str", "int", "float", "regex", "int_set", "int_list"):
                 buttons.append(
                     [
                         {
@@ -1084,6 +1105,7 @@ class GoTriggerMod(loader.Module):
                 },
             ]
         )
+        buttons.append([self._back_to_items_button(draft)])
 
         await utils.answer(
             call,
@@ -1092,6 +1114,19 @@ class GoTriggerMod(loader.Module):
             ),
             reply_markup=buttons,
         )
+
+    def _back_to_items_button(self, draft: dict) -> dict:
+        return {
+            "text": self.strings["back"],
+            "callback": self._items_menu,
+            "kwargs": {
+                "name": draft["trigger"],
+                "list_field": draft["field"],
+                "main_page": draft["main_page"],
+                "page": draft["page"],
+                "constructor": draft["constructor"],
+            },
+        }
 
     async def _draft_field_handler(
         self, call: InlineCall, data: str, draft_id: str, field_name: str, kind: str
@@ -1143,7 +1178,11 @@ class GoTriggerMod(loader.Module):
             kind = self._field_kind(f.type)
             if f.name in draft["data"]:
                 value = draft["data"][f.name]
-                kwargs[f.name] = set(value) if kind == "int_set" else value
+                if kind == "int_set":
+                    value = set(value)
+                elif kind == "regex":
+                    value = re.compile(value)
+                kwargs[f.name] = value
             elif f.default is MISSING and f.default_factory is MISSING:
                 kwargs[f.name] = self._empty_value_for(kind)
 
@@ -1462,4 +1501,4 @@ class GoTriggerMod(loader.Module):
         await utils.answer(message, self.strings["goadd_success"])
 
 
-__version__ = (0, 1, 0)
+__version__ = (0, 1, 1)
