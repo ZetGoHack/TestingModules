@@ -409,6 +409,8 @@ class TheBestExampleEverMod(loader.Module):
 
         if (opt := self.config["example_option"]) != value:
             self.set("cfg_value", opt)
+        else:
+            return
 
         # endregion ДАТАБАЗА
 
