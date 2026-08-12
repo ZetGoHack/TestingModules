@@ -34,7 +34,9 @@ class AvatarFrames(loader.Module):
         "ffmpeg_error": "❌ Не удалось разобрать видео на кадры (ошибка ffmpeg). Подробности в логах",
         "no_frames": "❌ Не удалось получить ни одного кадра из видео",
         "started": "▶️ Начинаю установку {} кадров на аватарку (с последнего к первому)",
-        "stopped": "⏹ Загрузка кадров остановлена. Прогресс сохранён, можно продолжить позже командой <code>.avaframes</code> в ответ на то же видео",
+        "resuming": "▶️ Продолжаю установку кадров с сохранённого места...",
+        "need_confirm": "⚠️ Юзербот перезапустился во время установки кадров на аватарку ({}/{} уже установлено).\nИнлайн-форма со статусом после перезапуска не работает, поэтому отправьте <code>.avaframes</code> в этом чате (без ответа на видео), чтобы подтвердить и продолжить с сохранённого места",
+        "stopped": "⏹ Загрузка кадров остановлена. Прогресс сохранён, можно продолжить позже командой <code>.avaframes</code>",
         "status": "📊 Загружено {}/{} кадров",
         "progress": "📊 Загружено {}/{} кадров",
         "done": "✅ Готово! Установлено {} кадров",
@@ -74,20 +76,61 @@ class AvatarFrames(loader.Module):
         self._task = None
 
     async def client_ready(self):
-        if self.get("running", False):
-            logger.info("Обнаружена незавершённая загрузка кадров, продолжаю после перезапуска")
-            self._task = asyncio.ensure_future(self._upload_loop())
+        if not self.get("running", False):
+            return
+
+        # Инлайн-формы выгружаются при перезапуске юзербота, поэтому старое
+        # статусное сообщение больше не отвечает на правки. Не запускаем
+        # загрузку молча в фоне - вместо этого просим подтвердить продолжение
+        # командой, чтобы можно было создать новую инлайн-форму
+        total_frames = self.get("total_frames", 0)
+        last_frame = self.get("last_frame")
+        done = (total_frames - last_frame + 1) if last_frame else 0
+
+        logger.info(
+            "Обнаружена незавершённая загрузка кадров (%d/%d), жду подтверждения командой .avaframes",
+            done, total_frames,
+        )
+
+        chat_id = self.get("chat_id")
+        if chat_id is not None:
+            try:
+                await self.client.send_message(chat_id, self.strings["need_confirm"].format(done, total_frames))
+            except Exception as e:
+                logger.warning("Не удалось отправить уведомление о незавершённой загрузке: %s", e)
 
     async def on_unload(self):
         if self._task and not self._task.done():
             self._task.cancel()
 
-    @loader.command(ru_doc="[ответ на видео] Начинает/продолжает установку кадров видео на аватарку")
+    def _reset_state(self):
+        self.set("running", False)
+        self.set("video_path", None)
+        self.set("frames_dir", None)
+        self.set("total_frames", None)
+        self.set("last_frame", None)
+        self.set("chat_id", None)
+
+    @loader.command(ru_doc="[ответ на видео] Начинает установку кадров видео на аватарку. Без ответа на видео - подтверждает продолжение после перезапуска юзербота")
     async def avaframes(self, message):
-        """[reply to video] Start/resume setting video frames as avatar"""
+        """[reply to video] Start setting video frames as avatar. Without a reply - confirm resuming after a userbot restart"""
         if self.get("running", False):
-            await utils.answer(message, self.strings["already_running"])
-            return
+            if self._task and not self._task.done():
+                await utils.answer(message, self.strings["already_running"])
+                return
+
+            # Задача была прервана перезапуском юзербота (инлайн-форма со
+            # статусом уже выгружена) - эта команда подтверждает продолжение
+            frames_dir = self.get("frames_dir")
+            if frames_dir and os.path.isdir(frames_dir):
+                self.set("chat_id", message.chat_id)
+                status = await self.inline.form(self.strings["resuming"], message)
+                logger.info("Продолжаю установку кадров после подтверждения командой")
+                self._task = asyncio.ensure_future(self._upload_loop(status))
+                return
+
+            logger.warning("Папка с кадрами не найдена, сбрасываю сохранённый прогресс")
+            self._reset_state()
 
         reply = await message.get_reply_message()
         if not reply or not reply.document:
