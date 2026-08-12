@@ -36,6 +36,7 @@ class AvatarFrames(loader.Module):
         "started": "▶️ Начинаю установку {} кадров на аватарку (с последнего к первому)",
         "stopped": "⏹ Загрузка кадров остановлена. Прогресс сохранён, можно продолжить позже командой <code>.avaframes</code> в ответ на то же видео",
         "status": "📊 Загружено {}/{} кадров",
+        "progress": "📊 Загружено {}/{} кадров",
         "done": "✅ Готово! Установлено {} кадров",
     }
 
@@ -61,6 +62,12 @@ class AvatarFrames(loader.Module):
                 "max_retries",
                 5,
                 "Сколько раз пытаться загрузить один кадр перед тем, как пропустить его",
+                validator=loader.validators.Integer(minimum=1),
+            ),
+            loader.ConfigValue(
+                "status_update_every",
+                5,
+                "Обновлять сообщение о прогрессе раз в N установленных кадров (реже - меньше редактирований)",
                 validator=loader.validators.Integer(minimum=1),
             ),
         )
@@ -98,7 +105,10 @@ class AvatarFrames(loader.Module):
             await utils.answer(message, self.strings["notvideo"])
             return
 
-        status = await utils.answer(message, self.strings["downloading"])
+        # Инлайн-форма вместо обычного сообщения: правки такого сообщения не
+        # засоряют историю правок сообщения так, как это делают обычные
+        # отредактированные сообщения при частых обновлениях прогресса
+        status = await self.inline.form(self.strings["downloading"], message)
 
         data_dir = os.path.join(DATA_DIR, str(message.chat_id), str(reply.id))
         frames_dir = os.path.join(data_dir, "frames")
@@ -128,7 +138,7 @@ class AvatarFrames(loader.Module):
         logger.info("Начинаю установку %d кадров на аватарку (от последнего к первому)", total_frames)
         await utils.answer(status, self.strings["started"].format(total_frames))
 
-        self._task = asyncio.ensure_future(self._upload_loop())
+        self._task = asyncio.ensure_future(self._upload_loop(status))
 
     @loader.command(ru_doc="Останавливает установку кадров на аватарку")
     async def avaframesstop(self, message):
@@ -175,11 +185,12 @@ class AvatarFrames(loader.Module):
 
         return len([f for f in os.listdir(frames_dir) if f.startswith("frame_")])
 
-    async def _upload_loop(self):
+    async def _upload_loop(self, status=None):
         frames_dir = self.get("frames_dir")
         total_frames = self.get("total_frames", 0)
         chat_id = self.get("chat_id")
         last_frame = self.get("last_frame")
+        update_every = self.config["status_update_every"]
 
         # last_frame - номер последнего успешно загруженного кадра.
         # Продолжаем со следующего (более раннего) кадра, а не с начала
@@ -204,6 +215,12 @@ class AvatarFrames(loader.Module):
             self.set("last_frame", idx)
             done = total_frames - idx + 1
             logger.info("Загружено %d/%d кадров (кадр №%d установлен на аватарку)", done, total_frames, idx)
+
+            if status is not None and (done % update_every == 0 or idx == 1):
+                try:
+                    await utils.answer(status, self.strings["progress"].format(done, total_frames))
+                except Exception as e:
+                    logger.warning("Не удалось обновить сообщение о прогрессе: %s", e)
 
             await asyncio.sleep(self.config["delay"])
 
