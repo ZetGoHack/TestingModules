@@ -8,6 +8,7 @@ import logging
 import os
 import random
 import shutil
+import time
 
 from telethon import functions, errors
 from telethon.tl.types import DocumentAttributeVideo
@@ -36,9 +37,10 @@ class AvatarFrames(loader.Module):
         "started": "▶️ Начинаю установку {} кадров на аватарку (с последнего к первому)",
         "resuming": "▶️ Продолжаю установку кадров с сохранённого места...",
         "need_confirm": "⚠️ Юзербот перезапустился во время установки кадров на аватарку ({}/{} уже установлено).\nИнлайн-форма со статусом после перезапуска не работает, поэтому отправьте <code>.avaframes</code> в этом чате (без ответа на видео), чтобы подтвердить и продолжить с сохранённого места",
-        "stopped": "⏹ Загрузка кадров остановлена. Прогресс сохранён, можно продолжить позже командой <code>.avaframes</code>",
+        "stopped": "⏹ Загрузка кадров остановлена ({}/{} уже установлено). Прогресс сохранён, продолжить можно командой <code>.avaframes</code> (без ответа на видео)",
         "status": "📊 Загружено {}/{} кадров",
         "progress": "📊 Загружено {}/{} кадров",
+        "floodwait": "⏳ Поймал FloodWait на {2} сек. (уже установлено {0}/{1} кадров). Продолжу примерно в {3}",
         "done": "✅ Готово! Установлено {} кадров",
     }
 
@@ -190,11 +192,17 @@ class AvatarFrames(loader.Module):
             await utils.answer(message, self.strings["not_running"])
             return
 
-        self.set("running", False)
+        # Флаг "running" НЕ сбрасываем - он означает "есть незавершённая
+        # задача", и по нему .avaframes понимает, что нужно резюмировать
+        # с сохранённого кадра, а не требовать новый реплай на видео
         if self._task and not self._task.done():
             self._task.cancel()
 
-        await utils.answer(message, self.strings["stopped"])
+        total_frames = self.get("total_frames", 0)
+        last_frame = self.get("last_frame")
+        done = (total_frames - last_frame + 1) if last_frame else 0
+
+        await utils.answer(message, self.strings["stopped"].format(done, total_frames))
 
     @loader.command(ru_doc="Показывает прогресс установки кадров на аватарку")
     async def avaframesstatus(self, message):
@@ -252,7 +260,7 @@ class AvatarFrames(loader.Module):
                 logger.warning("Кадр №%d не найден по пути %s, пропускаю", idx, frame_path)
                 continue
 
-            if not await self._upload_frame(frame_path, idx, total_frames):
+            if not await self._upload_frame(frame_path, idx, total_frames, status):
                 continue
 
             self.set("last_frame", idx)
@@ -269,7 +277,7 @@ class AvatarFrames(loader.Module):
 
         await self._finish(chat_id, total_frames)
 
-    async def _upload_frame(self, frame_path: str, idx: int, total_frames: int) -> bool:
+    async def _upload_frame(self, frame_path: str, idx: int, total_frames: int, status=None) -> bool:
         attempt = 0
         while attempt < self.config["max_retries"]:
             try:
@@ -278,11 +286,30 @@ class AvatarFrames(loader.Module):
                 return True
             except errors.FloodWaitError as e:
                 wait_time = e.seconds + random.randint(0, self.config["flood_extra_wait"])
+                done = total_frames - idx
+                resume_at = time.strftime("%H:%M:%S", time.localtime(time.time() + wait_time))
+
                 logger.warning(
-                    "FloodWait на %d сек. при загрузке кадра №%d (загружено %d/%d), жду %d сек.",
-                    e.seconds, idx, total_frames - idx, total_frames, wait_time,
+                    "FloodWait на %d сек. при загрузке кадра №%d (загружено %d/%d), жду %d сек. (продолжу в %s)",
+                    e.seconds, idx, done, total_frames, wait_time, resume_at,
                 )
+
+                if status is not None:
+                    try:
+                        await utils.answer(
+                            status,
+                            self.strings["floodwait"].format(done, total_frames, wait_time, resume_at),
+                        )
+                    except Exception as ex:
+                        logger.warning("Не удалось обновить сообщение о FloodWait: %s", ex)
+
                 await asyncio.sleep(wait_time)
+
+                if status is not None:
+                    try:
+                        await utils.answer(status, self.strings["progress"].format(done, total_frames))
+                    except Exception as ex:
+                        logger.warning("Не удалось обновить сообщение после FloodWait: %s", ex)
             except Exception as e:
                 attempt += 1
                 logger.error(
