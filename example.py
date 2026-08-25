@@ -55,7 +55,7 @@
 # 1. Версия модуля. Длина кортежа не валидируется, но до Heroku 2.0.0
 #    невозможно было открыть .help у модулей с версией короче трёх элементов.
 #    Ради совместимости со старыми юзерботами лучше всегда указывать три элемента
-__version__ = ("beta", "test", 5) # будет отображено как "vbeta.test.5"
+__version__ = ("beta", "test", 7) # будет отображено как "vbeta.test.7"
 
 
 # 2. Разработчик - имя, юзернейм или канал разработчика модуля
@@ -173,7 +173,7 @@ from .. import utils
 # импорты с "Telethon", или "hikkatl" на "herokutl". Если ты делаешь универсальный модуль под Hikka и Heroku,
 # то рекомендую просто использовать общий "from telethon import ...". Оба юб заменят его на свою библиотеку
 
-from telethon.tl.custom import Message
+from herokutl.tl.custom import Message # такой импорт уже будет принят только Heroku
 from telethon.tl.types import UpdateUserStatus, UserStatusOnline, UserStatusOffline # для raw_handler
 
 
@@ -332,6 +332,9 @@ class TheBestExampleEverMod(loader.Module):
                 "This is an example list option",
                 validator=loader.validators.Series( # валидатор для списков. Проверяет каждый элемент списка на соответствие требованиям.
                                                     # В данном случае - что каждый элемент - это число от 0 до 42 включительно
+                                                    # ⚠️ list/dict-опции нельзя редактировать напрямую, типа - self.config["list_example"].append(4).
+                                                    #     Оно не пройдёт через __setitem__, поэтому не сохранится в базу и не вызовет on_change.
+                                                    #     Переприсваивай целиком: self.config["list_example"] = self.config["list_example"] + [4]
                     loader.validators.Integer(minimum=0, maximum=42)
                 ),
                 on_change=self._on_config_change,
@@ -666,11 +669,63 @@ class TheBestExampleEverMod(loader.Module):
             message,
             reply_markup,
             always_allow=[25, 50, 149], # Да, эти оба параметра могут быть локальными для каждой кнопки,
-            disable_security=False,     # так и глобальными для всех кнопок в форме
+            disable_security=False,     # так и глобальными для всей формы - но это OR логикв:
+                                        # True с любой стороны убирает проверку. Если True указан глобально,
+                                        # то локально для кнопки защиту с False уже не включить
         )
 
 
+
         # endregion КНОПКИ
+
+
+    # region БОТ
+
+    # self.inline.bot - клиент бота. До Heroku 2.1.0+ (Hikka-вайбы) - Aiogram клиент, после - Telethon.
+    #                   Через него можно работать напрямую от лица бота
+
+    @loader.command(ru_doc="Пример отправки сообщения с кнопками от лица бота")
+    async def exmplnotify(self, message: Message):
+        """Example of sending message with buttons from the bot"""
+        # region ГЕНЕРАЦИЯ КНОПОК
+        reply_markup = self.inline.generate_markup(
+            # generate_markup - тот же парсер кнопок, что и для инлайн-сообщений. Полезен, когда нужно 
+            #                   отправить сообщение от имени бота с кнопками, созданными через удобный
+            #                   обработчик юзербота. (Разумеется ты можешь создавать свои кнопки через
+            #                   telethon-билдер Button и ловить его через сырой callback_handler для
+            #                   каких-то более сложных задач. Но удобный генератор ведь легче :3)
+            [
+                [
+                    {
+                        "text": "Да",
+                        "callback": self.exmplnotify_yes,
+                        "args": (await message.link(thread=True),),
+                    },
+                    {"text": "Нет", "callback": self.exmplnotify_no},
+                ],
+            ]
+        )
+        # endregion ГЕНЕРАЦИЯ КНОПОК
+
+        # вообще, self.inline.bot - ещё один прокси для обратной совместимости со старыми модулями на
+        # Aiogram-логике. В self.inline.bot.client уже лежит реальный клиент Telethon-бота, через него
+        # и можно инвокать методы
+        await self.inline.bot.send_message(
+            self.tg_id, # тут мы, разумеется, укажем айди владельца юзербота
+            "<b>Привет, это тестовое сообщения от <code>TheBestExampleEver</code></b>",
+            reply_markup=reply_markup,
+        )
+        await utils.answer(message, "Уведомление отправлено в личку с ботом")
+
+    async def exmplnotify_yes(self, call: BotInlineCall, source_message_link: str):
+        await call.answer("Подтверждено!")
+        await utils.answer(call, f"Готово! (из сообщения {source_message_link})")
+
+    async def exmplnotify_no(self, call: BotInlineCall):
+        await call.answer("Отменено")
+        await utils.answer(call, "Отменено юзером")
+
+    # endregion БОТ
 
 
     # Инлайн-команды. Функции, вызываемые при вводе инлайн-команды в виде @ur_inline_bot inlexample query1 query2.
@@ -810,13 +865,13 @@ class TheBestExampleEverMod(loader.Module):
             return
 
 
-        # region LOOKUP (доступ к модулям)
+        # region LOOKUP
 
 
         tester_module: "Literal[False] | Module | Library" = self.lookup(
             "TestMod"
         )
-        # ^ аннотация в кавычках (forward reference) - см. предупреждение у импорта Module/Library в начале файла
+        # ^ аннотация в кавычках - см. предупреждение у импорта Module/Library в начале файла
         # self.lookup("module_classname_or_name") - метод, буквально возвращающий объект класса активного Модуля/Библиотеки.
         #                                           с ним вы получаете доступ к self модуля и вызывать его функции, получать
         #                                           его данные и прочее. можно переиспользовать одну функцию одного модуля в
@@ -829,7 +884,27 @@ class TheBestExampleEverMod(loader.Module):
             log_level = 0
 
 
-        # endregion LOOKUP (доступ к модулям)
+        # endregion LOOKUP
+
+
+        # region INVOKE
+
+        # self.invoke(command, args=None, *, peer=None, message=None, edit=False) - вызывает команду
+        #             по её имени, как будто её реально ввели в чат: либо новым сообщением в peer, либо
+        #             через существующий message (.edit, если edit=True, иначе .respond; если указан
+        #             peer - message игнорируется). Удобен, когда известно только имя команды (например,
+        #             задано пользователем/конфигом), а не конкретный модуль и метод - lookup() тут не
+        #             поможет, раз не знаешь, с какого модуля тянуть
+
+        # ⚠️ команда должна быть в self.allmodules.commands (т.е. модуль с этой
+        #     командой должен быть загружен), иначе будет ValueError
+
+        # Пример (закомментирован, чтобы не дёргать реальную команду каждый тик loop):
+        # result_message = await self.invoke("ping", peer=self.tg_id)
+        # ^ отправит ".ping" в личку с самим собой и тут же вызовет
+        #   хендлер команды ping, если она загружена
+
+        # endregion INVOKE
 
 
     # endregion ЦИКЛЫ
