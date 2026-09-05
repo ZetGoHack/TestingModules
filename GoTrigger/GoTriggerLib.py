@@ -19,7 +19,7 @@ from telethon.tl.custom import Message
 
 from .. import loader, utils
 
-__version__ = (0, 2, 1)
+__version__ = (0, 2, 2)
 
 
 @dataclass
@@ -130,8 +130,13 @@ class GoTriggerLib(loader.Library):
     MessageMedia = MessageMedia
     MessageReaction = MessageReaction
 
+    version = __version__
+
     async def init(self):
         self._triggers: dict[str, tuple[str, gotriggerlib.Trigger]] = {}
+
+    async def on_lib_update(self, new: "GoTriggerLib") -> None:
+        new._triggers = self._triggers
 
     def register_trigger(self, trigger: gotriggerlib.Trigger, owner: str) -> None:
         """Вызывать из client_ready поставщика; перерегистрация по тому же имени — обновление"""
